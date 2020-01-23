@@ -20,6 +20,7 @@ Author: Edward Lam <ed@ed-lam.com>
 //#define PRINT_DEBUG
 
 #include "AStar.h"
+#include <cstddef>
 
 #define isLE(x,y) ((x)-(y) <= (1e-06))
 
