@@ -101,8 +101,8 @@ SCIP_RETCODE start_solver(
 #ifdef USE_WAITDELAY_CONFLICTS
     println("Using wait-delay conflict constraints");
 #endif
-#ifdef USE_ENTRYEXIT_CONFLICTS
-    println("Using entry-exit conflict constraints");
+#ifdef USE_EXITENTRY_CONFLICTS
+    println("Using exit-entry conflict constraints");
 #endif
 #ifdef USE_TWOEDGE_CONFLICTS
     println("Using two-edge conflict constraints");

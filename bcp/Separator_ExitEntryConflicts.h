@@ -17,16 +17,16 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#ifdef USE_ENTRYEXIT_CONFLICTS
+#ifdef USE_EXITENTRY_CONFLICTS
 
-#ifndef MAPF_SEPARATOR_ENTRYEXITCONFLICTS_H
-#define MAPF_SEPARATOR_ENTRYEXITCONFLICTS_H
+#ifndef MAPF_SEPARATOR_EXITENTRYCONFLICTS_H
+#define MAPF_SEPARATOR_EXITENTRYCONFLICTS_H
 
 #include "Includes.h"
 #include "scip/scip.h"
 
-// Create separator for entry-exit conflicts and include it
-SCIP_RETCODE SCIPincludeSepaEntryExitConflicts(
+// Create separator for exit-entry conflicts and include it
+SCIP_RETCODE SCIPincludeSepaExitEntryConflicts(
     SCIP* scip,         // SCIP
     SCIP_SEPA** sepa    // Output pointer to separator
 );

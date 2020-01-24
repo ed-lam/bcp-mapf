@@ -17,25 +17,25 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#ifdef USE_ENTRYEXIT_CONFLICTS
+#ifdef USE_EXITENTRY_CONFLICTS
 
 //#define PRINT_DEBUG
 
-#include "Separator_EntryExitConflicts.h"
+#include "Separator_ExitEntryConflicts.h"
 #include "Coordinates.h"
 #include "ProblemData.h"
 #include "VariableData.h"
 #include "ConstraintHandler_EdgeConflicts.h"
 
-#define SEPA_NAME                         "entryexit_conflicts"
-#define SEPA_DESC          "Separator for entry-exit conflicts"
+#define SEPA_NAME                         "exitentry_conflicts"
+#define SEPA_DESC          "Separator for exit-entry conflicts"
 #define SEPA_PRIORITY                                   +550000 // priority of the constraint handler for separation
 #define SEPA_FREQ                                             1 // frequency for separating cuts; zero means to separate only in the root node
 #define SEPA_MAXBOUNDDIST                                   1.0
 #define SEPA_USESSUBSCIP                                  FALSE // does the separator use a secondary SCIP instance? */
 #define SEPA_DELAY                                        FALSE // should separation method be delayed, if other separators found cuts? */
 
-SCIP_RETCODE entryexit_conflicts_create_cut(
+SCIP_RETCODE exitentry_conflicts_create_cut(
     SCIP* scip,                  // SCIP
     SCIP_ProbData* probdata,     // Problem data
     SCIP_SEPA* sepa,             // Separator
@@ -49,7 +49,7 @@ SCIP_RETCODE entryexit_conflicts_create_cut(
 {
     // Create constraint name.
 #ifdef DEBUG
-    auto name = fmt::format("entryexit_conflict({},{},{})", t, a1, a2);
+    auto name = fmt::format("exitentry_conflict({},{},{})", t, a1, a2);
 #endif
 
     // Create data for the cut.
@@ -70,14 +70,14 @@ SCIP_RETCODE entryexit_conflicts_create_cut(
 
 // Separator
 static
-SCIP_RETCODE entryexit_conflicts_separate(
+SCIP_RETCODE exitentry_conflicts_separate(
     SCIP* scip,            // SCIP
     SCIP_SEPA* sepa,       // Separator
     SCIP_RESULT* result    // Pointer to store the result of the separation call
 )
 {
     // Print.
-    debugln("Starting separator for entry-exit conflicts on solution with obj {:.6f}:",
+    debugln("Starting separator for exit-entry conflicts on solution with obj {:.6f}:",
             SCIPgetSolOrigObj(scip, nullptr));
 
     // Print paths.
@@ -230,7 +230,7 @@ SCIP_RETCODE entryexit_conflicts_separate(
                     if (SCIPisGT(scip, lhs, 1.0))
                     {
                         // Print.
-                        debugln("   Creating entry-exit conflict cut on edge "
+                        debugln("   Creating exit-entry conflict cut on edge "
                                 "(({},{}),({},{})) for agents {} and {} at time {} "
                                 "with value {} in branch-and-bound node {}",
                                 map.get_x(n1), map.get_y(n1),
@@ -242,7 +242,7 @@ SCIP_RETCODE entryexit_conflicts_separate(
                                 SCIPnodeGetNumber(SCIPgetCurrentNode(scip)));
 
                         // Create cut.
-                        SCIP_CALL(entryexit_conflicts_create_cut(scip,
+                        SCIP_CALL(exitentry_conflicts_create_cut(scip,
                                                                  probdata,
                                                                  sepa,
                                                                  a1,
@@ -264,7 +264,7 @@ SCIP_RETCODE entryexit_conflicts_separate(
 
 // Copy method for separator
 static
-SCIP_DECL_SEPACOPY(sepaCopyEntryExitConflicts)
+SCIP_DECL_SEPACOPY(sepaCopyExitEntryConflicts)
 {
     // Check.
     debug_assert(scip);
@@ -273,7 +273,7 @@ SCIP_DECL_SEPACOPY(sepaCopyEntryExitConflicts)
 
     // Include separator.
     SCIP_SEPA* sepa_copy;
-    SCIP_CALL(SCIPincludeSepaEntryExitConflicts(scip, &sepa_copy));
+    SCIP_CALL(SCIPincludeSepaExitEntryConflicts(scip, &sepa_copy));
 
     // Done.
     return SCIP_OKAY;
@@ -281,7 +281,7 @@ SCIP_DECL_SEPACOPY(sepaCopyEntryExitConflicts)
 
 // Separation method for LP solutions
 static
-SCIP_DECL_SEPAEXECLP(sepaExeclpEntryExitConflicts)
+SCIP_DECL_SEPAEXECLP(sepaExeclpExitEntryConflicts)
 {
     // Check.
     debug_assert(scip);
@@ -293,14 +293,14 @@ SCIP_DECL_SEPAEXECLP(sepaExeclpEntryExitConflicts)
     *result = SCIP_DIDNOTFIND;
 
     // Start separator.
-    SCIP_CALL(entryexit_conflicts_separate(scip, sepa, result));
+    SCIP_CALL(exitentry_conflicts_separate(scip, sepa, result));
 
     // Done.
     return SCIP_OKAY;
 }
 
-// Create separator for entry-exit conflicts constraints and include it in SCIP
-SCIP_RETCODE SCIPincludeSepaEntryExitConflicts(
+// Create separator for exit-entry conflicts constraints and include it in SCIP
+SCIP_RETCODE SCIPincludeSepaExitEntryConflicts(
     SCIP* scip,         // SCIP
     SCIP_SEPA** sepa    // Output pointer to separator
 )
@@ -320,13 +320,13 @@ SCIP_RETCODE SCIPincludeSepaEntryExitConflicts(
                                    SEPA_MAXBOUNDDIST,
                                    SEPA_USESSUBSCIP,
                                    SEPA_DELAY,
-                                   sepaExeclpEntryExitConflicts,
+                                   sepaExeclpExitEntryConflicts,
                                    nullptr,
                                    nullptr));
     debug_assert(*sepa);
 
     // Set callbacks.
-    SCIP_CALL(SCIPsetSepaCopy(scip, *sepa, sepaCopyEntryExitConflicts));
+    SCIP_CALL(SCIPsetSepaCopy(scip, *sepa, sepaCopyExitEntryConflicts));
 
     // Done.
     return SCIP_OKAY;

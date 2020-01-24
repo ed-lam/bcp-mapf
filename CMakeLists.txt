@@ -122,8 +122,8 @@ set(MAPF_SOURCE_FILES
         bcp/Separator_CorridorConflicts.cpp
         bcp/Separator_WaitDelayConflicts.h
         bcp/Separator_WaitDelayConflicts.cpp
-        bcp/Separator_EntryExitConflicts.h
-        bcp/Separator_EntryExitConflicts.cpp
+        bcp/Separator_ExitEntryConflicts.h
+        bcp/Separator_ExitEntryConflicts.cpp
         bcp/Separator_TwoEdgeConflicts.h
         bcp/Separator_TwoEdgeConflicts.cpp
         bcp/Separator_GoalConflicts.h
@@ -149,7 +149,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_WAITEDGE_CONFLICTS")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_RECTANGLE_KNAPSACK_CONFLICTS")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_CORRIDOR_CONFLICTS")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_WAITDELAY_CONFLICTS")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_ENTRYEXIT_CONFLICTS")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_EXITENTRY_CONFLICTS")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_TWOEDGE_CONFLICTS")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_GOAL_CONFLICTS")
 

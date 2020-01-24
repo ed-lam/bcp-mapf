@@ -113,9 +113,9 @@ SCIP_SEPA* SCIPprobdataGetWaitDelayConflictsSepa(
 );
 #endif
 
-// Get separator for entry-exit conflicts
-#ifdef USE_ENTRYEXIT_CONFLICTS
-SCIP_SEPA* SCIPprobdataGetEntryExitConflictsSepa(
+// Get separator for exit-entry conflicts
+#ifdef USE_EXITENTRY_CONFLICTS
+SCIP_SEPA* SCIPprobdataGetExitEntryConflictsSepa(
     SCIP_ProbData* probdata    // Problem data
 );
 #endif

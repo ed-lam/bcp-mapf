@@ -39,8 +39,8 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifdef USE_WAITDELAY_CONFLICTS
 #include "Separator_WaitDelayConflicts.h"
 #endif
-#ifdef USE_ENTRYEXIT_CONFLICTS
-#include "Separator_EntryExitConflicts.h"
+#ifdef USE_EXITENTRY_CONFLICTS
+#include "Separator_ExitEntryConflicts.h"
 #endif
 #ifdef USE_TWOEDGE_CONFLICTS
 #include "Separator_TwoEdgeConflicts.h"
@@ -83,8 +83,8 @@ struct SCIP_ProbData
 #ifdef USE_WAITDELAY_CONFLICTS
     SCIP_SEPA* waitdelay_conflicts;                     // Separator for wait-delay conflicts
 #endif
-#ifdef USE_ENTRYEXIT_CONFLICTS
-    SCIP_SEPA* entryexit_conflicts;                     // Separator for entry-exit conflicts
+#ifdef USE_EXITENTRY_CONFLICTS
+    SCIP_SEPA* exitentry_conflicts;                     // Separator for exit-entry conflicts
 #endif
 #ifdef USE_TWOEDGE_CONFLICTS
     SCIP_SEPA* twoedge_conflicts;                       // Separator for two-edge conflicts
@@ -183,10 +183,10 @@ SCIP_DECL_PROBTRANS(probtrans)
     (*targetdata)->waitdelay_conflicts = sourcedata->waitdelay_conflicts;
 #endif
 
-    // Copy separator for entry-exit conflicts.
-#ifdef USE_ENTRYEXIT_CONFLICTS
-    debug_assert(sourcedata->entryexit_conflicts);
-    (*targetdata)->entryexit_conflicts = sourcedata->entryexit_conflicts;
+    // Copy separator for exit-entry conflicts.
+#ifdef USE_EXITENTRY_CONFLICTS
+    debug_assert(sourcedata->exitentry_conflicts);
+    (*targetdata)->exitentry_conflicts = sourcedata->exitentry_conflicts;
 #endif
 
     // Copy separator for two-edge conflicts.
@@ -903,9 +903,9 @@ SCIP_RETCODE SCIPprobdataCreate(
     SCIP_CALL(SCIPincludeSepaWaitDelayConflicts(scip, &probdata->waitdelay_conflicts));
 #endif
 
-    // Include separator for entry-exit conflicts.
-#ifdef USE_ENTRYEXIT_CONFLICTS
-    SCIP_CALL(SCIPincludeSepaEntryExitConflicts(scip, &probdata->entryexit_conflicts));
+    // Include separator for exit-entry conflicts.
+#ifdef USE_EXITENTRY_CONFLICTS
+    SCIP_CALL(SCIPincludeSepaExitEntryConflicts(scip, &probdata->exitentry_conflicts));
 #endif
 
     // Include separator for two-edge conflicts.
@@ -1061,15 +1061,15 @@ SCIP_SEPA* SCIPprobdataGetWaitDelayConflictsSepa(
 }
 #endif
 
-// Get separator for entry-exit conflicts
-#ifdef USE_ENTRYEXIT_CONFLICTS
-SCIP_SEPA* SCIPprobdataGetEntryExitConflictsSepa(
+// Get separator for exit-entry conflicts
+#ifdef USE_EXITENTRY_CONFLICTS
+SCIP_SEPA* SCIPprobdataGetExitEntryConflictsSepa(
     SCIP_ProbData* probdata    // Problem data
 )
 {
     debug_assert(probdata);
-    debug_assert(probdata->entryexit_conflicts);
-    return probdata->entryexit_conflicts;
+    debug_assert(probdata->exitentry_conflicts);
+    return probdata->exitentry_conflicts;
 }
 #endif
 
