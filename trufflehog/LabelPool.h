@@ -23,6 +23,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "Includes.h"
 #include "Coordinates.h"
 #include <memory>
+#include <cstddef>
 
 namespace TruffleHog
 {
