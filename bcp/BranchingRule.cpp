@@ -49,24 +49,24 @@ SCIP_DECL_BRANCHEXECLP(branchExeclpMAPF)
 }
 
 // Branching execution method for pseudosolutions (integer solutions)
-static
-SCIP_DECL_BRANCHEXECPS(branchExecpsMAPF)
-{
-    // Check.
-    debug_assert(scip);
-    debug_assert(branchrule);
-    debug_assert(strcmp(SCIPbranchruleGetName(branchrule), BRANCHRULE_NAME) == 0);
-    debug_assert(result);
-
-    unreachable();
-}
+//static
+//SCIP_DECL_BRANCHEXECPS(branchExecpsMAPF)
+//{
+//    // Check.
+//    debug_assert(scip);
+//    debug_assert(branchrule);
+//    debug_assert(strcmp(SCIPbranchruleGetName(branchrule), BRANCHRULE_NAME) == 0);
+//    debug_assert(result);
+//
+//    unreachable();
+//}
 
 // Unused branching method
-static
-SCIP_DECL_BRANCHEXECEXT(branchExecextMAPF)
-{
-    unreachable();
-}
+//static
+//SCIP_DECL_BRANCHEXECEXT(branchExecextMAPF)
+//{
+//    unreachable();
+//}
 
 // Create the branching rule and include it in SCIP
 SCIP_RETCODE SCIPincludeBranchrule(
@@ -87,8 +87,8 @@ SCIP_RETCODE SCIPincludeBranchrule(
 
     // Activate branching rule.
     SCIP_CALL(SCIPsetBranchruleExecLp(scip, branchrule, branchExeclpMAPF));
-    SCIP_CALL(SCIPsetBranchruleExecPs(scip, branchrule, branchExecpsMAPF));
-    SCIP_CALL(SCIPsetBranchruleExecExt(scip, branchrule, branchExecextMAPF));
+//    SCIP_CALL(SCIPsetBranchruleExecPs(scip, branchrule, branchExecpsMAPF));
+//    SCIP_CALL(SCIPsetBranchruleExecExt(scip, branchrule, branchExecextMAPF));
 
     // Done.
     return SCIP_OKAY;
