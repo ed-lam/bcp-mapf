@@ -1,6 +1,17 @@
+Disclaimer
+----------
+This repository is part of a Delft University of Technology course on Intelligent Decision Making.
+
+##### Students
+- Isha Dijcks
+- Karel Flere
+- Rickard Hellström
+- Thalis Papakyriakou
+
+This project is supervised by [Mathijs de Weerdt](https://www.tudelft.nl/ewi/over-de-faculteit/afdelingen/software-technology/algorithmics/people/mathijs-de-weerdt/).
+
 BCP
 ===
-
 BCP is an implementation of a branch-and-cut-and-price model of the multi-agent path finding problem. It is described in the following papers:
 
 - Branch-and-Cut-and-Price for Multi-Agent Pathfinding. E. Lam, P. Le Bodic, D. Harabor, P. J. Stuckey. IJCAI 2019.
