@@ -31,7 +31,7 @@ Compiling
 
 Download the source code by cloning this Git repository and all its submodules:
 ```
-git clone --recurse-submodules https://github.com/ed-lam/bcp-mapf.git
+git clone --recurse-submodules https://github.com/ishadijcks/bcp-mapf.git
 ```
 
 Locate the `cplex` subdirectory inside wherever you downloaded the CPLEX binaries. Compile BCP using CMake:
@@ -77,11 +77,6 @@ The 2019 instances are organised differently. There is (usually) a total of 1000
 ```
 
 The optimal solution (or feasible solution if timed out) will be saved into the `outputs` directory.
-
-Contributing
-------------
-
-We welcome code contributions and scientific discussion subject to [Monash University’s equal opportunity and harassment policies](https://www.monash.edu/about/diversity-inclusion/staff/equal-opportunity).
 
 Authors
 -------
