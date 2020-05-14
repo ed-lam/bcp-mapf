@@ -37,8 +37,8 @@ CPLEX is commercial software but has binaries available free under an [academic 
 
 If CPLEX is not available, SoPlex from the SCIP Optimization Suite can be used instead but this option is not supported.
 
-Compiling
----------
+Compiling on the commandline
+----------------------------
 
 Download the source code by cloning this Git repository and all its submodules:
 ```
@@ -63,6 +63,18 @@ If you have a multi-core CPU with N cores, you can perform a parallel compile by
 ```
 cmake --build . -j N
 ```
+
+Compiling with CLion
+--------------------
+- Create a new project from version control `https://github.com/ishadijcks/bcp-mapf.git`
+
+- Add the scipoptsuite to the source as mentioned in [Dependencies](##Dependencies).
+
+- Change your CMake settings `Settings --> Build, Execution, Deployment --> CMake`:
+    - CMake options: `-DCPLEX_DIR={PATH TO cplex SUBDIRECTORY} ..`
+    - Generation Path: `build`
+
+- Edit your run configuration with the relevant Program Arguments (See [Usage](##Usage))
 
 Usage
 -----
