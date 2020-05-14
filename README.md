@@ -68,13 +68,13 @@ Compiling with CLion
 --------------------
 - Create a new project from version control `https://github.com/ishadijcks/bcp-mapf.git`
 
-- Add the scipoptsuite to the source as mentioned in [Dependencies](##Dependencies).
+- Add the scipoptsuite to the source as mentioned in [Dependencies](#Dependencies).
 
 - Change your CMake settings `Settings --> Build, Execution, Deployment --> CMake`:
     - CMake options: `-DCPLEX_DIR={PATH TO cplex SUBDIRECTORY} ..`
     - Generation Path: `build`
 
-- Edit your run configuration with the relevant Program Arguments (See [Usage](##Usage))
+- Edit your run configuration with the relevant Program Arguments (See [Usage](#Usage))
 
 Usage
 -----
