@@ -123,10 +123,10 @@ class AStar
     ~AStar() = default;
 
     // Getters
-    inline auto max_path_length() const { return heuristic_.max_path_length(); }
-    auto& reservation_table() { return open_.cmp().reservation_table_; };
-    auto& edge_penalties() { return edge_penalties_; }
-    auto& time_finish_penalties() { return time_finish_penalties_; }
+    Time max_path_length() const { return heuristic_.max_path_length(); }
+    ReservationTable& reservation_table() { return open_.cmp().reservation_table_; };
+    EdgePenalties& edge_penalties() { return edge_penalties_; }
+    Vector<Cost>& time_finish_penalties() { return time_finish_penalties_; }
 #ifdef USE_GOAL_CONFLICTS
     auto& goal_crossings() { return goal_crossings_; }
 #endif

@@ -87,7 +87,7 @@ class Heuristic
     ~Heuristic() = default;
 
     // Getters
-    inline auto max_path_length() const { return max_path_length_; }
+    Time max_path_length() const { return max_path_length_; }
 
     // Compute heuristic costs to a goal node
     const Vector<IntCost>& compute_h(const Node goal);
