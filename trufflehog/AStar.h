@@ -128,7 +128,7 @@ class AStar
     EdgePenalties& edge_penalties() { return edge_penalties_; }
     Vector<Cost>& time_finish_penalties() { return time_finish_penalties_; }
 #ifdef USE_GOAL_CONFLICTS
-    auto& goal_crossings() { return goal_crossings_; }
+    Vector<GoalCrossing>& goal_crossings() { return goal_crossings_; }
 #endif
 
     // Solve
