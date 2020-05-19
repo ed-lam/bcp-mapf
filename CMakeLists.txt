@@ -93,7 +93,7 @@ set(TRUFFLEHOG_SOURCE_FILES
         trufflehog/AStar.cpp
         trufflehog/ReservationTable.h
         trufflehog/ReservationTable.cpp
-)
+        trufflehog/AbstractPathfinder.cpp trufflehog/AbstractPathfinder.h)
 
 # Set source files.
 set(MAPF_SOURCE_FILES
