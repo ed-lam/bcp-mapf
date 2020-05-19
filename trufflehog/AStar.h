@@ -29,13 +29,14 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "EdgePenalties.h"
 #include "Crossings.h"
 #include "Heuristic.h"
+#include "AbstractPathfinder.h"
 #include <unordered_map>
 #include <functional>
 
 namespace TruffleHog
 {
 
-class AStar
+class AStar : public AbstractPathfinder
 {
     struct Label
     {
@@ -123,16 +124,16 @@ class AStar
     ~AStar() = default;
 
     // Getters
-    Time max_path_length() const { return heuristic_.max_path_length(); }
-    ReservationTable& reservation_table() { return open_.cmp().reservation_table_; };
-    EdgePenalties& edge_penalties() { return edge_penalties_; }
-    Vector<Cost>& time_finish_penalties() { return time_finish_penalties_; }
+    Time max_path_length() override { return heuristic_.max_path_length(); }
+    ReservationTable& reservation_table() override { return open_.cmp().reservation_table_; };
+    EdgePenalties& edge_penalties() override { return edge_penalties_; }
+    Vector<Cost>& time_finish_penalties() override { return time_finish_penalties_; }
 #ifdef USE_GOAL_CONFLICTS
-    Vector<GoalCrossing>& goal_crossings() { return goal_crossings_; }
+    Vector<GoalCrossing>& goal_crossings() override { return goal_crossings_; }
 #endif
 
     // Solve
-    inline void compute_h(const Node goal) { heuristic_.compute_h(goal); }
+    void compute_h(const Node goal) override { heuristic_.compute_h(goal); }
     template<bool is_farkas>
     Pair<Vector<NodeTime>, Cost> solve(NodeTime start,
                                        Node goal,
