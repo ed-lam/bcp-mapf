@@ -12,8 +12,7 @@ Author: Isha Dijcks <i.e.dijcks@student.tudelft.nl>
 
 namespace TruffleHog {
     class AbstractPathfinder {
-#ifdef DEBUG
-#endif
+    public:
         // Getters
         virtual Time max_path_length() = 0;
         virtual ReservationTable& reservation_table() = 0;
@@ -26,12 +25,6 @@ namespace TruffleHog {
         // Solve
         virtual void compute_h(Node goal) = 0;
 
-        template<bool is_farkas>
-        Pair<Vector<NodeTime>, Cost> solve(NodeTime start,
-                                           Node goal,
-                                           Time goal_earliest = 0,
-                                           Time goal_latest = std::numeric_limits<Time>::max(),
-                                           Cost max_cost = std::numeric_limits<Cost>::infinity());
 
         // Debug
 #ifdef DEBUG

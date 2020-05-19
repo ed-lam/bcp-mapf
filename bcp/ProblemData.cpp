@@ -62,7 +62,7 @@ struct SCIP_ProbData
 
     // Model data
     SCIP_PricerData* pricerdata;                        // Pricer data
-    SharedPtr<AStar> astar;                             // Pricing solver
+    SharedPtr<AbstractPathfinder> pathfinder;           // Pricing solver
 
     // Variables
     Vector<SCIP_VAR*> vars;                             // Array of variables
@@ -117,7 +117,7 @@ SCIP_DECL_PROBTRANS(probtrans)
 
     // Copy model data.
     (*targetdata)->pricerdata = sourcedata->pricerdata;
-    (*targetdata)->astar = sourcedata->astar;
+    (*targetdata)->pathfinder = sourcedata->pathfinder;
 
     // Allocate memory for variables.
     debug_assert(sourcedata->vars.empty());
@@ -753,7 +753,7 @@ SCIP_RETCODE SCIPprobdataCreate(
     SCIP* scip,                       // SCIP
     const char* probname,             // Problem name
     SharedPtr<Instance>& instance,    // Instance
-    SharedPtr<AStar>& astar           // Search algorithm
+    SharedPtr<AbstractPathfinder>& pathfinder           // Search algorithm
 )
 {
     // Check.
@@ -822,7 +822,7 @@ SCIP_RETCODE SCIPprobdataCreate(
 
     // Copy model data.
     probdata->pricerdata = nullptr;
-    probdata->astar = astar;
+    probdata->pathfinder = pathfinder;
 
     // Create agent partition constraints.
     probdata->agent_part.resize(N);
@@ -933,7 +933,7 @@ SCIP_RETCODE SCIPprobdataCreate(
         for (Agent a = 0; a < N; ++a)
         {
             const auto goal = agents[a].goal;
-            probdata->astar->compute_h(goal);
+            probdata->pathfinder->compute_h(goal);
         }
     }
 
@@ -1145,12 +1145,12 @@ Agent SCIPprobdataGetN(
 }
 
 // Get the pricing solver
-AStar& SCIPprobdataGetAStar(
+AbstractPathfinder& SCIPprobdataGetPathfinder(
     SCIP_ProbData* probdata    // Problem data
 )
 {
     debug_assert(probdata);
-    return *probdata->astar;
+    return *probdata->pathfinder;
 }
 
 // Format path

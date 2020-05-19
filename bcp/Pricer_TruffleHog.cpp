@@ -300,11 +300,11 @@ SCIP_RETCODE run_trufflehog_pricer(
     debug_assert(n_length_branching_conss == 0 || length_branching_conss);
 
     // Get solver.
-    auto& astar = SCIPprobdataGetAStar(probdata);
-    auto& restab = astar.reservation_table();
-    auto& edge_penalties = astar.edge_penalties();
+    auto& pathfinder = SCIPprobdataGetPathfinder(probdata);
+    auto& restab = pathfinder.reservation_table();
+    auto& edge_penalties = pathfinder.edge_penalties();
 #ifdef USE_GOAL_CONFLICTS
-    auto& goal_crossings = astar.goal_crossings();
+    auto& goal_crossings = pathfinder.goal_crossings();
 #endif
     static_assert(std::numeric_limits<Cost>::has_quiet_NaN);
 
@@ -518,7 +518,7 @@ SCIP_RETCODE run_trufflehog_pricer(
         Vector<Edge> path;
 
         // Clear previous run.
-        auto& time_finish_penalties = astar.time_finish_penalties();
+        auto& time_finish_penalties = pathfinder.time_finish_penalties();
         time_finish_penalties.clear();
 
         // Set up reservation table. Reserve vertices in use by all other agents and
@@ -763,8 +763,8 @@ SCIP_RETCODE run_trufflehog_pricer(
 #endif
 
         // Modify edge costs for length branching decisions.
-        debug_assert(astar.max_path_length() >= 1);
-        Time latest_finish = astar.max_path_length() - 1;
+        debug_assert(pathfinder.max_path_length() >= 1);
+        Time latest_finish = pathfinder.max_path_length() - 1;
         for (Int c = 0; c < n_length_branching_conss; ++c)
         {
             // Get the constraint.
@@ -795,7 +795,7 @@ SCIP_RETCODE run_trufflehog_pricer(
             else if (dir == LengthBranchDirection::LEq)
             {
                 // Don't use the vertex.
-                for (Time t = nt.t; t < astar.max_path_length(); ++t)
+                for (Time t = nt.t; t < pathfinder.max_path_length(); ++t)
                 {
                     const auto prev_time = t - 1;
                     {
@@ -901,7 +901,8 @@ SCIP_RETCODE run_trufflehog_pricer(
 
             // Solve.
             const auto max_cost = agent_part_dual[a] - path_cost;
-            const auto [segment, segment_cost] = astar.solve<is_farkas>(segment_start,
+            // TODO(@Isha) fix this cast
+            const auto [segment, segment_cost] = dynamic_cast<AStar &>(pathfinder).solve<is_farkas>(segment_start,
                                                                         segment_goal.n,
                                                                         segment_goal.t,
                                                                         segment_goal.t,
@@ -991,7 +992,8 @@ SCIP_RETCODE run_trufflehog_pricer(
 
             // Solve.
             const auto max_cost = agent_part_dual[a] - path_cost;
-            const auto [segment, segment_cost] = astar.solve<is_farkas>(segment_start,
+            // TODO(@Isha) fix this cast
+            const auto [segment, segment_cost] = dynamic_cast<AStar &>(pathfinder).solve<is_farkas>(segment_start,
                                                                         goal,
                                                                         earliest_finish,
                                                                         latest_finish,
