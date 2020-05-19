@@ -1,6 +1,6 @@
-//
-// Isha Dijcks
-//
+/*
+Author: Isha Dijcks <i.e.dijcks@student.tudelft.nl>
+*/
 
 #ifndef BCP_MAPF_ABSTRACTPATHFINDER_H
 #define BCP_MAPF_ABSTRACTPATHFINDER_H
@@ -12,7 +12,8 @@
 
 namespace TruffleHog {
     class AbstractPathfinder {
-
+#ifdef DEBUG
+#endif
         // Getters
         virtual Time max_path_length() = 0;
         virtual ReservationTable& reservation_table() = 0;
@@ -40,6 +41,8 @@ namespace TruffleHog {
         void print_crossings();
 #endif
 
+    protected:
+        bool verbose = false;
     };
 }
 

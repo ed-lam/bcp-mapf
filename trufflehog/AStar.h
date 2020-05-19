@@ -145,7 +145,6 @@ class AStar : public AbstractPathfinder
 #ifdef DEBUG
     template<bool without_resources>
     Cost calculate_cost(const Vector<Pair<Position, Position>>& path);
-    void set_verbose(const bool on = true);
     void print_crossings();
 #endif
 

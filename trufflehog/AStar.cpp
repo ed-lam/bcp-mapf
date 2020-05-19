@@ -27,9 +27,6 @@ Author: Edward Lam <ed@ed-lam.com>
 namespace TruffleHog
 {
 
-#ifdef DEBUG
-static bool verbose = false;
-#endif
 
 static inline bool get_bitset(const std::byte* const bitset, const Int i)
 {
@@ -719,10 +716,6 @@ template Pair<Vector<NodeTime>, Cost> AStar::solve_internal<true, true>(const No
 
 #ifdef DEBUG
 
-void AStar::set_verbose(const bool on)
-{
-    verbose = on;
-}
 
 void AStar::print_crossings()
 {
