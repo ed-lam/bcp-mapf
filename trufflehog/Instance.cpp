@@ -213,7 +213,7 @@ Instance::Instance(const char* scenario_path, const Agent nb_agents)
         release_assert(map_width2 == map.width(),
                        "Map width of agent {} does not match actual map size", a);
         release_assert(map_height2 == map.height(),
-                       "Map width of agent {} does not match actual map size", a);
+                       "Map height of agent {} does not match actual map size", a);
 
         const auto start_tile = start_y * map.width() + start_x;
         release_assert(start_tile < map.size() && map[start_tile],
