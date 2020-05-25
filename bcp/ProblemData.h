@@ -26,14 +26,14 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "scip/scip.h"
 
 #include "trufflehog/Instance.h"
-#include "trufflehog/AStar.h"
+#include <trufflehog/AbstractPathfinder.h>
 
 // Create problem data
 SCIP_RETCODE SCIPprobdataCreate(
     SCIP* scip,                       // SCIP
     const char* probname,             // Problem name
     SharedPtr<Instance>& instance,    // Instance
-    SharedPtr<AStar>& astar           // Search algorithm
+    SharedPtr<AbstractPathfinder>& pathfinder           // Search algorithm
 );
 
 // Add a new variable from pricing
@@ -161,7 +161,7 @@ const AgentsData& SCIPprobdataGetAgentsData(
 );
 
 // Get the pricing solver
-AStar& SCIPprobdataGetAStar(
+AbstractPathfinder& SCIPprobdataGetPathfinder(
     SCIP_ProbData* probdata    // Problem data
 );
 

@@ -29,13 +29,14 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "EdgePenalties.h"
 #include "Crossings.h"
 #include "Heuristic.h"
+#include "AbstractPathfinder.h"
 #include <unordered_map>
 #include <functional>
 
 namespace TruffleHog
 {
 
-class AStar
+class AStar : public AbstractPathfinder
 {
     struct Label
     {
@@ -123,59 +124,58 @@ class AStar
     ~AStar() = default;
 
     // Getters
-    inline auto max_path_length() const { return heuristic_.max_path_length(); }
-    auto& reservation_table() { return open_.cmp().reservation_table_; };
-    auto& edge_penalties() { return edge_penalties_; }
-    auto& time_finish_penalties() { return time_finish_penalties_; }
+    Time max_path_length() override { return heuristic_.max_path_length(); }
+    ReservationTable& reservation_table() override { return open_.cmp().reservation_table_; };
+    EdgePenalties& edge_penalties() override { return edge_penalties_; }
+    Vector<Cost>& time_finish_penalties() override { return time_finish_penalties_; }
 #ifdef USE_GOAL_CONFLICTS
-    auto& goal_crossings() { return goal_crossings_; }
+    Vector<GoalCrossing>& goal_crossings() override { return goal_crossings_; }
 #endif
 
     // Solve
-    inline void compute_h(const Node goal) { heuristic_.compute_h(goal); }
+    void compute_h(const Node goal) override { heuristic_.compute_h(goal); }
     template<bool is_farkas>
-    Pair<Vector<NodeTime>, Cost> solve(const NodeTime start,
-                                       const Node goal,
-                                       const Time goal_earliest = 0,
-                                       const Time goal_latest = std::numeric_limits<Time>::max(),
-                                       const Cost max_cost = std::numeric_limits<Cost>::infinity());
+    Pair<Vector<NodeTime>, Cost> solve(NodeTime start,
+                                       Node goal,
+                                       Time goal_earliest = 0,
+                                       Time goal_latest = std::numeric_limits<Time>::max(),
+                                       Cost max_cost = std::numeric_limits<Cost>::infinity());
 
     // Debug
 #ifdef DEBUG
     template<bool without_resources>
     Cost calculate_cost(const Vector<Pair<Position, Position>>& path);
-    void set_verbose(const bool on = true);
     void print_crossings();
 #endif
 
   private:
     // Check if a label is dominated by an existing label
-    AStar::Label* dominated_without_resources(Label* const new_label);
+    AStar::Label* dominated_without_resources(Label* new_label);
 
     // Solve
     template <bool without_resources>
-    void generate_start(const NodeTime start);
-    void generate_end(Label* const current, const Cost max_cost);
+    void generate_start(NodeTime start);
+    void generate_end(Label* current, Cost max_cost);
     template <bool without_resources>
-    void generate(Label* const current,
-                  const Node node,
-                  const Cost cost,
-                  const Time goal_latest,
-                  const Cost max_cost);
+    void generate(Label* current,
+                  Node node,
+                  Cost cost,
+                  Time goal_latest,
+                  Cost max_cost);
     template<bool without_resources, IntCost default_cost>
-    void generate_neighbours(Label* const current,
-                             const Node goal,
-                             const Time goal_earliest,
-                             const Time goal_latest,
-                             const Cost max_cost);
+    void generate_neighbours(Label* current,
+                             Node goal,
+                             Time goal_earliest,
+                             Time goal_latest,
+                             Cost max_cost);
     template<bool without_resources, IntCost default_cost>
     void generate_goal_neighbours(const Label* const current);
     template<bool without_resources, bool is_farkas>
-    Pair<Vector<NodeTime>, Cost> solve_internal(const NodeTime start,
-                                                const Node goal,
-                                                const Time goal_earliest = 0,
-                                                const Time goal_latest = std::numeric_limits<Time>::max(),
-                                                const Cost max_cost = std::numeric_limits<Cost>::infinity());
+    Pair<Vector<NodeTime>, Cost> solve_internal(NodeTime start,
+                                                Node goal,
+                                                Time goal_earliest = 0,
+                                                Time goal_latest = std::numeric_limits<Time>::max(),
+                                                Cost max_cost = std::numeric_limits<Cost>::infinity());
 };
 
 }
