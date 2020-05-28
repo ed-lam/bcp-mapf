@@ -216,7 +216,7 @@ Edge get_opposite_edge_allow_wait(
 SCIP_RETCODE edge_conflicts_create_cut(
     SCIP* scip,                         // SCIP
     const Map& map,                     // Map
-    SCIP_CONSHDLR* conshdlr,            // Constraint handler
+    SCIP_CONS* cons,                    // Constraint
     EdgeConflictsConsData* consdata,    // Constraint data
     const Time t,                       // Time
 #ifdef USE_WAITEDGE_CONFLICTS
@@ -248,7 +248,7 @@ SCIP_RETCODE edge_conflicts_create_cut(
     SCIP_ROW* row = nullptr;
     SCIP_CALL(SCIPcreateEmptyRowCons(scip,
                                      &row,
-                                     conshdlr,
+                                     cons,
 #ifdef DEBUG
                                      name.c_str(),
 #else
@@ -411,7 +411,6 @@ SCIP_RETCODE edge_conflicts_check(
 static
 SCIP_RETCODE edge_conflicts_separate(
     SCIP* scip,                 // SCIP
-    SCIP_CONSHDLR* conshdlr,    // Constraint handler
     SCIP_CONS* cons,            // Constraint
     SCIP_SOL* sol,              // Solution
     SCIP_RESULT* result         // Pointer to store the result
@@ -562,7 +561,7 @@ SCIP_RETCODE edge_conflicts_separate(
             // Create cut.
             SCIP_CALL(edge_conflicts_create_cut(scip,
                                                 map,
-                                                conshdlr,
+                                                cons,
                                                 consdata,
                                                 t,
                                                 edges,
@@ -750,7 +749,7 @@ SCIP_DECL_CONSENFOLP(consEnfolpEdgeConflicts)
         debug_assert(cons);
 
         // Start separator.
-        SCIP_CALL(edge_conflicts_separate(scip, conshdlr, cons, nullptr, result));
+        SCIP_CALL(edge_conflicts_separate(scip, cons, nullptr, result));
     }
 
     // Done.
@@ -808,7 +807,7 @@ SCIP_DECL_CONSSEPALP(consSepalpEdgeConflicts)
         debug_assert(cons);
 
         // Start separator.
-        SCIP_CALL(edge_conflicts_separate(scip, conshdlr, cons, nullptr, result));
+        SCIP_CALL(edge_conflicts_separate(scip, cons, nullptr, result));
     }
 
     // Done.
@@ -838,7 +837,7 @@ SCIP_DECL_CONSSEPASOL(consSepasolEdgeConflicts)
 
         // Start separator.
         debug_assert(sol);
-        SCIP_CALL(edge_conflicts_separate(scip, conshdlr, cons, sol, result));
+        SCIP_CALL(edge_conflicts_separate(scip, cons, sol, result));
     }
 
     // Done.

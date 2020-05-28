@@ -33,21 +33,19 @@ if (NOT CPLEX_LIBRARY)
 endif ()
 include_directories(${CPLEX_INCLUDE_DIR})
 
-# Set stuff for SCIP 6.0.2.
+# Include SCIP.
 set(WITH_SCIPDEF on)
 set(TPI none)
 set(tpisources tpi/tpi_none.c)
 set(THREAD_LIBRARIES "")
 set(TPI_NONE on)
-configure_file(scipoptsuite-6.0.2/scip/src/scip/config.h.in ${CMAKE_BINARY_DIR}/scip/config.h @ONLY)
+configure_file(scipoptsuite-7.0.1/scip/src/scip/config.h.in ${CMAKE_BINARY_DIR}/scip/config.h @ONLY)
 include_directories(${CMAKE_BINARY_DIR})
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ldl")
 endif ()
-
-# Include SCIP.
-add_subdirectory(scipoptsuite-6.0.2/scip/ EXCLUDE_FROM_ALL)
-include_directories(SYSTEM scipoptsuite-6.0.2/scip/src/)
+add_subdirectory(scipoptsuite-7.0.1/scip/ EXCLUDE_FROM_ALL)
+include_directories(SYSTEM scipoptsuite-7.0.1/scip/src/)
 
 # Link to math library.
 find_library(LIBM m)

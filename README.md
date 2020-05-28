@@ -16,11 +16,11 @@ BCP is released under the GPL version 3. See LICENSE.txt for further details.
 Dependencies
 ------------
 
-BCP is implemented in C++17 and is compiled using CMake, so you will need a recent compiler and a recent version of CMake. It is tested with Clang 9 on Mac and GCC 8 on Linux. It has not been tested on Windows.
+BCP is implemented in C++17 and is compiled using CMake, so you will need a recent compiler and a recent version of CMake. It is tested with Clang 10 on Mac and GCC 8 on Linux. It has not been tested on Windows.
 
 BCP calls SCIP for branch-and-bound and calls CPLEX for solving the linear relaxation.
 
-Source code to SCIP is available free (as in beer) strictly for academic use. BCP is tested with SCIP 6.0.2. Download the [SCIP Optimization Suite 6.0.2](https://scip.zib.de) and extract it into the root of this repository. You should find the subdirectory `scipoptsuite-6.0.2/scip/src`.
+Source code to SCIP is available free (as in beer) strictly for academic use. BCP is tested with SCIP 7.0.1. Download the [SCIP Optimization Suite 7.0.1](https://scip.zib.de) and extract it into the root of this repository. You should find the subdirectory `scipoptsuite-7.0.1/scip/src`.
 
 CPLEX is commercial software but has binaries available free under an [academic license](https://developer.ibm.com/docloud/blog/2019/07/04/cplex-optimization-studio-for-students-and-academics/). BCP is tested with CPLEX 12.10. You should find the subdirectory `cplex`.
 

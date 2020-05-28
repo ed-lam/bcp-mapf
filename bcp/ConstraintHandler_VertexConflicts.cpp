@@ -114,7 +114,7 @@ SCIP_RETCODE SCIPcreateConsVertexConflicts(
 
 SCIP_RETCODE vertex_conflicts_create_cut(
     SCIP* scip,                           // SCIP
-    SCIP_CONSHDLR* conshdlr,              // Constraint handler
+    SCIP_CONS* cons,                      // Constraint
     VertexConflictsConsData* consdata,    // Constraint data
     const NodeTime nt,                    // Node-time of the conflict
     const Vector<SCIP_VAR*>& vars,        // Array of variables
@@ -133,7 +133,7 @@ SCIP_RETCODE vertex_conflicts_create_cut(
     SCIP_ROW* row = nullptr;
     SCIP_CALL(SCIPcreateEmptyRowCons(scip,
                                      &row,
-                                     conshdlr,
+                                     cons,
 #ifdef DEBUG
                                      name.c_str(),
 #else
@@ -294,7 +294,6 @@ SCIP_RETCODE vertex_conflicts_check(
 static
 SCIP_RETCODE vertex_conflicts_separate(
     SCIP* scip,                 // SCIP
-    SCIP_CONSHDLR* conshdlr,    // Constraint handler
     SCIP_CONS* cons,            // Constraint
     SCIP_SOL* sol,              // Solution
     SCIP_RESULT* result         // Pointer to store the result
@@ -379,7 +378,7 @@ SCIP_RETCODE vertex_conflicts_separate(
 
             // Create cut.
             SCIP_CALL(vertex_conflicts_create_cut(scip,
-                                                  conshdlr,
+                                                  cons,
                                                   consdata,
                                                   nt,
                                                   vars,
@@ -565,7 +564,7 @@ SCIP_DECL_CONSENFOLP(consEnfolpVertexConflicts)
         debug_assert(cons);
 
         // Start separator.
-        SCIP_CALL(vertex_conflicts_separate(scip, conshdlr, cons, nullptr, result));
+        SCIP_CALL(vertex_conflicts_separate(scip, cons, nullptr, result));
     }
 
     // Done.
@@ -623,7 +622,7 @@ SCIP_DECL_CONSSEPALP(consSepalpVertexConflicts)
         debug_assert(cons);
 
         // Start separator.
-        SCIP_CALL(vertex_conflicts_separate(scip, conshdlr, cons, nullptr, result));
+        SCIP_CALL(vertex_conflicts_separate(scip, cons, nullptr, result));
     }
 
     // Done.
@@ -653,7 +652,7 @@ SCIP_DECL_CONSSEPASOL(consSepasolVertexConflicts)
 
         // Start separator.
         debug_assert(sol);
-        SCIP_CALL(vertex_conflicts_separate(scip, conshdlr, cons, sol, result));
+        SCIP_CALL(vertex_conflicts_separate(scip, cons, sol, result));
     }
 
     // Done.
