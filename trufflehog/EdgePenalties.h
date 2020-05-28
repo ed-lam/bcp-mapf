@@ -22,6 +22,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #include "Includes.h"
 #include "Coordinates.h"
+#include "Map.h"
 
 namespace TruffleHog
 {
@@ -108,10 +109,26 @@ class EdgePenalties
     void print()
     {
         println("Edge penalties:");
+        println("{:>20s}{:>8s}{:>8s}{:>15s}{:>15s}{:>15s}{:>15s}{:>15s}",
+                "NT", "N", "T", "North", "South", "East", "West", "Wait");
         for (const auto& [nt, values] : edge_penalties_)
         {
-            println("   n: {}, t: {}, nt: {}, north: {}, south: {}, east: {}, west {}, wait {}",
-                    nt.n, nt.t, nt.nt,
+            println("{:>20d}{:>8d}{:>8d}{:>15.2f}{:>15.2f}{:>15.2f}{:>15.2f}{:>15.2f}",
+                    nt.nt, nt.n, nt.t,
+                    values.north, values.south, values.east, values.west, values.wait);
+        }
+        println("");
+    }
+    void print(const Map& map)
+    {
+        println("Edge penalties:");
+        println("{:>20s}{:>8s}{:>8s}{:>8s}{:>8s}{:>15s}{:>15s}{:>15s}{:>15s}{:>15s}",
+                "NT", "N", "T", "X", "Y", "North", "South", "East", "West", "Wait");
+        for (const auto& [nt, values] : edge_penalties_)
+        {
+            println("{:>20d}{:>8d}{:>8d}{:>8d}{:>8d}{:>15.2f}{:>15.2f}{:>15.2f}{:>15.2f}{:>15.2f}",
+                    nt.nt, nt.n, nt.t,
+                    map.get_x(nt.n), map.get_y(nt.n),
                     values.north, values.south, values.east, values.west, values.wait);
         }
         println("");
