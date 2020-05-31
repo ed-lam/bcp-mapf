@@ -25,6 +25,11 @@ namespace TruffleHog {
         // Solve
         virtual void compute_h(Node goal) = 0;
 
+        virtual Pair<Vector<NodeTime>, Cost> solve(NodeTime start,
+                                           Node goal,
+                                           Time goal_earliest = 0,
+                                           Time goal_latest = std::numeric_limits<Time>::max(),
+                                           Cost max_cost = std::numeric_limits<Cost>::infinity()) = 0;
 
         // Debug
 #ifdef DEBUG

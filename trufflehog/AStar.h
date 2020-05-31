@@ -134,7 +134,7 @@ class AStar : public AbstractPathfinder
 
     // Solve
     void compute_h(const Node goal) override { heuristic_.compute_h(goal); }
-    template<bool is_farkas>
+
     Pair<Vector<NodeTime>, Cost> solve(NodeTime start,
                                        Node goal,
                                        Time goal_earliest = 0,
@@ -170,7 +170,8 @@ class AStar : public AbstractPathfinder
                              Cost max_cost);
     template<bool without_resources, IntCost default_cost>
     void generate_goal_neighbours(const Label* const current);
-    template<bool without_resources, bool is_farkas>
+
+    template<bool without_resources>
     Pair<Vector<NodeTime>, Cost> solve_internal(NodeTime start,
                                                 Node goal,
                                                 Time goal_earliest = 0,

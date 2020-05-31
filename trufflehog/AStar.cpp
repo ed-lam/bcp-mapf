@@ -525,27 +525,17 @@ void AStar::generate_neighbours<true, 1>(Label* const current,
                                          const Time goal_latest,
                                          const Cost max_cost);
 
-template<bool is_farkas>
 Pair<Vector<NodeTime>, Cost> AStar::solve(const NodeTime start,
                                           const Node goal,
                                           const Time goal_earliest,
                                           const Time goal_latest,
                                           const Cost max_cost)
 {
-    return solve_internal<true, is_farkas>(start, goal, goal_earliest, goal_latest, max_cost);
+    return solve_internal<true>(start, goal, goal_earliest, goal_latest, max_cost);
 }
-template Pair<Vector<NodeTime>, Cost> AStar::solve<false>(const NodeTime start,
-                                                          const Node goal,
-                                                          const Time goal_earliest,
-                                                          const Time goal_latest,
-                                                          const Cost max_cost);
-template Pair<Vector<NodeTime>, Cost> AStar::solve<true>(const NodeTime start,
-                                                         const Node goal,
-                                                         const Time goal_earliest,
-                                                         const Time goal_latest,
-                                                         const Cost max_cost);
 
-template<bool without_resources, bool is_farkas>
+
+template<bool without_resources>
 Pair<Vector<NodeTime>, Cost> AStar::solve_internal(const NodeTime start,
                                                    const Node goal,
                                                    const Time goal_earliest,
@@ -561,7 +551,8 @@ Pair<Vector<NodeTime>, Cost> AStar::solve_internal(const NodeTime start,
     debug_assert(heuristic_.max_path_length() >= 1);
     h_ = &heuristic_.compute_h(goal);
 
-    // Calculate the default edge cost.
+    // Calculate the default edge cost without farkas pricing.
+    constexpr bool is_farkas = false;
     constexpr IntCost default_cost = is_farkas ? 0 : 1;
 
     // Remove vertices with default outgoing costs.
@@ -703,16 +694,6 @@ Pair<Vector<NodeTime>, Cost> AStar::solve_internal(const NodeTime start,
     // Return.
     return output;
 }
-template Pair<Vector<NodeTime>, Cost> AStar::solve_internal<true, false>(const NodeTime start,
-                                                                         const Node goal,
-                                                                         const Time goal_earliest,
-                                                                         const Time goal_latest,
-                                                                         const Cost max_cost);
-template Pair<Vector<NodeTime>, Cost> AStar::solve_internal<true, true>(const NodeTime start,
-                                                                        const Node goal,
-                                                                        const Time goal_earliest,
-                                                                        const Time goal_latest,
-                                                                        const Cost max_cost);
 
 #ifdef DEBUG
 
