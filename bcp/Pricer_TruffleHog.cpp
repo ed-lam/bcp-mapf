@@ -901,8 +901,7 @@ SCIP_RETCODE run_trufflehog_pricer(
 
             // Solve.
             const auto max_cost = agent_part_dual[a] - path_cost;
-            // TODO(@Isha) fix this cast
-            const auto [segment, segment_cost] = dynamic_cast<AStar &>(pathfinder).solve(segment_start,
+            const auto [segment, segment_cost] = pathfinder.solve(segment_start,
                                                                         segment_goal.n,
                                                                         segment_goal.t,
                                                                         segment_goal.t,
@@ -992,8 +991,7 @@ SCIP_RETCODE run_trufflehog_pricer(
 
             // Solve.
             const auto max_cost = agent_part_dual[a] - path_cost;
-            // TODO(@Isha) fix this cast
-            const auto [segment, segment_cost] = dynamic_cast<AStar &>(pathfinder).solve(segment_start,
+            const auto [segment, segment_cost] = pathfinder.solve(segment_start,
                                                                         goal,
                                                                         earliest_finish,
                                                                         latest_finish,
