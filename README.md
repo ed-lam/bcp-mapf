@@ -66,6 +66,11 @@ You can also set a time limit in seconds:
 ./bcp-mapf —-time-limit={TIME LIMIT} {PATH TO INSTANCE}
 ```
 
+BCP can be run as a bounded suboptimal algorithm by setting an optimality gap, calculated as (upper bound - lower bound) / lower bound. For example, enter `0.1` for a 10% optimality gap.
+```
+./bcp-mapf —-gap-limit={OPTIMALITY GAP} {PATH TO INSTANCE}
+```
+
 Benchmark instances can be found in the `2018_instances` and `2019_instances` directories. Example:
 ```
 ./bcp-mapf --time-limit=30 ../instances/movingai_2018/dao_maps/lak503dmap-100agents-49.scen
@@ -76,7 +81,7 @@ The 2019 instances are organised differently. There is (usually) a total of 1000
 ./bcp-mapf --time-limit=30 --agents-limit=50 ../instances/movingai_2019/den520d-random-1.scen
 ```
 
-The optimal solution (or feasible solution if timed out) will be saved into the `outputs` directory.
+The optimal solution (or feasible solution if a time limit or gap limit is reached) will be saved into the `outputs` directory.
 
 Contributing
 ------------

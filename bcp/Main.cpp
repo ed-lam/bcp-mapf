@@ -33,8 +33,9 @@ SCIP_RETCODE start_solver(
 {
     // Parse program options.
     String instance_file;
-    SCIP_Real time_limit = 0;
     Agent agents_limit = std::numeric_limits<Agent>::max();
+    SCIP_Real time_limit = 0;
+    SCIP_Real gap_limit = 0;
     try
     {
         // Create program options.
@@ -45,8 +46,9 @@ SCIP_RETCODE start_solver(
         options.add_options()
             ("help", "Print help")
             ("f,file", "Path to instance file", cxxopts::value<Vector<String>>())
+            ("a,agents-limit", "Read first N agents only", cxxopts::value<Agent>())
             ("t,time-limit", "Time limit in seconds", cxxopts::value<SCIP_Real>())
-            ("a,agents-limit", "Read first N agents only", cxxopts::value<int>())
+            ("g,gap-limit", "Solve to an optimality gap", cxxopts::value<SCIP_Real>())
         ;
         options.parse_positional({"file"});
 
@@ -66,16 +68,22 @@ SCIP_RETCODE start_solver(
             instance_file = result["file"].as<Vector<String>>().at(0);
         }
 
+        // Get agents limit.
+        if (result.count("agents-limit"))
+        {
+            agents_limit = result["agents-limit"].as<Agent>();
+        }
+
         // Get time limit.
         if (result.count("time-limit"))
         {
             time_limit = result["time-limit"].as<SCIP_Real>();
         }
 
-        // Get agents limit.
-        if (result.count("agents-limit"))
+        // Get optimality gap limit.
+        if (result.count("gap-limit"))
         {
-            agents_limit = result["agents-limit"].as<int>();
+            gap_limit = result["gap-limit"].as<SCIP_Real>();
         }
     }
     catch (const cxxopts::OptionException& e)
@@ -184,6 +192,12 @@ SCIP_RETCODE start_solver(
     if (time_limit > 0)
     {
         SCIP_CALL(SCIPsetRealParam(scip, "limits/time", time_limit));
+    }
+
+    // Set optimality gap limit.
+    if (gap_limit > 0)
+    {
+        SCIP_CALL(SCIPsetRealParam(scip, "limits/gap", gap_limit));
     }
 
     // Solve.
