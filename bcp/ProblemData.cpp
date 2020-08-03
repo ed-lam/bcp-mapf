@@ -1268,7 +1268,9 @@ void print_used_paths(
 
             // Compute the makespan.
             if (makespan < path_length)
+            {
                 makespan = path_length;
+            }
         }
 
     // Get fractional vertices.
@@ -1360,9 +1362,11 @@ void print_used_paths(
         }
 
     // Print time horizon.
-    fmt::print("                                   ");
+    fmt::print("                                    ");
     for (Time t = 0; t < makespan; ++t)
-        fmt::print(" {:9d}", t);
+    {
+        fmt::print("{:10d}", t);
+    }
     println("");
 
     // Print paths.
@@ -1400,13 +1404,18 @@ void print_used_paths(
                )
             {
                 if (SCIPisZero(scip, var_val))
+                {
                     fmt::print("   ***");
+                }
                 else if (SCIPisIntegral(scip, var_val))
+                {
                     fmt::print("      ");
+                }
                 else
+                {
                     fmt::print("   ---");
-                fmt::print("Agent: {:2d}, Val: {:6.4f}, Path: ",
-                           a, std::abs(var_val));
+                }
+                fmt::print("Agent: {:2d}, Val: {:6.4f}, Path: ", a, std::abs(var_val));
 
                 for (Time t = 0; t < path_length; ++t)
                 {
@@ -1435,14 +1444,23 @@ void print_used_paths(
                         }
                     }
 
-                    fmt::print(fg(colour), "{:>10s}", fmt::format("({},{})", x, y));
+                    if (colour != fmt::terminal_color::black)
+                    {
+                        fmt::print(fg(colour), "{:>10s}", fmt::format("({},{})", x, y));
+                    }
+                    else
+                    {
+                        fmt::print("{:>10s}", fmt::format("({},{})", x, y));
+                    }
                 }
                 println("");
                 printed = true;
             }
         }
         if (is_fractional && printed)
+        {
             println("");
+        }
     }
 }
 
