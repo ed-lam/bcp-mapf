@@ -145,6 +145,42 @@ SCIP_RETCODE start_solver(
         // Turn off all separation algorithms.
         SCIP_CALL(SCIPsetSeparating(scip, SCIP_PARAMSETTING_OFF, TRUE));
 
+        // Set node selection rule.
+        SCIP_CALL(SCIPsetIntParam(scip, "nodeselection/bfs/stdpriority", 0));
+        SCIP_CALL(SCIPsetIntParam(scip, "nodeselection/bfs/memsavepriority", 0));
+        SCIP_CALL(SCIPsetIntParam(scip, "nodeselection/breadthfirst/stdpriority", 0));
+        SCIP_CALL(SCIPsetIntParam(scip, "nodeselection/breadthfirst/memsavepriority", 0));
+        SCIP_CALL(SCIPsetIntParam(scip, "nodeselection/dfs/stdpriority", 0));
+        SCIP_CALL(SCIPsetIntParam(scip, "nodeselection/dfs/memsavepriority", 0));
+        SCIP_CALL(SCIPsetIntParam(scip, "nodeselection/estimate/stdpriority", 0));
+        SCIP_CALL(SCIPsetIntParam(scip, "nodeselection/estimate/memsavepriority", 0));
+        SCIP_CALL(SCIPsetIntParam(scip, "nodeselection/hybridestim/stdpriority", 0));
+        SCIP_CALL(SCIPsetIntParam(scip, "nodeselection/hybridestim/memsavepriority", 0));
+        SCIP_CALL(SCIPsetIntParam(scip, "nodeselection/restartdfs/stdpriority", 0));
+        SCIP_CALL(SCIPsetIntParam(scip, "nodeselection/restartdfs/memsavepriority", 0));
+        SCIP_CALL(SCIPsetIntParam(scip, "nodeselection/uct/stdpriority", 0));
+        SCIP_CALL(SCIPsetIntParam(scip, "nodeselection/uct/memsavepriority", 0));
+#ifdef USE_BEST_FIRST_NODE_SELECTION
+        SCIP_CALL(SCIPsetIntParam(scip, "nodeselection/bfs/stdpriority", 500000));
+        SCIP_CALL(SCIPsetIntParam(scip, "nodeselection/bfs/memsavepriority", 500000));
+#endif
+#ifdef USE_DEPTH_FIRST_NODE_SELECTION
+        SCIP_CALL(SCIPsetIntParam(scip, "nodeselection/dfs/stdpriority", 500000));
+        SCIP_CALL(SCIPsetIntParam(scip, "nodeselection/dfs/memsavepriority", 500000));
+#endif
+#ifdef USE_BEST_ESTIMATE_NODE_SELECTION
+        SCIP_CALL(SCIPsetIntParam(scip, "nodeselection/estimate/stdpriority", 500000));
+        SCIP_CALL(SCIPsetIntParam(scip, "nodeselection/estimate/memsavepriority", 500000));
+#endif
+#ifdef USE_HYBRID_ESTIMATE_BOUND_NODE_SELECTION
+        SCIP_CALL(SCIPsetIntParam(scip, "nodeselection/hybridestim/stdpriority", 500000));
+        SCIP_CALL(SCIPsetIntParam(scip, "nodeselection/hybridestim/memsavepriority", 500000));
+#endif
+#ifdef USE_RESTART_DEPTH_FIRST_NODE_SELECTION
+        SCIP_CALL(SCIPsetIntParam(scip, "nodeselection/restartdfs/stdpriority", 500000));
+        SCIP_CALL(SCIPsetIntParam(scip, "nodeselection/restartdfs/memsavepriority", 500000));
+#endif
+
         // Turn on aggressive primal heuristics.
         SCIP_CALL(SCIPsetHeuristics(scip, SCIP_PARAMSETTING_AGGRESSIVE, TRUE));
 
