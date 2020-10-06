@@ -403,7 +403,7 @@ SCIP_RETCODE SCIPprobdataAddPricedVar(
     // Create and add variable.
 #ifdef DEBUG
     const auto name = fmt::format("path({},({}))",
-                                  a, format_path(probdata, path_length, path));
+                                  a, format_path(probdata, path_length, path)).substr(0, 255);
 #endif
     SCIP_CALL(SCIPcreateVar(scip,
                             var,

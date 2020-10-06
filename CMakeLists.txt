@@ -17,21 +17,46 @@ if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif ()
 
+# Include Gurobi.
+find_path(GUROBI_INCLUDE_DIR
+          NAMES gurobi_c.h
+          HINTS "${GUROBI_DIR}/include" 
+                "${GUROBI_DIR}/*/include" 
+                "$ENV{GUROBI_DIR}/include" 
+                "$ENV{GUROBI_DIR}/*/include")
+find_library(GUROBI_LIBRARY
+             NAMES gurobi91 gurobi90 gurobi80 gurobi81 gurobi75 gurobi70
+             HINTS "${GUROBI_DIR}/lib"
+                   "${GUROBI_DIR}/*/lib" 
+                   "$ENV{GUROBI_DIR}/lib"
+                   "$ENV{GUROBI_DIR}/*/lib")
+if (GUROBI_INCLUDE_DIR AND GUROBI_LIBRARY)
+    set(LPS grb CACHE STRING "options for LP solver")
+    include_directories(${GUROBI_INCLUDE_DIR})
+    message("Using Gurobi as LP solver")
+endif ()
+
 # Include CPLEX.
-set(LPS cpx CACHE STRING "options for LP solver")
-find_path(CPLEX_INCLUDE_DIR
-        NAMES cplex.h
-        HINTS "${CPLEX_DIR}/include/ilcplex" "$ENV{CPLEX_DIR}/include/ilcplex")
-find_library(CPLEX_LIBRARY
-        NAMES cplex
-        HINTS "${CPLEX_DIR}/lib/*/static_pic" "$ENV{CPLEX_DIR}/lib/*/static_pic")
-if (NOT CPLEX_INCLUDE_DIR)
-    message(FATAL_ERROR "CPLEX includes not found")
+if (NOT GUROBI_INCLUDE_DIR OR NOT GUROBI_LIBRARY)
+    find_path(CPLEX_INCLUDE_DIR
+              NAMES cplex.h
+              HINTS "${CPLEX_DIR}/include/ilcplex" 
+                    "$ENV{CPLEX_DIR}/include/ilcplex")
+    find_library(CPLEX_LIBRARY
+                 NAMES cplex
+                 HINTS "${CPLEX_DIR}/lib/*/static_pic" 
+                       "$ENV{CPLEX_DIR}/lib/*/static_pic")
+    if (CPLEX_INCLUDE_DIR AND CPLEX_LIBRARY)
+        set(LPS cpx CACHE STRING "options for LP solver")
+        include_directories(${CPLEX_INCLUDE_DIR})
+        message("Using CPLEX as LP solver")
+    endif ()
 endif ()
-if (NOT CPLEX_LIBRARY)
-    message(FATAL_ERROR "CPLEX library not found")
+
+# Check for LP solver.
+if (NOT LPS)
+    message(FATAL_ERROR "Gurobi or CPLEX is required")
 endif ()
-include_directories(${CPLEX_INCLUDE_DIR})
 
 # Include SCIP.
 set(WITH_SCIPDEF on)
