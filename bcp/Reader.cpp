@@ -21,6 +21,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "Includes.h"
 #include "ProblemData.h"
 #include <regex>
+#include <filesystem>
 
 #include "trufflehog/Instance.h"
 #include "trufflehog/AStar.h"
@@ -33,19 +34,8 @@ SCIP_RETCODE read_instance(
 )
 {
     // Get instance name.
-    String instance_name("mapf");
-    {
-        const String str(scenario_path);
-        std::smatch m;
-        if (std::regex_match(str, m, std::regex(".*\\/(.+)\\.map.scen")))
-        {
-            instance_name = m.str(1);
-        }
-        else if (std::regex_match(str, m, std::regex(".*\\/(.+)\\.scen")))
-        {
-            instance_name = m.str(1);
-        }
-    }
+    std::filesystem::path path(scenario_path);
+    auto instance_name = path.filename().stem().string();
     if (nb_agents < std::numeric_limits<Agent>::max())
     {
         instance_name += fmt::format("-{}agents", nb_agents);
