@@ -1,4 +1,7 @@
 .idea
+.vscode
 **/.DS_Store
 *.sh
 scip*/
+build/
+outputs/
