@@ -49,6 +49,9 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifdef USE_TWOEDGE_CONFLICTS
 #include "Separator_TwoEdgeConflicts.h"
 #endif
+#ifdef USE_THREEVERTEX_CONFLICTS
+#include "Separator_ThreeVertexConflicts.h"
+#endif
 #ifdef USE_GOAL_CONFLICTS
 #include "Separator_GoalConflicts.h"
 #endif
@@ -92,6 +95,9 @@ struct SCIP_ProbData
 #endif
 #ifdef USE_TWOEDGE_CONFLICTS
     SCIP_SEPA* twoedge_conflicts;                       // Separator for two-edge conflicts
+#endif
+#ifdef USE_THREEVERTEX_CONFLICTS
+    SCIP_SEPA* threevertex_conflicts;                   // Separator for three-vertex conflicts
 #endif
 #ifdef USE_GOAL_CONFLICTS
     SCIP_SEPA* goal_conflicts;                          // Separator for goal conflicts
@@ -206,6 +212,12 @@ SCIP_DECL_PROBTRANS(probtrans)
 #ifdef USE_TWOEDGE_CONFLICTS
     debug_assert(sourcedata->twoedge_conflicts);
     (*targetdata)->twoedge_conflicts = sourcedata->twoedge_conflicts;
+#endif
+
+    // Copy separator for three-vertex conflicts.
+#ifdef USE_THREEVERTEX_CONFLICTS
+    debug_assert(sourcedata->threevertex_conflicts);
+    (*targetdata)->threevertex_conflicts = sourcedata->threevertex_conflicts;
 #endif
 
     // Copy separator for goal conflicts.
@@ -1074,6 +1086,11 @@ SCIP_RETCODE SCIPprobdataCreate(
     SCIP_CALL(SCIPincludeSepaTwoEdgeConflicts(scip, &probdata->twoedge_conflicts));
 #endif
 
+    // Include separator for three-vertex conflicts.
+#ifdef USE_THREEVERTEX_CONFLICTS
+    SCIP_CALL(SCIPincludeSepaThreeVertexConflicts(scip, &probdata->threevertex_conflicts));
+#endif
+
     // Include separator for goal conflicts.
 #ifdef USE_GOAL_CONFLICTS
     SCIP_CALL(SCIPincludeSepaGoalConflicts(scip, &probdata->goal_conflicts));
@@ -1243,6 +1260,18 @@ SCIP_SEPA* SCIPprobdataGetTwoEdgeConflictsSepa(
     debug_assert(probdata);
     debug_assert(probdata->twoedge_conflicts);
     return probdata->twoedge_conflicts;
+}
+#endif
+
+// Get separator for three-vertex conflicts
+#ifdef USE_THREEVERTEX_CONFLICTS
+SCIP_SEPA* SCIPprobdataGetThreeVertexConflictsSepa(
+    SCIP_ProbData* probdata    // Problem data
+)
+{
+    debug_assert(probdata);
+    debug_assert(probdata->threevertex_conflicts);
+    return probdata->threevertex_conflicts;
 }
 #endif
 

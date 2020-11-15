@@ -137,6 +137,13 @@ SCIP_SEPA* SCIPprobdataGetTwoEdgeConflictsSepa(
 );
 #endif
 
+// Get separator for three-vertex conflicts
+#ifdef USE_THREEVERTEX_CONFLICTS
+SCIP_SEPA* SCIPprobdataGetThreeVertexConflictsSepa(
+    SCIP_ProbData* probdata    // Problem data
+);
+#endif
+
 // Get separator for goal conflicts
 #ifdef USE_GOAL_CONFLICTS
 SCIP_SEPA* SCIPprobdataGetGoalConflictsSepa(
