@@ -1,0 +1,17 @@
+﻿---
+BasedOnStyle: Chromium
+ColumnLimit: 120
+BreakBeforeBraces: Allman
+IndentWidth: 4
+UseTab: Never
+AlignTrailingComments: true
+SpacesBeforeTrailingComments: 4
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+BinPackArguments: false
+AlignAfterOpenBracket: Align
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: BeforeComma
+AlwaysBreakAfterReturnType: None
+AllowShortLambdasOnASingleLine: All
+...
