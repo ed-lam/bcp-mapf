@@ -151,6 +151,13 @@ SCIP_SEPA* SCIPprobdataGetFiveEdgeConflictsSepa(
 );
 #endif
 
+// Get separator for agent wait-edge conflicts
+#ifdef USE_AGENTWAITEDGE_CONFLICTS
+SCIP_SEPA* SCIPprobdataGetAgentWaitEdgeConflictsSepa(
+    SCIP_ProbData* probdata    // Problem data
+);
+#endif
+
 // Get separator for goal conflicts
 #ifdef USE_GOAL_CONFLICTS
 SCIP_SEPA* SCIPprobdataGetGoalConflictsSepa(
