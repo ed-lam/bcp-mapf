@@ -52,6 +52,9 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifdef USE_THREEVERTEX_CONFLICTS
 #include "Separator_ThreeVertexConflicts.h"
 #endif
+#ifdef USE_FIVEEDGE_CONFLICTS
+#include "Separator_FiveEdgeConflicts.h"
+#endif
 #ifdef USE_GOAL_CONFLICTS
 #include "Separator_GoalConflicts.h"
 #endif
@@ -98,6 +101,9 @@ struct SCIP_ProbData
 #endif
 #ifdef USE_THREEVERTEX_CONFLICTS
     SCIP_SEPA* threevertex_conflicts;                   // Separator for three-vertex conflicts
+#endif
+#ifdef USE_FIVEEDGE_CONFLICTS
+    SCIP_SEPA* fiveedge_conflicts;                      // Separator for five-edge conflicts
 #endif
 #ifdef USE_GOAL_CONFLICTS
     SCIP_SEPA* goal_conflicts;                          // Separator for goal conflicts
@@ -218,6 +224,12 @@ SCIP_DECL_PROBTRANS(probtrans)
 #ifdef USE_THREEVERTEX_CONFLICTS
     debug_assert(sourcedata->threevertex_conflicts);
     (*targetdata)->threevertex_conflicts = sourcedata->threevertex_conflicts;
+#endif
+
+    // Copy separator for five-edge conflicts.
+#ifdef USE_FIVEEDGE_CONFLICTS
+    debug_assert(sourcedata->fiveedge_conflicts);
+    (*targetdata)->fiveedge_conflicts = sourcedata->fiveedge_conflicts;
 #endif
 
     // Copy separator for goal conflicts.
@@ -1091,6 +1103,11 @@ SCIP_RETCODE SCIPprobdataCreate(
     SCIP_CALL(SCIPincludeSepaThreeVertexConflicts(scip, &probdata->threevertex_conflicts));
 #endif
 
+    // Include separator for five-edge conflicts.
+#ifdef USE_FIVEEDGE_CONFLICTS
+    SCIP_CALL(SCIPincludeSepaFiveEdgeConflicts(scip, &probdata->fiveedge_conflicts));
+#endif
+
     // Include separator for goal conflicts.
 #ifdef USE_GOAL_CONFLICTS
     SCIP_CALL(SCIPincludeSepaGoalConflicts(scip, &probdata->goal_conflicts));
@@ -1272,6 +1289,18 @@ SCIP_SEPA* SCIPprobdataGetThreeVertexConflictsSepa(
     debug_assert(probdata);
     debug_assert(probdata->threevertex_conflicts);
     return probdata->threevertex_conflicts;
+}
+#endif
+
+// Get separator for five-edge conflicts
+#ifdef USE_FIVEEDGE_CONFLICTS
+SCIP_SEPA* SCIPprobdataGetFiveEdgeConflictsSepa(
+    SCIP_ProbData* probdata    // Problem data
+)
+{
+    debug_assert(probdata);
+    debug_assert(probdata->fiveedge_conflicts);
+    return probdata->fiveedge_conflicts;
 }
 #endif
 

@@ -118,6 +118,9 @@ SCIP_RETCODE start_solver(
 #ifdef USE_THREEVERTEX_CONFLICTS
     println("Using three-vertex conflict constraints");
 #endif
+#ifdef USE_FIVEEDGE_CONFLICTS
+    println("Using five-edge conflict constraints");
+#endif
 #ifdef USE_GOAL_CONFLICTS
     println("Using goal conflict constraints");
 #endif

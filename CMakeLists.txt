@@ -142,6 +142,8 @@ set(MAPF_SOURCE_FILES
         bcp/Separator_TwoEdgeConflicts.cpp
         bcp/Separator_ThreeVertexConflicts.h
         bcp/Separator_ThreeVertexConflicts.cpp
+        bcp/Separator_FiveEdgeConflicts.h
+        bcp/Separator_FiveEdgeConflicts.cpp
         bcp/Separator_GoalConflicts.h
         bcp/Separator_GoalConflicts.cpp
         bcp/BranchingRule.h
@@ -168,6 +170,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_WAITDELAY_CONFLICTS")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_EXITENTRY_CONFLICTS")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_TWOEDGE_CONFLICTS")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_THREEVERTEX_CONFLICTS")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_FIVEEDGE_CONFLICTS")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_GOAL_CONFLICTS")
 
 # Set node selection rule.
