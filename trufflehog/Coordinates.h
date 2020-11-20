@@ -115,7 +115,7 @@ inline bool operator!=(const EdgeTime a, const EdgeTime b)
 
 }
 
-namespace std
+namespace robin_hood
 {
 
 template<>
@@ -123,7 +123,7 @@ struct hash<TruffleHog::NodeTime>
 {
     inline std::size_t operator()(const TruffleHog::NodeTime nt) const noexcept
     {
-        return std::hash<uint64_t>{}(nt.nt);
+        return robin_hood::hash<uint64_t>{}(nt.nt);
     }
 };
 
@@ -132,7 +132,7 @@ struct hash<TruffleHog::EdgeTime>
 {
     inline std::size_t operator()(const TruffleHog::EdgeTime et) const noexcept
     {
-        return std::hash<uint64_t>{}(et.id);
+        return robin_hood::hash<uint64_t>{}(et.id);
     }
 };
 

@@ -67,7 +67,7 @@ inline void hash_combine(std::size_t& s, const T& v)
     s ^= h(v) + 0x9e3779b9 + (s << 6) + (s >> 2);
 }
 
-namespace std
+namespace robin_hood
 {
 
 template<>
@@ -75,7 +75,7 @@ struct hash<AgentTime>
 {
     inline std::size_t operator()(const AgentTime at) const noexcept
     {
-        return std::hash<uint64_t>{}(at.id);
+        return robin_hood::hash<uint64_t>{}(at.id);
     }
 };
 
@@ -84,7 +84,7 @@ struct hash<AgentNodeTime>
 {
     inline std::size_t operator()(const AgentNodeTime ant) const noexcept
     {
-        auto x = std::hash<Agent>{}(ant.a);
+        auto x = robin_hood::hash<Agent>{}(ant.a);
         hash_combine(x, ant.n);
         hash_combine(x, ant.t);
         return x;
