@@ -62,15 +62,6 @@ add_subdirectory(fmt EXCLUDE_FROM_ALL)
 # Include cxxopts.
 include_directories(SYSTEM cxxopts/include)
 
-# Include boost.
-#find_path(BOOST_INCLUDE_DIR
-#        NAMES boost/unordered/unordered_map.hpp
-#        HINTS "${BOOST_DIR}" "$ENV{BOOST_DIR}")
-#if (NOT BOOST_INCLUDE_DIR)
-#    message(FATAL_ERROR "Boost library not found")
-#endif ()
-#include_directories(SYSTEM ${BOOST_INCLUDE_DIR})
-
 # Include Truffle Hog.
 include_directories(./)
 set(TRUFFLEHOG_SOURCE_FILES
