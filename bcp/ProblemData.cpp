@@ -19,6 +19,10 @@ Author: Edward Lam <ed@ed-lam.com>
 
 //#define PRINT_DEBUG
 
+#ifdef DEBUG
+//#define MAKE_NAMES
+#endif
+
 #ifndef DEBUG
 #define REMOVE_PADDING
 #endif
@@ -321,12 +325,12 @@ SCIP_RETCODE SCIPprobdataAddDummyVar(
     constexpr SCIP_Real obj = ARTIFICIAL_VAR_COST;
 
     // Create and add variable.
-#ifdef DEBUG
+#ifdef MAKE_NAMES
     const auto name = fmt::format("dummy_path({})", a);
 #endif
     SCIP_CALL(SCIPcreateVar(scip,
                             var,
-#ifdef DEBUG
+#ifdef MAKE_NAMES
                             name.c_str(),
 #else
                             "",
@@ -401,13 +405,13 @@ SCIP_RETCODE SCIPprobdataAddPricedVar(
     const SCIP_Real obj = path_length - 1;
 
     // Create and add variable.
-#ifdef DEBUG
+#ifdef MAKE_NAMES
     const auto name = fmt::format("path({},({}))",
                                   a, format_path(probdata, path_length, path)).substr(0, 255);
 #endif
     SCIP_CALL(SCIPcreateVar(scip,
                             var,
-#ifdef DEBUG
+#ifdef MAKE_NAMES
                             name.c_str(),
 #else
                             "",
@@ -519,7 +523,7 @@ SCIP_RETCODE SCIPprobdataAddTwoAgentRobustCut(
     SCIP_CALL(SCIPcreateEmptyRowSepa(scip,
                                      &row,
                                      sepa,
-#ifdef DEBUG
+#ifdef MAKE_NAMES
                                      cut.name().c_str(),
 #else
                                      "",
