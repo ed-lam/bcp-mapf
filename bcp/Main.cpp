@@ -106,6 +106,9 @@ SCIP_RETCODE start_solver(
 #ifdef USE_CORRIDOR_CONFLICTS
     println("Using corridor conflict constraints");
 #endif
+#ifdef USE_STEPASIDE_CONFLICTS
+    println("Using step-aside conflict constraints");
+#endif
 #ifdef USE_WAITDELAY_CONFLICTS
     println("Using wait-delay conflict constraints");
 #endif

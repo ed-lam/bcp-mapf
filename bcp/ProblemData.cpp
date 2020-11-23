@@ -40,6 +40,9 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifdef USE_CORRIDOR_CONFLICTS
 #include "Separator_CorridorConflicts.h"
 #endif
+#ifdef USE_STEPASIDE_CONFLICTS
+#include "Separator_StepAsideConflicts.h"
+#endif
 #ifdef USE_WAITDELAY_CONFLICTS
 #include "Separator_WaitDelayConflicts.h"
 #endif
@@ -92,6 +95,9 @@ struct SCIP_ProbData
 #endif
 #ifdef USE_CORRIDOR_CONFLICTS
     SCIP_SEPA* corridor_conflicts;                      // Separator for corridor conflicts
+#endif
+#ifdef USE_STEPASIDE_CONFLICTS
+    SCIP_SEPA* stepaside_conflicts;                     // Separator for step-aside conflicts
 #endif
 #ifdef USE_WAITDELAY_CONFLICTS
     SCIP_SEPA* waitdelay_conflicts;                     // Separator for wait-delay conflicts
@@ -206,6 +212,12 @@ SCIP_DECL_PROBTRANS(probtrans)
 #ifdef USE_CORRIDOR_CONFLICTS
     debug_assert(sourcedata->corridor_conflicts);
     (*targetdata)->corridor_conflicts = sourcedata->corridor_conflicts;
+#endif
+
+    // Copy separator for step-aside conflicts.
+#ifdef USE_STEPASIDE_CONFLICTS
+    debug_assert(sourcedata->stepaside_conflicts);
+    (*targetdata)->stepaside_conflicts = sourcedata->stepaside_conflicts;
 #endif
 
     // Copy separator for wait-delay conflicts.
@@ -1095,6 +1107,11 @@ SCIP_RETCODE SCIPprobdataCreate(
     SCIP_CALL(SCIPincludeSepaCorridorConflicts(scip, &probdata->corridor_conflicts));
 #endif
 
+    // Include separator for step-aside conflicts.
+#ifdef USE_STEPASIDE_CONFLICTS
+    SCIP_CALL(SCIPincludeSepaStepAsideConflicts(scip, &probdata->stepaside_conflicts));
+#endif
+
     // Include separator for wait-delay conflicts.
 #ifdef USE_WAITDELAY_CONFLICTS
     SCIP_CALL(SCIPincludeSepaWaitDelayConflicts(scip, &probdata->waitdelay_conflicts));
@@ -1258,6 +1275,18 @@ SCIP_SEPA* SCIPprobdataGetCorridorConflictsSepa(
     debug_assert(probdata);
     debug_assert(probdata->corridor_conflicts);
     return probdata->corridor_conflicts;
+}
+#endif
+
+// Get separator for step-aside conflicts
+#ifdef USE_STEPASIDE_CONFLICTS
+SCIP_SEPA* SCIPprobdataGetStepAsideConflictsSepa(
+    SCIP_ProbData* probdata    // Problem data
+)
+{
+    debug_assert(probdata);
+    debug_assert(probdata->stepaside_conflicts);
+    return probdata->stepaside_conflicts;
 }
 #endif
 

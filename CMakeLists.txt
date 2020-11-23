@@ -134,6 +134,8 @@ set(MAPF_SOURCE_FILES
         bcp/Separator_RectangleKnapsackConflicts.cpp
         bcp/Separator_CorridorConflicts.h
         bcp/Separator_CorridorConflicts.cpp
+        bcp/Separator_StepAsideConflicts.h
+        bcp/Separator_StepAsideConflicts.cpp
         bcp/Separator_WaitDelayConflicts.h
         bcp/Separator_WaitDelayConflicts.cpp
         bcp/Separator_ExitEntryConflicts.h
@@ -168,6 +170,7 @@ target_link_libraries(bcp-mapf fmt::fmt-header-only libscip ${LIBM})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_WAITEDGE_CONFLICTS")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_RECTANGLE_KNAPSACK_CONFLICTS")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_CORRIDOR_CONFLICTS")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_STEPASIDE_CONFLICTS")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_WAITDELAY_CONFLICTS")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_EXITENTRY_CONFLICTS")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_TWOEDGE_CONFLICTS")

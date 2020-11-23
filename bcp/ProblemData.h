@@ -116,6 +116,13 @@ SCIP_SEPA* SCIPprobdataGetCorridorConflictsSepa(
 );
 #endif
 
+// Get separator for step-aside conflicts
+#ifdef USE_STEPASIDE_CONFLICTS
+SCIP_SEPA* SCIPprobdataGetStepAsideConflictsSepa(
+    SCIP_ProbData* probdata    // Problem data
+);
+#endif
+
 // Get separator for wait-delay conflicts
 #ifdef USE_WAITDELAY_CONFLICTS
 SCIP_SEPA* SCIPprobdataGetWaitDelayConflictsSepa(
