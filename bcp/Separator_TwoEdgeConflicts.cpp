@@ -57,14 +57,14 @@ SCIP_RETCODE twoedge_conflicts_create_cut(
     const auto [x4, y4] = map.get_destination_xy(a1_e2);
 
     auto name = fmt::format("twoedge_conflict("
-                           "{},{},",
-                           "(({},{}),({},{})),"
-                           "(({},{}),({},{})),"
-                           "{})",
-                           a1, a2,
-                           x1, y1, x2, y2,
-                           x3, y3, x4, y4,
-                           t);
+                            "{},{},"
+                            "(({},{}),({},{})),"
+                            "(({},{}),({},{})),"
+                            "{})",
+                            a1, a2,
+                            x1, y1, x2, y2,
+                            x3, y3, x4, y4,
+                            t);
 #endif
 
     // Create data for the cut.
