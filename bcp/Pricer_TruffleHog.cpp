@@ -255,8 +255,7 @@ SCIP_RETCODE run_trufflehog_pricer(
     // Print.
     if constexpr (!is_farkas)
     {
-        debugln("Starting pricer for feasible master problem at node {}, depth {}, obj "
-                "{}:",
+        debugln("Starting pricer for feasible master problem at node {}, depth {}, obj {}:",
                 SCIPnodeGetNumber(SCIPgetCurrentNode(scip)),
                 SCIPgetDepth(scip),
                 SCIPgetLPObjval(scip));

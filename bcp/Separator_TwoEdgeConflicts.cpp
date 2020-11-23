@@ -163,8 +163,7 @@ SCIP_RETCODE twoedge_conflicts_separate(
                                                 0.0;
 
                         // Determine if there is a conflict.
-                        const auto lhs = a1_et1_val + a1_et2_val +
-                                         a2_et1_val + a2_et2_val;
+                        const auto lhs = a1_et1_val + a1_et2_val + a2_et1_val + a2_et2_val;
                         if (SCIPisGT(scip, lhs, 1.0))
                         {
                             // Print.
