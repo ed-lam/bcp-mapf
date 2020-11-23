@@ -1101,6 +1101,247 @@ SCIP_SEPA* SCIPprobdataGetGoalConflictsSepa(
 }
 #endif
 
+// Get the vertices fractionally used by each agent
+Vector<HashTable<NodeTime, SCIP_Real>> get_agent_fractional_vertices(
+    SCIP* scip    // SCIP
+)
+{
+    // Get problem data.
+    auto probdata = SCIPgetProbData(scip);
+    const auto N = SCIPprobdataGetN(probdata);
+
+    // Get variables.
+    const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
+
+    // Get vertices of each agent.
+    Vector<HashTable<NodeTime, SCIP_Real>> agent_vertices(N);
+    for (Agent a = 0; a < N; ++a)
+    {
+        // Calculate the number of times a vertex is used by summing the columns.
+        auto& agent_vertices_a = agent_vertices[a];
+        for (auto var : agent_vars[a])
+        {
+            // Get the path.
+            debug_assert(var);
+            auto vardata = SCIPvarGetData(var);
+            const auto path_length = SCIPvardataGetPathLength(vardata);
+            const auto path = SCIPvardataGetPath(vardata);
+
+            // Get the variable value.
+            const auto var_val = SCIPgetSolVal(scip, nullptr, var);
+
+            // Append the path.
+            if (SCIPisPositive(scip, var_val))
+            {
+                for (Time t = 0; t < path_length; ++t)
+                {
+                    const NodeTime nt{path[t].n, t};
+                    agent_vertices_a[nt] += var_val;
+                }
+            }
+        }
+
+        // Delete vertices with integer values.
+        for (auto it = agent_vertices_a.begin(); it != agent_vertices_a.end();)
+        {
+            const auto& [nt, val] = *it;
+            if (SCIPisIntegral(scip, val))
+            {
+                it = agent_vertices_a.erase(it);
+            }
+            else
+            {
+                ++it;
+            }
+        }
+
+        // Print.
+#ifdef PRINT_DEBUG
+        if (!agent_vertices_a.empty())
+        {
+            const auto& map = SCIPprobdataGetMap(probdata);
+
+            println("   Fractional vertices for agent {}:", a);
+            for (const auto [nt, val] : agent_vertices_a)
+            {
+                const auto [x, y] = map.get_xy(nt.n);
+                debugln("      (({},{}),{}) val {:.4f}", x, y, nt.t, val);
+            }
+        }
+#endif
+    }
+
+    // Return.
+    return agent_vertices;
+}
+
+// Get the edges fractionally used by each agent
+Vector<HashTable<EdgeTime, SCIP_Real>> get_agent_fractional_edges(
+    SCIP* scip    // SCIP
+)
+{
+    // Get problem data.
+    auto probdata = SCIPgetProbData(scip);
+    const auto N = SCIPprobdataGetN(probdata);
+
+    // Get variables.
+    const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
+
+    // Get edges of each agent.
+    Vector<HashTable<EdgeTime, SCIP_Real>> agent_edges(N);
+    for (Agent a = 0; a < N; ++a)
+    {
+        // Calculate the number of times an edge is used by summing the columns.
+        auto& agent_edges_a = agent_edges[a];
+        for (auto var : agent_vars[a])
+        {
+            // Get the path.
+            debug_assert(var);
+            auto vardata = SCIPvarGetData(var);
+            const auto path_length = SCIPvardataGetPathLength(vardata);
+            const auto path = SCIPvardataGetPath(vardata);
+
+            // Get the variable value.
+            const auto var_val = SCIPgetSolVal(scip, nullptr, var);
+
+            // Append the path.
+            if (SCIPisPositive(scip, var_val))
+            {
+                for (Time t = 0; t < path_length - 1; ++t)
+                {
+                    const EdgeTime et{path[t], t};
+                    agent_edges_a[et] += var_val;
+                }
+            }
+        }
+
+        // Delete edges with integer values.
+        for (auto it = agent_edges_a.begin(); it != agent_edges_a.end();)
+        {
+            const auto& [et, val] = *it;
+            if (SCIPisIntegral(scip, val))
+            {
+                it = agent_edges_a.erase(it);
+            }
+            else
+            {
+                ++it;
+            }
+        }
+
+        // Print.
+#ifdef PRINT_DEBUG
+        if (!agent_edges_a.empty())
+        {
+            const auto& map = SCIPprobdataGetMap(probdata);
+
+            println("   Fractional edges used by agent {}:", a);
+            for (const auto [et, val] : agent_edges_a)
+            {
+                const auto [x1, y1] = map.get_xy(et.n);
+                auto x2 = x1, y2 = y1;
+                if (et.d == Direction::NORTH)
+                    y2--;
+                else if (et.d == Direction::SOUTH)
+                    y2++;
+                else if (et.d == Direction::EAST)
+                    x2++;
+                else if (et.d == Direction::WEST)
+                    x2--;
+                debugln("      (({},{}),({},{}),{}) val {:.4f}", x1, y1, x2, y2, et.t, val);
+            }
+        }
+#endif
+    }
+
+    // Return.
+    return agent_edges;
+}
+
+// Get the non-wait edges fractionally used by each agent
+Vector<HashTable<EdgeTime, SCIP_Real>> get_agent_fractional_edges_no_waits(
+    SCIP* scip    // SCIP
+)
+{
+    // Get problem data.
+    auto probdata = SCIPgetProbData(scip);
+    const auto N = SCIPprobdataGetN(probdata);
+
+    // Get variables.
+    const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
+
+    // Get edges of each agent.
+    Vector<HashTable<EdgeTime, SCIP_Real>> agent_edges(N);
+    for (Agent a = 0; a < N; ++a)
+    {
+        // Calculate the number of times an edge is used by summing the columns.
+        auto& agent_edges_a = agent_edges[a];
+        for (auto var : agent_vars[a])
+        {
+            // Get the path.
+            debug_assert(var);
+            auto vardata = SCIPvarGetData(var);
+            const auto path_length = SCIPvardataGetPathLength(vardata);
+            const auto path = SCIPvardataGetPath(vardata);
+
+            // Get the variable value.
+            const auto var_val = SCIPgetSolVal(scip, nullptr, var);
+
+            // Append the path.
+            if (SCIPisPositive(scip, var_val))
+            {
+                for (Time t = 0; t < path_length - 1; ++t)
+                    if (path[t].d != Direction::WAIT)
+                    {
+                        const EdgeTime et{path[t], t};
+                        agent_edges_a[et] += var_val;
+                    }
+            }
+        }
+
+        // Delete edges with integer values.
+        for (auto it = agent_edges_a.begin(); it != agent_edges_a.end();)
+        {
+            const auto& [et, val] = *it;
+            if (SCIPisIntegral(scip, val))
+            {
+                it = agent_edges_a.erase(it);
+            }
+            else
+            {
+                ++it;
+            }
+        }
+
+        // Print.
+#ifdef PRINT_DEBUG
+        if (!agent_edges_a.empty())
+        {
+            const auto& map = SCIPprobdataGetMap(probdata);
+            
+            println("   Fractional edges used by agent {}:", a);
+            for (const auto [et, val] : agent_edges_a)
+            {
+                const auto [x1, y1] = map.get_xy(et.n);
+                auto x2 = x1, y2 = y1;
+                if (et.d == Direction::NORTH)
+                    y2--;
+                else if (et.d == Direction::SOUTH)
+                    y2++;
+                else if (et.d == Direction::EAST)
+                    x2++;
+                else if (et.d == Direction::WEST)
+                    x2--;
+                debugln("      (({},{}),({},{}),{}) val {:.4f}", x1, y1, x2, y2, et.t, val);
+            }
+        }
+#endif
+    }
+
+    // Return.
+    return agent_edges;
+}
+
 // Get pricer data
 SCIP_PricerData* SCIPprobdataGetPricerData(
     SCIP_ProbData* probdata    // Problem data

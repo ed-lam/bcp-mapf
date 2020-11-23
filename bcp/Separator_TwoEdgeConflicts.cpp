@@ -125,75 +125,8 @@ SCIP_RETCODE twoedge_conflicts_separate(
     const auto N = SCIPprobdataGetN(probdata);
     const auto& map = SCIPprobdataGetMap(probdata);
 
-    // Get variables.
-    const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
-
-    // Get edges of each agent.
-    Vector<HashTable<EdgeTime, SCIP_Real>> agent_edges(N);
-    for (Agent a = 0; a < N; ++a)
-    {
-        // Calculate the number of times an edge is used by summing the columns.
-        auto& agent_edges_a = agent_edges[a];
-        for (auto var : agent_vars[a])
-        {
-            // Get the path.
-            debug_assert(var);
-            auto vardata = SCIPvarGetData(var);
-            const auto path_length = SCIPvardataGetPathLength(vardata);
-            const auto path = SCIPvardataGetPath(vardata);
-
-            // Get the variable value.
-            const auto var_val = SCIPgetSolVal(scip, nullptr, var);
-
-            // Append the path.
-            if (SCIPisPositive(scip, var_val))
-            {
-                for (Time t = 0; t < path_length - 1; ++t)
-                    if (path[t].d != Direction::WAIT)
-                    {
-                        const EdgeTime et{path[t], t};
-                        agent_edges_a[et] += var_val;
-                    }
-            }
-        }
-
-        // Delete edges with integer values.
-        for (auto it = agent_edges_a.begin(); it != agent_edges_a.end();)
-        {
-            const auto& [et, val] = *it;
-            if (SCIPisIntegral(scip, val))
-            {
-                it = agent_edges_a.erase(it);
-            }
-            else
-            {
-                ++it;
-            }
-        }
-
-        // Print.
-#ifdef PRINT_DEBUG
-        if (!agent_edges_a.empty())
-        {
-            debugln("   Fractional edges for agent {}:", a);
-            for (const auto [et, val] : agent_edges_a)
-            {
-                const auto [x1, y1] = map.get_xy(et.e.n);
-                auto x2 = x1, y2 = y1;
-                if (et.e.d == Direction::NORTH)
-                    y2--;
-                else if (et.e.d == Direction::SOUTH)
-                    y2++;
-                else if (et.e.d == Direction::EAST)
-                    x2++;
-                else if (et.e.d == Direction::WEST)
-                    x2--;
-                debugln("      (({},{}),({},{}),{}) val {:.4f}",
-                        x1, y1, x2, y2, et.t, val);
-            }
-        }
-#endif
-    }
+    // Get the edges fractionally used by each agent.
+    const auto& agent_edges = get_agent_fractional_edges_no_waits(scip);
 
     // Find conflicts.
     for (Agent a1 = 0; a1 < N - 1; ++a1)

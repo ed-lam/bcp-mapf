@@ -134,6 +134,21 @@ SCIP_SEPA* SCIPprobdataGetGoalConflictsSepa(
 );
 #endif
 
+// Get the vertices fractionally used by each agent
+Vector<HashTable<NodeTime, SCIP_Real>> get_agent_fractional_vertices(
+    SCIP* scip    // SCIP
+);
+
+// Get the edges fractionally used by each agent
+Vector<HashTable<EdgeTime, SCIP_Real>> get_agent_fractional_edges(
+    SCIP* scip    // SCIP
+);
+
+// Get the non-wait edges fractionally used by each agent
+Vector<HashTable<EdgeTime, SCIP_Real>> get_agent_fractional_edges_no_waits(
+    SCIP* scip    // SCIP
+);
+
 // Get pricer data
 SCIP_PricerData* SCIPprobdataGetPricerData(
     SCIP_ProbData* probdata    // Problem data
