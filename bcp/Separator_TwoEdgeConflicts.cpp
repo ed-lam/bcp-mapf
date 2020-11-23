@@ -170,35 +170,31 @@ SCIP_RETCODE twoedge_conflicts_separate(
                             // Print.
 #ifdef PRINT_DEBUG
                             {
-                                const auto [x1, y1] = map.get_xy(a1_e1.n);
-                                auto x2 = x1, y2 = y1;
-                                if (a1_e1.d == Direction::NORTH)
-                                    y2--;
-                                else if (a1_e1.d == Direction::SOUTH)
-                                    y2++;
-                                else if (a1_e1.d == Direction::EAST)
-                                    x2++;
-                                else if (a1_e1.d == Direction::WEST)
-                                    x2--;
+                                const auto [a1_e1_x1, a1_e1_y1] = map.get_xy(a1_e1.n);
+                                const auto [a1_e1_x2, a1_e1_y2] = map.get_destination_xy(a1_e1);
 
-                                const auto [x3, y3] = map.get_xy(a1_e2.n);
-                                auto x4 = x3, y4 = y3;
-                                if (a1_e2.d == Direction::NORTH)
-                                    y4--;
-                                else if (a1_e2.d == Direction::SOUTH)
-                                    y4++;
-                                else if (a1_e2.d == Direction::EAST)
-                                    x4++;
-                                else if (a1_e2.d == Direction::WEST)
-                                    x4--;
+                                const auto [a1_e2_x1, a1_e2_y1] = map.get_xy(a1_e2.n);
+                                const auto [a1_e2_x2, a1_e2_y2] = map.get_destination_xy(a1_e2);
+
+                                const auto [a2_e1_x1, a2_e1_y1] = map.get_xy(a2_e1.n);
+                                const auto [a2_e1_x2, a2_e1_y2] = map.get_destination_xy(a2_e1);
+
+                                const auto [a2_e2_x1, a2_e2_y1] = map.get_xy(a2_e2.n);
+                                const auto [a2_e2_x2, a2_e2_y2] = map.get_destination_xy(a2_e2);
 
                                 debugln("   Creating two-edge conflict cut on edges "
-                                        "(({},{}),({},{})) and (({},{}),({},{})) for agents "
-                                        "{} and {} at time {} with value {} in "
+                                        "(({},{}),({},{})) and (({},{}),({},{})) for agent {} "
+                                        "and "
+                                        "(({},{}),({},{})) and (({},{}),({},{})) for agent {} "
+                                        "at time {} "
+                                        "with value {} in "
                                         "branch-and-bound node {}",
-                                        x1, y1, x2, y2,
-                                        x3, y3, x4, y4,
-                                        a1, a2,
+                                        a1_e1_x1, a1_e1_y1, a1_e1_x2, a1_e1_y2,
+                                        a1_e2_x1, a1_e2_y1, a1_e2_x2, a1_e2_y2,
+                                        a1,
+                                        a2_e1_x1, a2_e1_y1, a2_e1_x2, a2_e1_y2,
+                                        a2_e2_x1, a2_e2_y1, a2_e2_x2, a2_e2_y2,
+                                        a2,
                                         t,
                                         lhs,
                                         SCIPnodeGetNumber(SCIPgetCurrentNode(scip)));
