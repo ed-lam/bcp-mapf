@@ -164,9 +164,13 @@ set(MAPF_SOURCE_FILES
 )
 include_directories(bcp/)
 
-# Add executable.
+# Add BCP-MAPF executable.
 add_executable(bcp-mapf ${MAPF_SOURCE_FILES} ${TRUFFLEHOG_SOURCE_FILES})
 target_link_libraries(bcp-mapf fmt::fmt-header-only libscip ${LIBM})
+
+# Add Truffle Hog executable.
+add_executable(trufflehog ${TRUFFLEHOG_SOURCE_FILES} trufflehog/Main.cpp)
+target_link_libraries(trufflehog fmt::fmt-header-only)
 
 # Enable the families of cuts.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_WAITEDGE_CONFLICTS")
