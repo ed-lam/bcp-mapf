@@ -53,26 +53,10 @@ SCIP_RETCODE twoedge_conflicts_create_cut(
 #ifdef DEBUG
     const auto& map = SCIPprobdataGetMap(probdata);
     const auto [x1, y1] = map.get_xy(a1_e1.n);
-    auto x2 = x1, y2 = y1;
-    if (a1_e1.d == Direction::NORTH)
-        y2--;
-    else if (a1_e1.d == Direction::SOUTH)
-        y2++;
-    else if (a1_e1.d == Direction::EAST)
-        x2++;
-    else if (a1_e1.d == Direction::WEST)
-        x2--;
+    const auto [x2, y2] = map.get_destination_xy(a1_e1);
 
     const auto [x3, y3] = map.get_xy(a1_e2.n);
-    auto x4 = x3, y4 = y3;
-    if (a1_e2.d == Direction::NORTH)
-        y4--;
-    else if (a1_e2.d == Direction::SOUTH)
-        y4++;
-    else if (a1_e2.d == Direction::EAST)
-        x4++;
-    else if (a1_e2.d == Direction::WEST)
-        x4--;
+    const auto [x4, y4] = map.get_destination_xy(a1_e2);
 
     auto name = fmt::format("twoedge_conflict("
                            "{},{},",
@@ -163,14 +147,16 @@ SCIP_RETCODE twoedge_conflicts_separate(
                                                 0.0;
 
                         // Get the first edge of agent 2.
-                        const auto a2_e1 = get_opposite_edge(a1_e1, map);
+                        debug_assert(a1_e1.d != Direction::WAIT);
+                        const auto a2_e1 = map.get_opposite_edge(a1_e1);
                         const auto a2_et1_it = agent_edges_a2.find(EdgeTime{a2_e1, t});
                         const auto a2_et1_val = a2_et1_it != agent_edges_a2.end() ?
                                                 a2_et1_it->second :
                                                 0.0;
 
                         // Get the second edge of agent 2.
-                        const auto a2_e2 = get_opposite_edge(a1_e2, map);
+                        debug_assert(a1_e2.d != Direction::WAIT);
+                        const auto a2_e2 = map.get_opposite_edge(a1_e2);
                         const auto a2_et2_it = agent_edges_a2.find(EdgeTime{a2_e2, t});
                         const auto a2_et2_val = a2_et2_it != agent_edges_a2.end() ?
                                                 a2_et2_it->second :

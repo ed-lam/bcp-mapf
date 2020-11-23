@@ -88,16 +88,4 @@ Edge get_reversed_undirected_edge(
     const Map& map    // Map
 );
 
-// Get edge in opposite direction
-Edge get_opposite_edge(
-    const Edge e,     // Edge
-    const Map& map    // Map
-);
-
-// Get edge in opposite direction with waits
-Edge get_opposite_edge_allow_wait(
-    const Edge e,     // Edge
-    const Map& map    // Map
-);
-
 #endif

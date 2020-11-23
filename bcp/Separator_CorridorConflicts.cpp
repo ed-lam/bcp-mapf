@@ -121,12 +121,13 @@ SCIP_RETCODE corridor_conflicts_separate(
             {
                 // See if agent 2 is using the reverse edge.
                 const auto t = a1_e1.t;
-                const EdgeTime a2_e1{get_opposite_edge(a1_e1.et.e, map), t};
-                const auto it_a2_e1 = agent_edges_a2.find(a2_e1);
-                if (it_a2_e1 != agent_edges_a2.end())
+                debug_assert(a1_e1.et.e.d != Direction::WAIT);
+                const EdgeTime a2_e1{map.get_opposite_edge(a1_e1.et.e), t};
+                const auto a2_e1_it = agent_edges_a2.find(a2_e1);
+                if (a2_e1_it != agent_edges_a2.end())
                 {
                     // Store the value.
-                    const auto a2_e1_val = it_a2_e1->second;
+                    const auto a2_e1_val = a2_e1_it->second;
 
                     // See if the same edge is used at either one timestep before or one
                     // timestep after.
@@ -135,22 +136,20 @@ SCIP_RETCODE corridor_conflicts_separate(
                     {
                         const EdgeTime a1_e2{a1_e1.et.e, t + offset};
                         const EdgeTime a2_e2{a2_e1.et.e, t + offset};
-                        auto it_a1_e2 = agent_edges_a1.find(a1_e2);
-                        auto it_a2_e2 = agent_edges_a2.find(a2_e2);
-                        if (it_a1_e2 != agent_edges_a1.end() ||
-                            it_a2_e2 != agent_edges_a2.end())
+                        auto a1_e2_it = agent_edges_a1.find(a1_e2);
+                        auto a2_e2_it = agent_edges_a2.find(a2_e2);
+                        if (a1_e2_it != agent_edges_a1.end() || a2_e2_it != agent_edges_a2.end())
                         {
                             // Store the value.
-                            const auto a1_e2_val = it_a1_e2 != agent_edges_a1.end() ?
-                                                   it_a1_e2->second :
+                            const auto a1_e2_val = a1_e2_it != agent_edges_a1.end() ?
+                                                   a1_e2_it->second :
                                                    0.0;
-                            const auto a2_e2_val = it_a2_e2 != agent_edges_a2.end() ?
-                                                   it_a2_e2->second :
+                            const auto a2_e2_val = a2_e2_it != agent_edges_a2.end() ?
+                                                   a2_e2_it->second :
                                                    0.0;
 
                             // Determine if there is a conflict.
-                            const auto lhs = a1_e1_val + a1_e2_val +
-                                             a2_e1_val + a2_e2_val;
+                            const auto lhs = a1_e1_val + a1_e2_val + a2_e1_val + a2_e2_val;
                             if (SCIPisGT(scip, lhs, 1.0))
                             {
                                 // Print.

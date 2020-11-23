@@ -99,6 +99,62 @@ class Map
     {
         return n;
     }
+    inline Node get_destination(const Edge e) const
+    {
+        switch (e.d) 
+        {
+            case (Direction::NORTH):
+            {
+                return get_north(e.n);
+            }
+            case (Direction::SOUTH):
+            {
+                return get_south(e.n);
+            }
+            case (Direction::EAST):
+            {
+                return get_east(e.n);
+            }
+            case (Direction::WEST):
+            {
+                return get_west(e.n);
+            }
+            default:
+            {
+                return get_wait(e.n);
+            }
+        }
+    }
+    inline Pair<Position, Position> get_destination_xy(const Edge e) const
+    {
+        return get_xy(get_destination(e));
+    }
+    inline Edge get_opposite_edge(const Edge e) const
+    {
+        switch (e.d)
+        {
+            case (Direction::NORTH):
+            {
+                return Edge{get_north(e.n), Direction::SOUTH};
+            }
+            case (Direction::SOUTH):
+            {
+                return Edge{get_south(e.n), Direction::NORTH};
+            }
+            case (Direction::EAST):
+            {
+                return Edge{get_east(e.n), Direction::WEST};
+            }
+            case (Direction::WEST):
+            {
+                return Edge{get_west(e.n), Direction::EAST};
+            }
+            default:
+            {
+                return e;
+            }
+        }
+    }
 
     // Setters
     void resize(const Position width, const Position height)

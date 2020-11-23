@@ -132,7 +132,7 @@ SCIP_RETCODE exitentry_conflicts_separate(
                                        Edge(map.get_east(n2), Direction::WEST),
                                        Edge(map.get_wait(n2), Direction::WAIT),
 
-                                       get_opposite_edge_allow_wait(a1_e, map)};
+                                       map.get_opposite_edge(a1_e)};
 
                     // Remove duplicates.
                     for (auto it = a2_es.begin(); it != a2_es.end() - 1; ++it)

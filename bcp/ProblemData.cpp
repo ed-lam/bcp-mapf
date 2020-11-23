@@ -1165,7 +1165,7 @@ Vector<HashTable<NodeTime, SCIP_Real>> get_agent_fractional_vertices(
             for (const auto [nt, val] : agent_vertices_a)
             {
                 const auto [x, y] = map.get_xy(nt.n);
-                debugln("      (({},{}),{}) val {:.4f}", x, y, nt.t, val);
+                println("      (({},{}),{}) val {:.4f}", x, y, nt.t, val);
             }
         }
 #endif
@@ -1239,16 +1239,8 @@ Vector<HashTable<EdgeTime, SCIP_Real>> get_agent_fractional_edges(
             for (const auto [et, val] : agent_edges_a)
             {
                 const auto [x1, y1] = map.get_xy(et.n);
-                auto x2 = x1, y2 = y1;
-                if (et.d == Direction::NORTH)
-                    y2--;
-                else if (et.d == Direction::SOUTH)
-                    y2++;
-                else if (et.d == Direction::EAST)
-                    x2++;
-                else if (et.d == Direction::WEST)
-                    x2--;
-                debugln("      (({},{}),({},{}),{}) val {:.4f}", x1, y1, x2, y2, et.t, val);
+                const auto [x2, y2] = map.get_destination_xy(et.et.e);
+                println("      (({},{}),({},{}),{}) val {:.4f}", x1, y1, x2, y2, et.t, val);
             }
         }
 #endif
@@ -1323,16 +1315,8 @@ Vector<HashTable<EdgeTime, SCIP_Real>> get_agent_fractional_edges_no_waits(
             for (const auto [et, val] : agent_edges_a)
             {
                 const auto [x1, y1] = map.get_xy(et.n);
-                auto x2 = x1, y2 = y1;
-                if (et.d == Direction::NORTH)
-                    y2--;
-                else if (et.d == Direction::SOUTH)
-                    y2++;
-                else if (et.d == Direction::EAST)
-                    x2++;
-                else if (et.d == Direction::WEST)
-                    x2--;
-                debugln("      (({},{}),({},{}),{}) val {:.4f}", x1, y1, x2, y2, et.t, val);
+                const auto [x2, y2] = map.get_destination_xy(et.et.e);
+                println("      (({},{}),({},{}),{}) val {:.4f}", x1, y1, x2, y2, et.t, val);
             }
         }
 #endif

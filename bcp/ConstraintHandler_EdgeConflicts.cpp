@@ -157,62 +157,6 @@ Edge get_reversed_undirected_edge(
     }
 }
 
-// Get edge in opposite direction
-Edge get_opposite_edge(
-    const Edge e,     // Edge
-    const Map& map    // Map
-)
-{
-    if (e.d == Direction::NORTH)
-    {
-        return Edge(map.get_north(e.n), Direction::SOUTH);
-    }
-    else if (e.d == Direction::SOUTH)
-    {
-        return Edge(map.get_south(e.n), Direction::NORTH);
-    }
-    else if (e.d == Direction::EAST)
-    {
-        return Edge(map.get_east(e.n), Direction::WEST);
-    }
-    else if (e.d == Direction::WEST)
-    {
-        return Edge(map.get_west(e.n), Direction::EAST);
-    }
-    else
-    {
-        unreachable();
-    }
-}
-
-// Get edge in opposite direction with waits
-Edge get_opposite_edge_allow_wait(
-    const Edge e,     // Edge
-    const Map& map    // Map
-)
-{
-    if (e.d == Direction::NORTH)
-    {
-        return Edge(map.get_north(e.n), Direction::SOUTH);
-    }
-    else if (e.d == Direction::SOUTH)
-    {
-        return Edge(map.get_south(e.n), Direction::NORTH);
-    }
-    else if (e.d == Direction::EAST)
-    {
-        return Edge(map.get_east(e.n), Direction::WEST);
-    }
-    else if (e.d == Direction::WEST)
-    {
-        return Edge(map.get_west(e.n), Direction::EAST);
-    }
-    else
-    {
-        return Edge(map.get_wait(e.n), Direction::WAIT);
-    }
-}
-
 SCIP_RETCODE edge_conflicts_create_cut(
     SCIP* scip,                         // SCIP
     const Map& map,                     // Map
@@ -231,17 +175,8 @@ SCIP_RETCODE edge_conflicts_create_cut(
     // Create constraint name.
 #ifdef DEBUG
     const auto [x1, y1] = map.get_xy(edges[0].n);
-    auto x2 = x1, y2 = y1;
-    if (edges[0].d == Direction::NORTH)
-        y2--;
-    else if (edges[0].d == Direction::SOUTH)
-        y2++;
-    else if (edges[0].d == Direction::EAST)
-        x2++;
-    else if (edges[0].d == Direction::WEST)
-        x2--;
-    const auto name = fmt::format("edge_conflict(({},{}),({},{}),{})",
-                                  x1, y1, x2, y2, t);
+    const auto [x2, y2] = map.get_destination_xy(edges[0]);
+    const auto name = fmt::format("edge_conflict(({},{}),({},{}),{})", x1, y1, x2, y2, t);
 #endif
 
     // Create a row.
@@ -382,15 +317,7 @@ SCIP_RETCODE edge_conflicts_check(
 #ifdef PRINT_DEBUG
             {
                 const auto [x1, y1] = map.get_xy(et.n);
-                auto x2 = x1, y2 = y1;
-                if (et.d == Direction::NORTH)
-                    y2--;
-                else if (et.d == Direction::SOUTH)
-                    y2++;
-                else if (et.d == Direction::EAST)
-                    x2++;
-                else if (et.d == Direction::WEST)
-                    x2--;
+                const auto [x2, y2] = map.get_destination_xy(et.et.e);
 
                 debugln("   Infeasible solution has edge (({},{}),({},{})) (node ID {}, "
                         "direction {}) at time {} with value {}",
@@ -484,7 +411,8 @@ SCIP_RETCODE edge_conflicts_separate(
         Array<Edge, 2> edges;
 #endif
         edges[0] = et.et.e;
-        edges[1] = get_opposite_edge(et.et.e, map);
+        edges[1] = map.get_opposite_edge(et.et.e);
+        debug_assert(et.et.e.d != Direction::WAIT);
 
         // Get the wait edge.
 #ifdef USE_WAITEDGE_CONFLICTS
@@ -527,15 +455,7 @@ SCIP_RETCODE edge_conflicts_separate(
 #ifdef PRINT_DEBUG
             {
                 const auto [x1, y1] = map.get_xy(edges[0].n);
-                auto x2 = x1, y2 = y1;
-                if (edges[0].d == Direction::NORTH)
-                    y2--;
-                else if (edges[0].d == Direction::SOUTH)
-                    y2++;
-                else if (edges[0].d == Direction::EAST)
-                    x2++;
-                else if (edges[0].d == Direction::WEST)
-                    x2--;
+                const auto [x2, y2] = map.get_destination_xy(edges[0]);
 
 #ifdef USE_WAITEDGE_CONFLICTS
                 const auto [x3, y3] = map.get_xy(edges[2].n);
