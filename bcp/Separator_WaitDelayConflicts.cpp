@@ -34,17 +34,17 @@ Author: Edward Lam <ed@ed-lam.com>
 #define SEPA_DELAY                                        FALSE // should separation method be delayed, if other separators found cuts? */
 
 SCIP_RETCODE waitdelay_conflicts_create_cut(
-    SCIP* scip,                         // SCIP
-    SCIP_ProbData* probdata,            // Problem data
-    SCIP_SEPA* sepa,                    // Separator
-    const Agent a1,                     // Agent 1
-    const Agent a2,                     // Agent 2
+    SCIP* scip,                          // SCIP
+    SCIP_ProbData* probdata,             // Problem data
+    SCIP_SEPA* sepa,                     // Separator
+    const Agent a1,                      // Agent 1
+    const Agent a2,                      // Agent 2
 #ifdef DEBUG
-    const NodeTime nt,                  // Node-time of the conflict
+    const NodeTime nt,                   // Node-time of the conflict
 #endif
-    const Array<EdgeTime, 9> a1_ets,    // Edge-times of agent 1
-    const EdgeTime a2_et,               // Edge-time of the wait by agent 2
-    SCIP_Result* result                 // Output result
+    const Array<EdgeTime, 9>& a1_ets,    // Edge-times of agent 1
+    const EdgeTime a2_et,                // Edge-time of the wait by agent 2
+    SCIP_Result* result                  // Output result
 )
 {
     // Create constraint name.
