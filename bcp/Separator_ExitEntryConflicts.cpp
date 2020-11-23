@@ -34,15 +34,16 @@ Author: Edward Lam <ed@ed-lam.com>
 #define SEPA_DELAY                                        FALSE // should separation method be delayed, if other separators found cuts? */
 
 SCIP_RETCODE exitentry_conflicts_create_cut(
-    SCIP* scip,                  // SCIP
-    SCIP_ProbData* probdata,     // Problem data
-    SCIP_SEPA* sepa,             // Separator
-    const Agent a1,              // Agent 1
-    const Agent a2,              // Agent 2
-    const Edge a1_e,             // Edge-time of agent 1
-    const Vector<Edge> a2_es,    // Edge-times of agent 2
-    const Time t,                // Time
-    SCIP_Result* result          // Output result
+    SCIP* scip,                      // SCIP
+    SCIP_ProbData* probdata,         // Problem data
+    SCIP_SEPA* sepa,                 // Separator
+    const Agent a1,                  // Agent 1
+    const Agent a2,                  // Agent 2
+    const Edge a1_e,                 // Edge-time of agent 1
+    const Int a2_es_size,            // Number of edge-times for agent 2
+    const Array<Edge, 11>& a2_es,    // Edge-times of agent 2
+    const Time t,                    // Time
+    SCIP_Result* result              // Output result
 )
 {
     // Create constraint name.
@@ -51,13 +52,13 @@ SCIP_RETCODE exitentry_conflicts_create_cut(
 #endif
 
     // Create data for the cut.
-    TwoAgentRobustCut cut{scip, a1, a2, t, 1, static_cast<Int>(a2_es.size())
+    TwoAgentRobustCut cut{scip, a1, a2, t, 1, a2_es_size
 #ifdef DEBUG
         , std::move(name)
 #endif
     };
     cut.edges_a1(0) = a1_e;
-    std::copy(a2_es.begin(), a2_es.end(), cut.edges_a2().first);
+    std::copy(a2_es.begin(), a2_es.begin() + a2_es_size, cut.edges_a2().first);
 
     // Store the cut.
     SCIP_CALL(SCIPprobdataAddTwoAgentRobustCut(scip, probdata, sepa, std::move(cut), 1, result));
@@ -111,46 +112,48 @@ SCIP_RETCODE exitentry_conflicts_separate(
                     const auto t = a1_et.t;
                     const auto a1_e = a1_et.et.e;
                     const auto n1 = a1_e.n;
-                    const auto n2 = a1_e.d == Direction::NORTH ? map.get_north(n1) :
-                                    a1_e.d == Direction::SOUTH ? map.get_south(n1) :
-                                    a1_e.d == Direction::EAST  ? map.get_east(n1)  :
-                                    a1_e.d == Direction::WEST  ? map.get_west(n1)  :
-                                                                 map.get_wait(n1);
+                    const auto n2 = map.get_destination(a1_e);
 
                     // Make the incompatible edges for agent 2.
-                    Vector<Edge> a2_es{Edge(n1, Direction::NORTH),
-                                       Edge(n1, Direction::SOUTH),
-                                       Edge(n1, Direction::EAST),
-                                       Edge(n1, Direction::WEST),
-                                       Edge(n1, Direction::WAIT),
-
-                                       Edge(map.get_south(n2), Direction::NORTH),
-                                       Edge(map.get_north(n2), Direction::SOUTH),
-                                       Edge(map.get_west(n2), Direction::EAST),
-                                       Edge(map.get_east(n2), Direction::WEST),
-                                       Edge(map.get_wait(n2), Direction::WAIT),
-
-                                       map.get_opposite_edge(a1_e)};
-
-                    // Remove duplicates.
-                    for (auto it = a2_es.begin(); it != a2_es.end() - 1; ++it)
-                        for (auto it2 = it + 1; it2 != a2_es.end();)
-                        {
-                            if (*it == *it2)
-                            {
-                                it2 = a2_es.erase(it2);
-                            }
-                            else
-                            {
-                                ++it2;
-                            }
-                        }
+                    debug_assert(a1_e.d != Direction::WAIT);
+                    Array<Edge, 11> a2_es{map.get_opposite_edge(a1_e),
+                                          Edge{n1, Direction::NORTH},
+                                          Edge{n1, Direction::SOUTH},
+                                          Edge{n1, Direction::EAST},
+                                          Edge{n1, Direction::WEST},
+                                          Edge{n1, Direction::WAIT}};
+                    Int a2_es_size = 6;
+                    if (const auto orig = map.get_south(n2); orig != n1)
+                    {
+                        a2_es[a2_es_size] = Edge{orig, Direction::NORTH};
+                        ++a2_es_size;
+                    }
+                    if (const auto orig = map.get_north(n2); orig != n1)
+                    {
+                        a2_es[a2_es_size] = Edge{orig, Direction::SOUTH};
+                        ++a2_es_size;
+                    }
+                    if (const auto orig = map.get_west(n2); orig != n1)
+                    {
+                        a2_es[a2_es_size] = Edge{orig, Direction::EAST};
+                        ++a2_es_size;
+                    }
+                    if (const auto orig = map.get_east(n2); orig != n1)
+                    {
+                        a2_es[a2_es_size] = Edge{orig, Direction::WEST};
+                        ++a2_es_size;
+                    }
+                    if (const auto orig = map.get_wait(n2); orig != n1)
+                    {
+                        a2_es[a2_es_size] = Edge{orig, Direction::WAIT};
+                        ++a2_es_size;
+                    }
 
                     // Compute the LHS.
                     SCIP_Real lhs = a1_et_val;
                     for (const auto e : a2_es)
                     {
-                        auto it = agent_edges_a2.find(EdgeTime(e, t));
+                        const auto it = agent_edges_a2.find(EdgeTime{e, t});
                         if (it != agent_edges_a2.end())
                         {
                             const auto a2_et_val = it->second;
@@ -180,6 +183,7 @@ SCIP_RETCODE exitentry_conflicts_separate(
                                                                  a1,
                                                                  a2,
                                                                  a1_e,
+                                                                 a2_es_size,
                                                                  a2_es,
                                                                  t,
                                                                  result));
