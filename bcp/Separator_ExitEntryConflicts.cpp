@@ -22,10 +22,8 @@ Author: Edward Lam <ed@ed-lam.com>
 //#define PRINT_DEBUG
 
 #include "Separator_ExitEntryConflicts.h"
-#include "Coordinates.h"
 #include "ProblemData.h"
 #include "VariableData.h"
-#include "ConstraintHandler_EdgeConflicts.h"
 
 #define SEPA_NAME                         "exitentry_conflicts"
 #define SEPA_DESC          "Separator for exit-entry conflicts"

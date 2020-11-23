@@ -24,7 +24,6 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "Separator_CorridorConflicts.h"
 #include "ProblemData.h"
 #include "VariableData.h"
-#include "ConstraintHandler_EdgeConflicts.h"
 
 #define SEPA_NAME                          "corridor_conflicts"
 #define SEPA_DESC            "Separator for corridor conflicts"

@@ -23,7 +23,6 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #include "Separator_RectangleKnapsackConflicts.h"
 #include "Separator_RectangleConflicts.h"
-#include "Coordinates.h"
 #include "ProblemData.h"
 #include "VariableData.h"
 #include <algorithm>

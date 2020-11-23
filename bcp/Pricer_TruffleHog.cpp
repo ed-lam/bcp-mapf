@@ -33,7 +33,9 @@ Author: Edward Lam <ed@ed-lam.com>
 //#include "Constraint_WaitBranching.h"
 #include "Constraint_LengthBranching.h"
 #include <chrono>
-//#include <numeric>
+#ifdef DEBUG
+#include <numeric>
+#endif
 
 #include "trufflehog/Instance.h"
 #include "trufflehog/AStar.h"

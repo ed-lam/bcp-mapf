@@ -22,7 +22,6 @@ Author: Edward Lam <ed@ed-lam.com>
 //#define PRINT_DEBUG
 
 #include "Separator_WaitDelayConflicts.h"
-#include "Coordinates.h"
 #include "ProblemData.h"
 #include "VariableData.h"
 
