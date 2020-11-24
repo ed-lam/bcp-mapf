@@ -29,6 +29,9 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifdef USE_GOAL_CONFLICTS
 #include "Separator_GoalConflicts.h"
 #endif
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+#include "Separator_RectangleCliqueConflicts.h"
+#endif
 #include "Constraint_VertexBranching.h"
 //#include "Constraint_WaitBranching.h"
 #include "Constraint_LengthBranching.h"
@@ -288,6 +291,9 @@ SCIP_RETCODE run_trufflehog_pricer(
 #ifdef USE_GOAL_CONFLICTS
     const auto& goal_conflicts_conss = goal_conflicts_get_constraints(probdata);
 #endif
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+    const auto& rectangle_clique_conflicts_conss = rectangle_clique_conflicts_get_constraints(probdata);
+#endif
 
     // Get constraints for branching decisions.
     const auto n_vertex_branching_conss = SCIPconshdlrGetNConss(pricerdata->vertex_branching_conshdlr);
@@ -306,6 +312,9 @@ SCIP_RETCODE run_trufflehog_pricer(
     auto& edge_penalties = astar.edge_penalties();
 #ifdef USE_GOAL_CONFLICTS
     auto& goal_crossings = astar.goal_crossings();
+#endif
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+    auto& rectangle_crossings = astar.rectangle_crossings();
 #endif
     static_assert(std::numeric_limits<Cost>::has_quiet_NaN);
 
@@ -418,6 +427,9 @@ SCIP_RETCODE run_trufflehog_pricer(
     print_two_agent_robust_cuts_dual(scip, is_farkas);
 #ifdef USE_GOAL_CONFLICTS
     print_goal_conflicts_dual(scip, is_farkas);
+#endif
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+    print_rectangle_clique_conflicts_dual(scip, is_farkas);
 #endif
 #endif
 
@@ -651,6 +663,33 @@ SCIP_RETCODE run_trufflehog_pricer(
                     auto& goal = goal_crossings.emplace_back();
                     goal.dual = dual;
                     goal.nt = nt;
+                }
+            }
+#endif
+
+        // Modify edge costs for rectangle clique conflicts.
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+        rectangle_crossings.clear();
+        for (const auto& conflict : rectangle_clique_conflicts_conss)
+            if (a == conflict.a1 || a == conflict.a2)
+            {
+                const auto dual = is_farkas ?
+                                  SCIProwGetDualfarkas(conflict.row) :
+                                  SCIProwGetDualsol(conflict.row);
+                debug_assert(SCIPisLE(scip, dual, 0.0));
+                if (SCIPisLT(scip, dual, 0.0))
+                {
+                    // Add a rectangle crossing penalty.
+                    auto& rectangle = rectangle_crossings.emplace_back();
+                    const auto [it1, it2, it3] = conflict.agent_in_out_edges(a);
+                    rectangle.dual = dual;
+                    rectangle.mid = it2 - it1;
+                    rectangle.end = it3 - it1;
+                    rectangle.other_dir = a == conflict.a1 ?
+                                          conflict.in2_begin()->e.d :
+                                          conflict.in1_begin()->e.d;
+                    rectangle.edges = UniquePtr<EdgeTime[]>(new EdgeTime[rectangle.end]);
+                    std::copy(it1, it3, rectangle.edges.get());
                 }
             }
 #endif

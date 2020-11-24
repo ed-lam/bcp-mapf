@@ -130,6 +130,9 @@ SCIP_RETCODE start_solver(
 #ifdef USE_GOAL_CONFLICTS
     println("Using goal conflict constraints");
 #endif
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+    println("Using rectangle clique conflict constraints");
+#endif
 #endif
     println("");
 

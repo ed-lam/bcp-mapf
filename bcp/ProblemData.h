@@ -172,6 +172,13 @@ SCIP_SEPA* SCIPprobdataGetGoalConflictsSepa(
 );
 #endif
 
+// Get separator for rectangle clique conflicts
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+SCIP_SEPA* SCIPprobdataGetRectangleCliqueConflictsSepa(
+    SCIP_ProbData* probdata    // Problem data
+);
+#endif
+
 // Get the vertices fractionally used by each agent
 Vector<HashTable<NodeTime, SCIP_Real>> get_agent_fractional_vertices(
     SCIP* scip    // SCIP
@@ -267,6 +274,12 @@ void print_two_agent_robust_cuts_dual(
 );
 #ifdef USE_GOAL_CONFLICTS
 void print_goal_conflicts_dual(
+    SCIP* scip,             // SCIP
+    const bool is_farkas    // Indicates if the master problem is infeasible
+);
+#endif
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+void print_rectangle_clique_conflicts_dual(
     SCIP* scip,             // SCIP
     const bool is_farkas    // Indicates if the master problem is infeasible
 );

@@ -100,10 +100,16 @@ class AStar
 #ifdef USE_GOAL_CONFLICTS
     Vector<GoalCrossing> goal_crossings_;
 #endif
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+    Vector<RectangleCrossing> rectangle_crossings_;
+#endif
 
     // Temporary storage for each run
     PriorityQueue<Label, LabelCompare, false> open_;
     HashTable<NodeTime, Label*> frontier_without_resources_;
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+    HashTable<NodeTime, Vector<Label*>> frontier_with_resources_;
+#endif
     const Vector<IntCost>* h_;
     Vector<Cost> time_finish_h_;
 
@@ -130,6 +136,9 @@ class AStar
 #ifdef USE_GOAL_CONFLICTS
     auto& goal_crossings() { return goal_crossings_; }
 #endif
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+    auto& rectangle_crossings() { return rectangle_crossings_; }
+#endif
 
     // Solve
     inline void compute_h(const Node goal) { heuristic_.compute_h(goal); }
@@ -151,6 +160,9 @@ class AStar
   private:
     // Check if a label is dominated by an existing label
     AStar::Label* dominated_without_resources(Label* const new_label);
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+    AStar::Label* dominated_with_resources(Label* const new_label);
+#endif
 
     // Solve
     template <bool without_resources>
@@ -159,6 +171,9 @@ class AStar
     template <bool without_resources>
     void generate(Label* const current,
                   const Node node,
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+                  const Direction d,
+#endif
                   const Cost cost,
                   const Time goal_latest,
                   const Cost max_cost);

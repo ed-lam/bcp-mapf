@@ -132,6 +132,8 @@ set(MAPF_SOURCE_FILES
         bcp/Separator_RectangleConflicts.cpp
         bcp/Separator_RectangleKnapsackConflicts.h
         bcp/Separator_RectangleKnapsackConflicts.cpp
+        bcp/Separator_RectangleCliqueConflicts.h
+        bcp/Separator_RectangleCliqueConflicts.cpp
         bcp/Separator_CorridorConflicts.h
         bcp/Separator_CorridorConflicts.cpp
         bcp/Separator_StepAsideConflicts.h
@@ -169,6 +171,7 @@ target_link_libraries(bcp-mapf fmt::fmt-header-only libscip ${LIBM})
 # Enable the families of cuts.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_WAITEDGE_CONFLICTS")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_RECTANGLE_KNAPSACK_CONFLICTS")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_RECTANGLE_CLIQUE_CONFLICTS")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_CORRIDOR_CONFLICTS")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_STEPASIDE_CONFLICTS")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_WAITDELAY_CONFLICTS")

@@ -52,6 +52,7 @@ target_link_libraries(trufflehog fmt::fmt-header-only)
 
 # Enable resources for the families of cuts.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_GOAL_CONFLICTS")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_RECTANGLE_CLIQUE_CONFLICTS")
 
 # Set flags.
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer")

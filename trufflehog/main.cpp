@@ -93,6 +93,23 @@ int main()
 //        printf("");
 //    }
 
+    // Create rectangle crossings.
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+    auto& rectangle_crossings = astar.rectangle_crossings();
+    {
+        auto& rect = rectangle_crossings.emplace_back();
+        rect.dual = -10;
+        rect.mid = 2;
+        rect.end = 4;
+        rect.other_dir = Direction::EAST;
+        rect.edges = UniquePtr<EdgeTime[]>(new EdgeTime[4]);
+        rect.edges[0] = EdgeTime(340, Direction::NORTH, 0);
+        rect.edges[1] = EdgeTime(341, Direction::NORTH, 1);
+        rect.edges[2] = EdgeTime(292, Direction::NORTH, 2);
+        rect.edges[3] = EdgeTime(293, Direction::NORTH, 3);
+    }
+#endif
+
     // Create goal crossings.
 //    auto& goal_crossings = astar.goal_crossings();
 //    {

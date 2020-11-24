@@ -34,6 +34,18 @@ struct GoalCrossing
 static_assert(sizeof(GoalCrossing) == 8 + 8);
 #endif
 
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+struct RectangleCrossing
+{
+    Float dual;
+    Int mid;
+    Int end;
+    UniquePtr<EdgeTime[]> edges;
+    Direction other_dir;
+};
+static_assert(sizeof(RectangleCrossing) == 8 + 4 + 4 + 8 + 8);
+#endif
+
 }
 
 #endif

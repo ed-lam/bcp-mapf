@@ -64,6 +64,9 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifdef USE_GOAL_CONFLICTS
 #include "Separator_GoalConflicts.h"
 #endif
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+#include "Separator_RectangleCliqueConflicts.h"
+#endif
 #include "BranchingRule.h"
 #include "Constraint_VertexBranching.h"
 #include "Constraint_WaitBranching.h"
@@ -119,6 +122,9 @@ struct SCIP_ProbData
 #endif
 #ifdef USE_GOAL_CONFLICTS
     SCIP_SEPA* goal_conflicts;                          // Separator for goal conflicts
+#endif
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+    SCIP_SEPA* rectangle_clique_conflicts;              // Separator for rectangle clique conflicts
 #endif
 };
 
@@ -262,6 +268,12 @@ SCIP_DECL_PROBTRANS(probtrans)
     (*targetdata)->goal_conflicts = sourcedata->goal_conflicts;
 #endif
 
+    // Copy separator for rectangle clique conflicts.
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+    debug_assert(sourcedata->rectangle_clique_conflicts);
+    (*targetdata)->rectangle_clique_conflicts = sourcedata->rectangle_clique_conflicts;
+#endif
+    
     // Create a warm-start solution.
     release_assert(SCIPgetProbData(scip) == *targetdata, "Error in transforming problem");
     SCIP_CALL(add_initial_solution(scip));
@@ -696,6 +708,16 @@ SCIP_RETCODE SCIPprobdataAddPricedVar(
                                      a,
                                      path_length,
                                      path));
+#endif
+
+    // Add coefficient to rectangle clique conflicts constraints.
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+    SCIP_CALL(rectangle_clique_conflicts_add_var(scip,
+                                                 probdata->rectangle_clique_conflicts,
+                                                 *var,
+                                                 a,
+                                                 path_length,
+                                                 path));
 #endif
 
     // Store variable in array of all variables.
@@ -1147,6 +1169,11 @@ SCIP_RETCODE SCIPprobdataCreate(
     SCIP_CALL(SCIPincludeSepaGoalConflicts(scip, &probdata->goal_conflicts));
 #endif
 
+    // Include separator for rectangle clique conflicts.
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+    SCIP_CALL(SCIPincludeSepaRectangleCliqueConflicts(scip, &probdata->rectangle_clique_conflicts));
+#endif
+
     // Create dummy paths.
     probdata->dummy_vars.resize(N);
     for (Agent a = 0; a < N; ++a)
@@ -1371,6 +1398,18 @@ SCIP_SEPA* SCIPprobdataGetGoalConflictsSepa(
     debug_assert(probdata);
     debug_assert(probdata->goal_conflicts);
     return probdata->goal_conflicts;
+}
+#endif
+
+// Get separator for rectangle clique conflicts
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+SCIP_SEPA* SCIPprobdataGetRectangleCliqueConflictsSepa(
+    SCIP_ProbData* probdata    // Problem data
+)
+{
+    debug_assert(probdata);
+    debug_assert(probdata->rectangle_clique_conflicts);
+    return probdata->rectangle_clique_conflicts;
 }
 #endif
 
@@ -2074,6 +2113,28 @@ void print_goal_conflicts_dual(
     for (const auto& goal_conflict : conflicts)
     {
         auto row = goal_conflict.row;
+        const auto row_dual =
+            SCIProwIsInLP(row) ?
+            (is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row)) :
+            0.0;
+        if (!SCIPisZero(scip, row_dual))
+        {
+            println("   Dual of {} = {:.4f}", SCIProwGetName(row), row_dual);
+        }
+    }
+}
+#endif
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+void print_rectangle_clique_conflicts_dual(
+    SCIP* scip,             // SCIP
+    const bool is_farkas    // Indicates if the master problem is infeasible
+)
+{
+    auto probdata = SCIPgetProbData(scip);
+    const auto& conflicts = rectangle_clique_conflicts_get_constraints(probdata);
+    for (const auto& rect_conflict : conflicts)
+    {
+        auto row = rect_conflict.row;
         const auto row_dual =
             SCIProwIsInLP(row) ?
             (is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row)) :

@@ -17,7 +17,7 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#ifdef USE_RECTANGLE_KNAPSACK_CONFLICTS
+#if defined(USE_RECTANGLE_KNAPSACK_CONFLICTS) || defined(USE_RECTANGLE_CLIQUE_CONFLICTS)
 
 #ifndef MAPF_SEPARATOR_RECTANGLECONFLICTS_H
 #define MAPF_SEPARATOR_RECTANGLECONFLICTS_H
