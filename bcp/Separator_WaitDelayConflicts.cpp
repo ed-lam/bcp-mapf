@@ -93,7 +93,7 @@ SCIP_RETCODE waitdelay_conflicts_separate(
     const auto& map = SCIPprobdataGetMap(probdata);
 
     // Get the edges fractionally used by each agent.
-    const auto& agent_edges = get_agent_fractional_edges(scip);
+    const auto& agent_edges = SCIPprobdataGetAgentFractionalEdges(probdata);
 
     // Find conflicts.
     for (Agent a1 = 0; a1 < N; ++a1)

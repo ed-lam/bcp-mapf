@@ -180,17 +180,22 @@ SCIP_SEPA* SCIPprobdataGetRectangleCliqueConflictsSepa(
 #endif
 
 // Get the vertices fractionally used by each agent
-Vector<HashTable<NodeTime, SCIP_Real>> get_agent_fractional_vertices(
-    SCIP* scip    // SCIP
+const Vector<HashTable<NodeTime, SCIP_Real>>& SCIPprobdataGetAgentFractionalVertices(
+    SCIP_ProbData* probdata    // Problem data
 );
 
 // Get the edges fractionally used by each agent
-Vector<HashTable<EdgeTime, SCIP_Real>> get_agent_fractional_edges(
-    SCIP* scip    // SCIP
+const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetAgentFractionalEdges(
+    SCIP_ProbData* probdata    // Problem data
 );
 
 // Get the non-wait edges fractionally used by each agent
-Vector<HashTable<EdgeTime, SCIP_Real>> get_agent_fractional_edges_no_waits(
+const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetAgentFractionalEdgesNoWaits(
+    SCIP_ProbData* probdata    // Problem data
+);
+
+// Update the database of fractional vertices and edges
+void update_fractional_vertices_and_edges(
     SCIP* scip    // SCIP
 );
 

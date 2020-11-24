@@ -160,6 +160,9 @@ SCIP_RETCODE goal_conflicts_separate(
     SCIP_RESULT* result    // Pointer to store the result of the separation call
 )
 {
+    // Update database of fractional vertices and edges before separators start.
+    update_fractional_vertices_and_edges(scip);
+
     // Print.
     debugln("Starting separator for goal conflicts on solution with obj {:.6f}:",
             SCIPgetSolOrigObj(scip, nullptr));

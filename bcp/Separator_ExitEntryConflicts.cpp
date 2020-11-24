@@ -90,7 +90,7 @@ SCIP_RETCODE exitentry_conflicts_separate(
     const auto& map = SCIPprobdataGetMap(probdata);
 
     // Get the edges fractionally used by each agent.
-    const auto& agent_edges = get_agent_fractional_edges_no_waits(scip);
+    const auto& agent_edges = SCIPprobdataGetAgentFractionalEdgesNoWaits(probdata);
 
     // Find conflicts.
     for (Agent a1 = 0; a1 < N; ++a1)
