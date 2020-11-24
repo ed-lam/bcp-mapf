@@ -158,38 +158,38 @@ SCIP_RETCODE corridor_conflicts_separate(
                                         "and edges ({},{},{},{}) and ({},{},{},{}) for "
                                         "agent {} with value {} in branch-and-bound node "
                                         "{}",
-                                        map.get_x(a1_e1.e.n),
-                                        map.get_y(a1_e1.e.n),
-                                        a1_e1.e.d == Direction::NORTH ? "north" :
-                                        a1_e1.e.d == Direction::SOUTH ? "south" :
-                                        a1_e1.e.d == Direction::EAST ? "east" :
-                                        a1_e1.e.d == Direction::WEST ? "west" :
-                                        a1_e1.e.d == Direction::WAIT ? "wait" : "other",
+                                        map.get_x(a1_e1.et.e.n),
+                                        map.get_y(a1_e1.et.e.n),
+                                        a1_e1.et.e.d == Direction::NORTH ? "north" :
+                                        a1_e1.et.e.d == Direction::SOUTH ? "south" :
+                                        a1_e1.et.e.d == Direction::EAST ? "east" :
+                                        a1_e1.et.e.d == Direction::WEST ? "west" :
+                                        a1_e1.et.e.d == Direction::WAIT ? "wait" : "other",
                                         a1_e1.t,
-                                        map.get_x(a1_e2.e.n),
-                                        map.get_y(a1_e2.e.n),
-                                        a1_e2.e.d == Direction::NORTH ? "north" :
-                                        a1_e2.e.d == Direction::SOUTH ? "south" :
-                                        a1_e2.e.d == Direction::EAST ? "east" :
-                                        a1_e2.e.d == Direction::WEST ? "west" :
-                                        a1_e2.e.d == Direction::WAIT ? "wait" : "other",
+                                        map.get_x(a1_e2.et.e.n),
+                                        map.get_y(a1_e2.et.e.n),
+                                        a1_e2.et.e.d == Direction::NORTH ? "north" :
+                                        a1_e2.et.e.d == Direction::SOUTH ? "south" :
+                                        a1_e2.et.e.d == Direction::EAST ? "east" :
+                                        a1_e2.et.e.d == Direction::WEST ? "west" :
+                                        a1_e2.et.e.d == Direction::WAIT ? "wait" : "other",
                                         a1_e2.t,
                                         a1,
-                                        map.get_x(a2_e1.e.n),
-                                        map.get_y(a2_e1.e.n),
-                                        a2_e1.e.d == Direction::NORTH ? "north" :
-                                        a2_e1.e.d == Direction::SOUTH ? "south" :
-                                        a2_e1.e.d == Direction::EAST ? "east" :
-                                        a2_e1.e.d == Direction::WEST ? "west" :
-                                        a2_e1.e.d == Direction::WAIT ? "wait" : "other",
+                                        map.get_x(a2_e1.et.e.n),
+                                        map.get_y(a2_e1.et.e.n),
+                                        a2_e1.et.e.d == Direction::NORTH ? "north" :
+                                        a2_e1.et.e.d == Direction::SOUTH ? "south" :
+                                        a2_e1.et.e.d == Direction::EAST ? "east" :
+                                        a2_e1.et.e.d == Direction::WEST ? "west" :
+                                        a2_e1.et.e.d == Direction::WAIT ? "wait" : "other",
                                         a2_e1.t,
-                                        map.get_x(a2_e2.e.n),
-                                        map.get_y(a2_e2.e.n),
-                                        a2_e2.e.d == Direction::NORTH ? "north" :
-                                        a2_e2.e.d == Direction::SOUTH ? "south" :
-                                        a2_e2.e.d == Direction::EAST ? "east" :
-                                        a2_e2.e.d == Direction::WEST ? "west" :
-                                        a2_e2.e.d == Direction::WAIT ? "wait" : "other",
+                                        map.get_x(a2_e2.et.e.n),
+                                        map.get_y(a2_e2.et.e.n),
+                                        a2_e2.et.e.d == Direction::NORTH ? "north" :
+                                        a2_e2.et.e.d == Direction::SOUTH ? "south" :
+                                        a2_e2.et.e.d == Direction::EAST ? "east" :
+                                        a2_e2.et.e.d == Direction::WEST ? "west" :
+                                        a2_e2.et.e.d == Direction::WAIT ? "wait" : "other",
                                         a2_e2.t,
                                         a2,
                                         lhs,

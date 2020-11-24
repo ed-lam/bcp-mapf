@@ -522,7 +522,7 @@ SCIP_RETCODE rectangle_knapsack_conflicts_separate(
                         String a1_in_str("{");
                         for (auto it = conflict.in1_begin(); it != conflict.in1_end(); ++it)
                         {
-                            const auto& [e, t] = *it;
+                            const auto& [e, t] = it->et;
                             a1_in_str += fmt::format("EdgeTime({},{}),",
                                                      NodeTime(e.n, t).nt,
                                                      e.d == Direction::NORTH ? "Direction::NORTH" :
@@ -536,7 +536,7 @@ SCIP_RETCODE rectangle_knapsack_conflicts_separate(
                         String a1_out_str("{");
                         for (auto it = conflict.out1_begin(); it != conflict.out1_end(); ++it)
                         {
-                            const auto& [e, t] = *it;
+                            const auto& [e, t] = it->et;
                             a1_out_str += fmt::format("EdgeTime({},{}),",
                                                      NodeTime(e.n, t).nt,
                                                      e.d == Direction::NORTH ? "Direction::NORTH" :
@@ -550,7 +550,7 @@ SCIP_RETCODE rectangle_knapsack_conflicts_separate(
                         String a2_in_str("{");
                         for (auto it = conflict.in2_begin(); it != conflict.in2_end(); ++it)
                         {
-                            const auto& [e, t] = *it;
+                            const auto& [e, t] = it->et;
                             a2_in_str += fmt::format("EdgeTime({},{}),",
                                                      NodeTime(e.n, t).nt,
                                                      e.d == Direction::NORTH ? "Direction::NORTH" :
@@ -564,7 +564,7 @@ SCIP_RETCODE rectangle_knapsack_conflicts_separate(
                         String a2_out_str("{");
                         for (auto it = conflict.out2_begin(); it != conflict.out2_end(); ++it)
                         {
-                            const auto& [e, t] = *it;
+                            const auto& [e, t] = it->et;
                             a2_out_str += fmt::format("EdgeTime({},{}),",
                                                       NodeTime(e.n, t).nt,
                                                       e.d == Direction::NORTH ? "Direction::NORTH" :
