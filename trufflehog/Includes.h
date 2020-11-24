@@ -45,7 +45,7 @@ template<class T>
 using Vector = std::vector<T>;
 
 template<class Key, class T, class Hash = robin_hood::hash<Key>, class KeyEqual = std::equal_to<Key>>
-using HashTable = robin_hood::unordered_flat_map<Key, T, Hash, KeyEqual>;
+using HashTable = robin_hood::unordered_flat_map<Key, T, Hash, KeyEqual, 60>;
 
 template<class T1, class T2>
 using Pair = std::pair<T1, T2>;
