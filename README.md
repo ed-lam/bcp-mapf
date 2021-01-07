@@ -6,7 +6,7 @@ BCP is an implementation of a branch-and-cut-and-price model of the multi-agent 
 - Branch-and-Cut-and-Price for Multi-Agent Pathfinding. E. Lam, P. Le Bodic, D. Harabor, P. J. Stuckey. IJCAI 2019.
 - New Valid Inequalities in Branch-and-Cut-and-Price for Multi-Agent Path Finding. E. Lam, P. Le Bodic. ICAPS 2020.
 
-If you use this code, please cite these articles.
+Please cite these articles if you use this code for the multi-agent path finding problem or as a template for other branch-and-cut-and-price codes.
 
 License
 -------
@@ -16,13 +16,13 @@ BCP is released under the GPL version 3. See LICENSE.txt for further details.
 Dependencies
 ------------
 
-BCP is implemented in C++17 and is compiled using CMake, so you will need a recent compiler and a recent version of CMake. It is tested with Clang 10 on Mac and GCC 8 on Linux. It has not been tested on Windows.
+BCP is implemented in C++17 and is compiled using CMake, so you will need a recent compiler and a recent version of CMake. It is tested with Clang 11 on Mac and GCC 10 on Linux. It has not been tested on Windows.
 
 BCP calls SCIP for branch-and-bound and calls CPLEX for solving the linear relaxation.
 
 Source code to SCIP is available free (as in beer) strictly for academic use. BCP is tested with SCIP 7.0.2. Download the [SCIP Optimization Suite 7.0.2](https://scip.zib.de) and extract it into the root of this repository. You should find the subdirectory `scipoptsuite-7.0.2/scip/src`.
 
-CPLEX is commercial software but has binaries available free under an [academic license](https://developer.ibm.com/docloud/blog/2019/07/04/cplex-optimization-studio-for-students-and-academics/). BCP is tested with CPLEX 12.10. You should find the subdirectory `cplex`.
+CPLEX is commercial software but has binaries available free under an [academic license](https://community.ibm.com/community/user/datascience/blogs/xavier-nodet1/2020/07/09/cplex-free-for-students). BCP is tested with CPLEX 12.10. You should find the subdirectory `cplex`.
 
 If CPLEX is not available, SoPlex from the SCIP Optimization Suite can be used instead but this option is not supported.
 
@@ -71,7 +71,7 @@ BCP can be run as a bounded suboptimal algorithm by setting an optimality gap, c
 ./bcp-mapf —-gap-limit={OPTIMALITY GAP} {PATH TO INSTANCE}
 ```
 
-Benchmark instances can be found in the `2018_instances` and `2019_instances` directories. Example:
+Benchmark instances can be found in the `movingai_2018` and `movingai_2019` directories. Example:
 ```
 ./bcp-mapf --time-limit=30 ../instances/movingai_2018/dao_maps/lak503dmap-100agents-49.scen
 ```
