@@ -220,6 +220,8 @@ SCIP_RETCODE corridor_conflicts_separate(
 }
 
 // Copy method for separator
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_SEPACOPY(sepaCopyCorridorConflicts)
 {
@@ -235,8 +237,11 @@ SCIP_DECL_SEPACOPY(sepaCopyCorridorConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Separation method for LP solutions
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_SEPAEXECLP(sepaExeclpCorridorConflicts)
 {
@@ -255,6 +260,7 @@ SCIP_DECL_SEPAEXECLP(sepaExeclpCorridorConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Create separator for corridor conflicts constraints and include it in SCIP
 SCIP_RETCODE SCIPincludeSepaCorridorConflicts(

@@ -613,6 +613,8 @@ SCIP_RETCODE rectangle_knapsack_conflicts_separate(
 }
 
 // Copy method for separator
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_SEPACOPY(sepaCopyRectangleKnapsackConflicts)
 {
@@ -628,6 +630,7 @@ SCIP_DECL_SEPACOPY(sepaCopyRectangleKnapsackConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Free separator data
 static
@@ -651,6 +654,8 @@ SCIP_DECL_SEPAFREE(sepaFreeRectangleKnapsackConflicts)
 }
 
 // Separation method for LP solutions
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_SEPAEXECLP(sepaExeclpRectangleKnapsackConflicts)
 {
@@ -668,6 +673,7 @@ SCIP_DECL_SEPAEXECLP(sepaExeclpRectangleKnapsackConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Creates separator for rectangle knapsack conflicts constraints and include it in SCIP
 SCIP_RETCODE SCIPincludeSepaRectangleKnapsackConflicts(

@@ -179,6 +179,8 @@ SCIP_RETCODE waitdelay_conflicts_separate(
 }
 
 // Copy method for separator
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_SEPACOPY(sepaCopyWaitDelayConflicts)
 {
@@ -194,8 +196,11 @@ SCIP_DECL_SEPACOPY(sepaCopyWaitDelayConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Separation method for LP solutions
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_SEPAEXECLP(sepaExeclpWaitDelayConflicts)
 {
@@ -214,6 +219,7 @@ SCIP_DECL_SEPAEXECLP(sepaExeclpWaitDelayConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Create separator for wait-delay conflicts constraints and include it in SCIP
 SCIP_RETCODE SCIPincludeSepaWaitDelayConflicts(

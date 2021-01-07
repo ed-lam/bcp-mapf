@@ -663,6 +663,8 @@ SCIP_RETCODE rectangle_clique_conflicts_separate(
 }
 
 // Copy method for separator
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_SEPACOPY(sepaCopyRectangleCliqueConflicts)
 {
@@ -678,6 +680,7 @@ SCIP_DECL_SEPACOPY(sepaCopyRectangleCliqueConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Free rows
 static
@@ -725,6 +728,8 @@ SCIP_DECL_SEPAFREE(sepaFreeRectangleCliqueConflicts)
 }
 
 // Separation method for LP solutions
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_SEPAEXECLP(sepaExeclpRectangleCliqueConflicts)
 {
@@ -742,6 +747,7 @@ SCIP_DECL_SEPAEXECLP(sepaExeclpRectangleCliqueConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Creates separator for rectangle clique conflicts constraints and include it in SCIP
 SCIP_RETCODE SCIPincludeSepaRectangleCliqueConflicts(

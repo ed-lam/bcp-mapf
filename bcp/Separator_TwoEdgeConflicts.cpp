@@ -223,6 +223,8 @@ SCIP_RETCODE twoedge_conflicts_separate(
 }
 
 // Copy method for separator
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_SEPACOPY(sepaCopyTwoEdgeConflicts)
 {
@@ -238,8 +240,11 @@ SCIP_DECL_SEPACOPY(sepaCopyTwoEdgeConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Separation method for LP solutions
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_SEPAEXECLP(sepaExeclpTwoEdgeConflicts)
 {
@@ -258,6 +263,7 @@ SCIP_DECL_SEPAEXECLP(sepaExeclpTwoEdgeConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Create separator for two-edge conflicts constraints and include it in SCIP
 SCIP_RETCODE SCIPincludeSepaTwoEdgeConflicts(

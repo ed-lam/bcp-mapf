@@ -199,6 +199,8 @@ SCIP_RETCODE exitentry_conflicts_separate(
 }
 
 // Copy method for separator
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_SEPACOPY(sepaCopyExitEntryConflicts)
 {
@@ -214,8 +216,11 @@ SCIP_DECL_SEPACOPY(sepaCopyExitEntryConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Separation method for LP solutions
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_SEPAEXECLP(sepaExeclpExitEntryConflicts)
 {
@@ -234,6 +239,7 @@ SCIP_DECL_SEPAEXECLP(sepaExeclpExitEntryConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Create separator for exit-entry conflicts constraints and include it in SCIP
 SCIP_RETCODE SCIPincludeSepaExitEntryConflicts(

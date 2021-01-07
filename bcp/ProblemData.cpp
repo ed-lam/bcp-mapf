@@ -386,6 +386,8 @@ SCIP_DECL_PROBDELTRANS(probdeltrans)
 }
 
 // Free when finishing branch-and-bound
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_PROBEXITSOL(probexitsol)
 {
@@ -399,6 +401,7 @@ SCIP_DECL_PROBEXITSOL(probexitsol)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Add a new dummy variable at the start
 SCIP_RETCODE SCIPprobdataAddDummyVar(

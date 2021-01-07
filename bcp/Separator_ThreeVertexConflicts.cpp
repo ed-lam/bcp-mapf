@@ -280,6 +280,8 @@ SCIP_RETCODE threevertex_conflicts_separate(
 }
 
 // Copy method for separator
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_SEPACOPY(sepaCopyThreeVertexConflicts)
 {
@@ -295,8 +297,11 @@ SCIP_DECL_SEPACOPY(sepaCopyThreeVertexConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Separation method for LP solutions
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_SEPAEXECLP(sepaExeclpThreeVertexConflicts)
 {
@@ -315,6 +320,7 @@ SCIP_DECL_SEPAEXECLP(sepaExeclpThreeVertexConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Create separator for three-vertex conflicts constraints and include it in SCIP
 SCIP_RETCODE SCIPincludeSepaThreeVertexConflicts(

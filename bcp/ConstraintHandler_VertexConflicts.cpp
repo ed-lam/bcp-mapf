@@ -390,6 +390,8 @@ SCIP_RETCODE vertex_conflicts_separate(
 }
 
 // Copy method for constraint handler
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_CONSHDLRCOPY(conshdlrCopyVertexConflicts)
 {
@@ -406,8 +408,11 @@ SCIP_DECL_CONSHDLRCOPY(conshdlrCopyVertexConflicts)
     *valid = TRUE;
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Free constraint data
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_CONSDELETE(consDeleteVertexConflicts)
 {
@@ -429,8 +434,11 @@ SCIP_DECL_CONSDELETE(consDeleteVertexConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Free rows
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_CONSEXITSOL(consExitsolVertexConflicts)
 {
@@ -462,6 +470,7 @@ SCIP_DECL_CONSEXITSOL(consExitsolVertexConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Transform constraint data into data belonging to the transformed problem
 static
@@ -513,6 +522,8 @@ SCIP_DECL_CONSTRANS(consTransVertexConflicts)
 }
 
 // Feasibility check method for integral solutions
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_CONSCHECK(consCheckVertexConflicts)
 {
@@ -541,8 +552,11 @@ SCIP_DECL_CONSCHECK(consCheckVertexConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Constraint enforcing method for LP solutions
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_CONSENFOLP(consEnfolpVertexConflicts)
 {
@@ -570,8 +584,11 @@ SCIP_DECL_CONSENFOLP(consEnfolpVertexConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Constraint enforcing method for pseudo solutions
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_CONSENFOPS(consEnfopsVertexConflicts)
 {
@@ -599,8 +616,11 @@ SCIP_DECL_CONSENFOPS(consEnfopsVertexConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Separation method for LP solutions
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_CONSSEPALP(consSepalpVertexConflicts)
 {
@@ -628,8 +648,11 @@ SCIP_DECL_CONSSEPALP(consSepalpVertexConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Separation method for arbitrary primal solutions
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_CONSSEPASOL(consSepasolVertexConflicts)
 {
@@ -658,8 +681,11 @@ SCIP_DECL_CONSSEPASOL(consSepasolVertexConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Variable rounding lock method of constraint handler
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_CONSLOCK(consLockVertexConflicts)
 {
@@ -683,8 +709,11 @@ SCIP_DECL_CONSLOCK(consLockVertexConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Copying constraint of constraint handler
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_CONSCOPY(consCopyVertexConflicts)
 {
@@ -726,6 +755,7 @@ SCIP_DECL_CONSCOPY(consCopyVertexConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Creates constraint handler for vertex conflicts constraints and include it in SCIP
 SCIP_RETCODE SCIPincludeConshdlrVertexConflicts(

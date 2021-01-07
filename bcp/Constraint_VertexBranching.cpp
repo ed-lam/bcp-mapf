@@ -253,6 +253,8 @@ void check_propagation(
 #endif
 
 // Free constraint data
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_CONSDELETE(consDeleteVertexBranching)
 {
@@ -268,6 +270,7 @@ SCIP_DECL_CONSDELETE(consDeleteVertexBranching)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Transform constraint data into data belonging to the transformed problem
 static
@@ -319,6 +322,8 @@ SCIP_DECL_CONSTRANS(consTransVertexBranching)
 }
 
 // Domain propagation method of constraint handler
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_CONSPROP(consPropVertexBranching)
 {
@@ -394,8 +399,11 @@ SCIP_DECL_CONSPROP(consPropVertexBranching)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Constraint activation notification method of constraint handler
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_CONSACTIVE(consActiveVertexBranching)
 {
@@ -444,8 +452,11 @@ SCIP_DECL_CONSACTIVE(consActiveVertexBranching)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Constraint deactivation notification method of constraint handler
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_CONSDEACTIVE(consDeactiveVertexBranching)
 {
@@ -484,6 +495,7 @@ SCIP_DECL_CONSDEACTIVE(consDeactiveVertexBranching)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Create the constraint handler for a branch and include it
 SCIP_RETCODE SCIPincludeConshdlrVertexBranching(

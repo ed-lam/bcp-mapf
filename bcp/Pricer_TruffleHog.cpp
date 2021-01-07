@@ -1112,11 +1112,14 @@ SCIP_DECL_PRICERREDCOST(pricerTruffleHogRedCost)
 }
 
 // Farkas pricing for infeasible master problem
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_PRICERFARKAS(pricerTruffleHogFarkas)
 {
     unreachable();
 }
+#pragma GCC diagnostic pop
 
 // Create pricer and include it in SCIP
 SCIP_RETCODE SCIPincludePricerTruffleHog(

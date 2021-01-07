@@ -265,6 +265,8 @@ void check_propagation(
 #endif
 
 // Free constraint data
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_CONSDELETE(consDeleteLengthBranching)
 {
@@ -280,6 +282,7 @@ SCIP_DECL_CONSDELETE(consDeleteLengthBranching)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Transform constraint data into data belonging to the transformed problem
 static
@@ -329,6 +332,8 @@ SCIP_DECL_CONSTRANS(consTransLengthBranching)
 }
 
 // Domain propagation method of constraint handler
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_CONSPROP(consPropLengthBranching)
 {
@@ -403,8 +408,11 @@ SCIP_DECL_CONSPROP(consPropLengthBranching)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Constraint activation notification method of constraint handler
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_CONSACTIVE(consActiveLengthBranching)
 {
@@ -453,8 +461,11 @@ SCIP_DECL_CONSACTIVE(consActiveLengthBranching)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Constraint deactivation notification method of constraint handler
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_CONSDEACTIVE(consDeactiveLengthBranching)
 {
@@ -493,6 +504,7 @@ SCIP_DECL_CONSDEACTIVE(consDeactiveLengthBranching)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Create the constraint handler for a branch and include it
 SCIP_RETCODE SCIPincludeConshdlrLengthBranching(

@@ -354,6 +354,8 @@ SCIP_RETCODE stepaside_conflicts_separate(
 }
 
 // Copy method for separator
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_SEPACOPY(sepaCopyStepAsideConflicts)
 {
@@ -369,8 +371,11 @@ SCIP_DECL_SEPACOPY(sepaCopyStepAsideConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Separation method for LP solutions
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_SEPAEXECLP(sepaExeclpStepAsideConflicts)
 {
@@ -389,6 +394,7 @@ SCIP_DECL_SEPAEXECLP(sepaExeclpStepAsideConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Create separator for step-aside conflicts constraints and include it in SCIP
 SCIP_RETCODE SCIPincludeSepaStepAsideConflicts(

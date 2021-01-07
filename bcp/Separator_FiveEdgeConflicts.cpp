@@ -243,6 +243,8 @@ SCIP_RETCODE fiveedge_conflicts_separate(
 }
 
 // Copy method for separator
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_SEPACOPY(sepaCopyFiveEdgeConflicts)
 {
@@ -258,8 +260,11 @@ SCIP_DECL_SEPACOPY(sepaCopyFiveEdgeConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Separation method for LP solutions
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_SEPAEXECLP(sepaExeclpFiveEdgeConflicts)
 {
@@ -278,6 +283,7 @@ SCIP_DECL_SEPAEXECLP(sepaExeclpFiveEdgeConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Create separator for five-edge conflicts constraints and include it in SCIP
 SCIP_RETCODE SCIPincludeSepaFiveEdgeConflicts(

@@ -495,6 +495,8 @@ SCIP_RETCODE edge_conflicts_separate(
 }
 
 // Copy method for constraint handler
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_CONSHDLRCOPY(conshdlrCopyEdgeConflicts)
 {
@@ -511,8 +513,11 @@ SCIP_DECL_CONSHDLRCOPY(conshdlrCopyEdgeConflicts)
     *valid = TRUE;
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Free constraint data
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_CONSDELETE(consDeleteEdgeConflicts)
 {
@@ -534,8 +539,11 @@ SCIP_DECL_CONSDELETE(consDeleteEdgeConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Free rows
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_CONSEXITSOL(consExitsolEdgeConflicts)
 {
@@ -567,6 +575,7 @@ SCIP_DECL_CONSEXITSOL(consExitsolEdgeConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Transform constraint data into data belonging to the transformed problem
 static
@@ -618,6 +627,8 @@ SCIP_DECL_CONSTRANS(consTransEdgeConflicts)
 }
 
 // Feasibility check method for integral solutions
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_CONSCHECK(consCheckEdgeConflicts)
 {
@@ -646,8 +657,11 @@ SCIP_DECL_CONSCHECK(consCheckEdgeConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Constraint enforcing method for LP solutions
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_CONSENFOLP(consEnfolpEdgeConflicts)
 {
@@ -675,8 +689,11 @@ SCIP_DECL_CONSENFOLP(consEnfolpEdgeConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Constraint enforcing method for pseudo solutions
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_CONSENFOPS(consEnfopsEdgeConflicts)
 {
@@ -704,8 +721,11 @@ SCIP_DECL_CONSENFOPS(consEnfopsEdgeConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Separation method for LP solutions
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_CONSSEPALP(consSepalpEdgeConflicts)
 {
@@ -733,8 +753,11 @@ SCIP_DECL_CONSSEPALP(consSepalpEdgeConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Separation method for arbitrary primal solutions
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_CONSSEPASOL(consSepasolEdgeConflicts)
 {
@@ -763,8 +786,11 @@ SCIP_DECL_CONSSEPASOL(consSepasolEdgeConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Variable rounding lock method of constraint handler
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_CONSLOCK(consLockEdgeConflicts)
 {
@@ -788,8 +814,11 @@ SCIP_DECL_CONSLOCK(consLockEdgeConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Copying constraint of constraint handler
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_CONSCOPY(consCopyEdgeConflicts)
 {
@@ -831,6 +860,7 @@ SCIP_DECL_CONSCOPY(consCopyEdgeConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Creates constraint handler for edge conflicts constraints and include it in SCIP
 SCIP_RETCODE SCIPincludeConshdlrEdgeConflicts(

@@ -89,6 +89,8 @@ SCIP_RETCODE SCIPvardataCreate(
 }
 
 // Free variable data of transformed variable
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_VARDELTRANS(vardataDelTrans)
 {
@@ -103,6 +105,7 @@ SCIP_DECL_VARDELTRANS(vardataDelTrans)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Create variable
 SCIP_RETCODE SCIPcreateVar(

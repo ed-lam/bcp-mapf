@@ -287,6 +287,8 @@ SCIP_RETCODE agentwaitedge_conflicts_separate(
 }
 
 // Copy method for separator
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_SEPACOPY(sepaCopyAgentWaitEdgeConflicts)
 {
@@ -302,8 +304,11 @@ SCIP_DECL_SEPACOPY(sepaCopyAgentWaitEdgeConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Separation method for LP solutions
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_SEPAEXECLP(sepaExeclpAgentWaitEdgeConflicts)
 {
@@ -322,6 +327,7 @@ SCIP_DECL_SEPAEXECLP(sepaExeclpAgentWaitEdgeConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Create separator for agent wait-edge conflicts constraints and include it in SCIP
 SCIP_RETCODE SCIPincludeSepaAgentWaitEdgeConflicts(

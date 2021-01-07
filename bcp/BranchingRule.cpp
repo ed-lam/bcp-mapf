@@ -35,6 +35,8 @@ Author: Edward Lam <ed@ed-lam.com>
 #define BRANCHRULE_MAXBOUNDDIST                      1.0
 
 // Branching execution method for fractional LP solutions
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_BRANCHEXECLP(branchExeclpMAPF)
 {
@@ -47,6 +49,7 @@ SCIP_DECL_BRANCHEXECLP(branchExeclpMAPF)
     // Branch.
     return branch_lp(scip, result);
 }
+#pragma GCC diagnostic pop
 
 // Branching execution method for pseudosolutions (integer solutions)
 //static

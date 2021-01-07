@@ -331,6 +331,8 @@ SCIP_RETCODE goal_conflicts_separate(
 }
 
 // Copy method for separator
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_SEPACOPY(sepaCopyGoalConflicts)
 {
@@ -391,8 +393,11 @@ SCIP_DECL_SEPAFREE(sepaFreeGoalConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Separation method for LP solutions
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 static
 SCIP_DECL_SEPAEXECLP(sepaExeclpGoalConflicts)
 {
@@ -411,6 +416,7 @@ SCIP_DECL_SEPAEXECLP(sepaExeclpGoalConflicts)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Create separator for goal conflicts constraints and include it in SCIP
 SCIP_RETCODE SCIPincludeSepaGoalConflicts(
