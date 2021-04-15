@@ -100,10 +100,10 @@ class EdgePenalties
     }
 
     // Reset for next run
-//    inline void reset()
-//    {
-//        edge_penalties_.clear();
-//    }
+    inline void reset()
+    {
+        edge_penalties_.clear();
+    }
 
     // Debug
     void print()

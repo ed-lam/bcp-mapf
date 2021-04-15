@@ -123,9 +123,26 @@ SCIP_DECL_PROBTRANS(probtrans)
     (*targetdata)->pricerdata = sourcedata->pricerdata;
     (*targetdata)->astar = sourcedata->astar;
 
-    // Allocate memory for variables.
-    debug_assert(sourcedata->vars.empty());
+    // Copy agent path variables.
+    (*targetdata)->vars.resize(sourcedata->vars.size());
     (*targetdata)->vars.reserve(N * 5000);
+    (*targetdata)->agent_vars.resize(N);
+    for (Agent a = 0; a < N; ++a)
+    {
+        (*targetdata)->agent_vars[a].reserve(5000);
+    }
+    SCIP_CALL(SCIPtransformVars(scip,
+                                sourcedata->vars.size(),
+                                sourcedata->vars.data(),
+                                (*targetdata)->vars.data()));
+    for (auto var : (*targetdata)->vars)
+    {
+        debug_assert(var);
+        auto vardata = SCIPvarGetData(var);
+        const auto a = SCIPvardataGetAgent(vardata);
+
+        (*targetdata)->agent_vars[a].push_back(var);
+    }
 
     // Copy dummy variables.
     debug_assert(static_cast<Agent>(sourcedata->dummy_vars.size()) == N);
@@ -134,14 +151,6 @@ SCIP_DECL_PROBTRANS(probtrans)
                                 N,
                                 sourcedata->dummy_vars.data(),
                                 (*targetdata)->dummy_vars.data()));
-
-    // Allocate memory for variables for agents.
-    debug_assert(sourcedata->agent_vars.empty());
-    (*targetdata)->agent_vars.resize(N);
-    for (Agent a = 0; a < N; ++a)
-    {
-        (*targetdata)->agent_vars[a].reserve(5000);
-    }
 
     // Copy agent partition constraints.
     debug_assert(static_cast<Agent>(sourcedata->agent_part.size()) == N);
@@ -204,6 +213,10 @@ SCIP_DECL_PROBTRANS(probtrans)
     debug_assert(sourcedata->goal_conflicts);
     (*targetdata)->goal_conflicts = sourcedata->goal_conflicts;
 #endif
+
+    // Create a warm-start solution.
+    release_assert(SCIPgetProbData(scip) == *targetdata, "Error in transforming problem");
+    SCIP_CALL(add_initial_solution(scip));
 
     // Done.
     return SCIP_OKAY;
@@ -358,6 +371,150 @@ SCIP_RETCODE SCIPprobdataAddDummyVar(
     // Store variable in dummy variables array.
     debug_assert(a < static_cast<Agent>(probdata->dummy_vars.size()));
     probdata->dummy_vars[a] = *var;
+
+    // Done.
+    return SCIP_OKAY;
+}
+
+// Add a new variable for an warm-start solution
+SCIP_RETCODE SCIPprobdataAddInitialVar(
+    SCIP* scip,                 // SCIP
+    SCIP_ProbData* probdata,    // Problem data
+    const Agent a,              // Agent
+    const Time path_length,     // Path length
+    const Edge* const path,     // Path
+    SCIP_VAR** var              // Output new variable
+)
+{
+    // Check.
+    debug_assert(var);
+    debug_assert(path);
+
+    // Check that the path doesn't already exist.
+#ifdef DEBUG
+    for (auto var : probdata->agent_vars.at(a))
+    {
+        debug_assert(var);
+        auto vardata = SCIPvarGetData(var);
+        const auto existing_path_length = SCIPvardataGetPathLength(vardata);
+        const auto existing_path = SCIPvardataGetPath(vardata);
+        release_assert(!std::equal(path,
+                                   path + path_length,
+                                   existing_path,
+                                   existing_path + existing_path_length),
+                       "Path {} already exists for agent {} with value {}",
+                       format_path(probdata, path_length, path),
+                       a,
+                       SCIPgetSolVal(scip, nullptr, var));
+    }
+#endif
+
+    // Create variable data.
+    SCIP_VarData* vardata = nullptr;
+    SCIP_CALL(SCIPvardataCreate(scip, a, path_length, path, &vardata));
+    debug_assert(vardata);
+
+    // Calculate column cost.
+    const SCIP_Real obj = path_length - 1;
+
+    // Create and add variable.
+#ifdef MAKE_NAMES
+    const auto name = fmt::format("path({},({}))",
+                                  a, format_path(probdata, path_length, path)).substr(0, 255);
+#endif
+    SCIP_CALL(SCIPcreateVar(scip,
+                            var,
+#ifdef MAKE_NAMES
+        name.c_str(),
+#else
+                            "",
+#endif
+                            obj,
+                            vardata));
+    debug_assert(*var);
+    SCIP_CALL(SCIPaddVar(scip, *var));
+
+    // Print.
+    debugln("      Adding column with obj {:4.0f}, agent {:2d}, path {}",
+            obj, a, format_path_spaced(probdata, path_length, path));
+
+    // Change the upper bound of the binary variable to lazy since the upper bound is
+    // already enforced due to the objective function the set covering constraint. The
+    // reason for doing is that, is to avoid the bound of x <= 1 in the LP relaxation
+    // since this bound constraint would produce a dual variable which might have a
+    // positive reduced cost.
+    SCIP_CALL(SCIPchgVarUbLazy(scip, *var, 1.0));
+
+    // Add coefficient to agent partition constraint.
+//    debug_assert(SCIPconsIsEnabled(probdata->agent_part[a]));
+    SCIP_CALL(SCIPaddCoefSetppc(scip, probdata->agent_part[a], *var));
+
+    // Add coefficient to vertex conflicts constraints.
+    SCIP_CALL(vertex_conflicts_add_var(scip,
+                                       probdata->vertex_conflicts,
+                                       *var,
+                                       path_length,
+                                       path));
+
+    // Add coefficient to edge conflicts constraints.
+    SCIP_CALL(edge_conflicts_add_var(scip,
+                                     probdata->edge_conflicts,
+                                     *var,
+                                     path_length,
+                                     path));
+
+    // Add coefficients to two-agent robust cuts.
+    for (const auto& cut : probdata->two_agent_robust_cuts)
+    {
+        // Calculate the coefficient.
+        SCIP_Real coeff = 0.0;
+        if (a == cut.a1() || a == cut.a2())
+        {
+            if (cut.is_same_time())
+            {
+                const auto t = cut.t();
+                for (auto [it, end] = cut.edges(a); it != end; ++it)
+                {
+                    const auto e = *it;
+                    coeff += (t < path_length && path[t] == e);
+                }
+            }
+            else
+            {
+                for (auto [it, end] = cut.edge_times(a); it != end; ++it)
+                {
+                    const auto [e, t] = it->et;
+                    coeff += (t < path_length && path[t] == e);
+                }
+            }
+        }
+
+        // Add variable to the cut.
+        if (coeff)
+        {
+            SCIP_CALL(SCIPaddVarToRow(scip, cut.row(), *var, coeff));
+        }
+    }
+
+    // Add coefficient to goal conflicts constraints.
+#ifdef USE_GOAL_CONFLICTS
+    SCIP_CALL(goal_conflicts_add_var(scip,
+                                     probdata->goal_conflicts,
+                                     *var,
+                                     a,
+                                     path_length,
+                                     path));
+#endif
+
+    // Store variable in array of all variables.
+    probdata->vars.push_back(*var);
+
+    // Store variable in agent variables array.
+    debug_assert(a < static_cast<Agent>(probdata->agent_vars.size()));
+    probdata->agent_vars[a].push_back(*var);
+
+    // Capture variable again. Previously captured in addVar.
+    SCIP_CALL(SCIPcaptureVar(scip, *var));
 
     // Done.
     return SCIP_OKAY;

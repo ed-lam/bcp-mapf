@@ -36,6 +36,16 @@ SCIP_RETCODE SCIPprobdataCreate(
     SharedPtr<AStar>& astar           // Search algorithm
 );
 
+// Add a new variable for an warm-start solution
+SCIP_RETCODE SCIPprobdataAddInitialVar(
+    SCIP* scip,                 // SCIP
+    SCIP_ProbData* probdata,    // Problem data
+    const Agent a,              // Agent
+    const Time path_length,     // Path length
+    const Edge* const path,     // Path
+    SCIP_VAR** var              // Output new variable
+);
+
 // Add a new variable from pricing
 SCIP_RETCODE SCIPprobdataAddPricedVar(
     SCIP* scip,                 // SCIP

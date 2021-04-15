@@ -34,4 +34,9 @@ SCIP_RETCODE SCIPpricerTruffleHogActivate(
     SCIP* scip    // SCIP
 );
 
+// Inject a warm-start solution
+SCIP_RETCODE add_initial_solution(
+    SCIP* scip    // SCIP
+);
+
 #endif

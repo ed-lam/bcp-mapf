@@ -1122,3 +1122,72 @@ SCIP_RETCODE SCIPpricerTruffleHogActivate(
     // Done.
     return SCIP_OKAY;
 }
+
+// Inject a warm-start solution
+SCIP_RETCODE add_initial_solution(
+    SCIP* scip    // SCIP
+)
+{
+    // Get problem data.
+    auto probdata = SCIPgetProbData(scip);
+    const auto N = SCIPprobdataGetN(probdata);
+    const auto& map = SCIPprobdataGetMap(probdata);
+    const auto& agents = SCIPprobdataGetAgentsData(probdata);
+
+    // Get shortest path solver.
+    auto& astar = SCIPprobdataGetAStar(probdata);
+    auto& restab = astar.reservation_table();
+    auto& edge_penalties = astar.edge_penalties();
+    restab.clear_reservations();
+#ifdef USE_GOAL_CONFLICTS
+    auto& goal_crossings = astar.goal_crossings();
+    release_assert(goal_crossings.empty(), "Cannot have goal crossings in warm-start solution");
+#endif
+    static_assert(std::numeric_limits<Cost>::has_quiet_NaN);
+
+    // Find a path for each agent.
+    for (Agent a = 0; a < N; ++a)
+    {
+        // Set edge costs.
+        edge_penalties.reset();
+
+        // Solve.
+        const auto start = NodeTime{agents[a].start, 0};
+        const auto goal = agents[a].goal;
+        const Time earliest_finish = 0;
+        const Time latest_finish = astar.max_path_length() - 1;
+        const auto [segment, path_cost] = astar.solve<false>(start,
+                                                             goal,
+                                                             earliest_finish,
+                                                             latest_finish,
+                                                             std::numeric_limits<Cost>::max());
+
+        // Get the solution.
+        Vector<Edge> path;
+        for (auto it = segment.begin(); it != segment.end(); ++it)
+        {
+            const auto d = it != segment.end() - 1 ?
+                           get_direction(*it, *(it + 1), map) :
+                           Direction::INVALID;
+            path.push_back(Edge{it->n, d});
+        }
+
+        // Print.
+        debugln("      Found path with length {}, cost {:.6f} ({})",
+                path.size(),
+                path_cost,
+                format_path(probdata, path.size(), path.data()));
+
+        // Add column.
+        SCIP_VAR* var = nullptr;
+        SCIP_CALL(SCIPprobdataAddInitialVar(scip,
+                                            probdata,
+                                            a,
+                                            path.size(),
+                                            path.data(),
+                                            &var));
+        debug_assert(var);
+    }
+
+    return SCIP_OKAY;
+}
