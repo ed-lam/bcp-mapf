@@ -64,6 +64,9 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifdef USE_AGENTWAITEDGE_CONFLICTS
 #include "Separator_AgentWaitEdgeConflicts.h"
 #endif
+#ifdef USE_VERTEX_FOUREDGE_CONFLICTS
+#include "Separator_VertexFourEdgeConflicts.h"
+#endif
 #ifdef USE_GOAL_CONFLICTS
 #include "Separator_GoalConflicts.h"
 #endif
@@ -1115,6 +1118,11 @@ SCIP_RETCODE SCIPprobdataCreate(
     // Include separator for agent wait-edge conflicts.
 #ifdef USE_AGENTWAITEDGE_CONFLICTS
     SCIP_CALL(SCIPincludeSepaAgentWaitEdgeConflicts(scip));
+#endif
+
+    // Include separator for vertex four-edge conflicts.
+#ifdef USE_VERTEX_FOUREDGE_CONFLICTS
+    SCIP_CALL(SCIPincludeSepaVertexFourEdgeConflicts(scip));
 #endif
 
     // Include separator for goal conflicts.

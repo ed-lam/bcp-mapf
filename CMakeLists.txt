@@ -79,6 +79,8 @@ set(BCP_MAPF_SOURCE_FILES
     bcp/Separator_FiveEdgeConflicts.cpp
     bcp/Separator_AgentWaitEdgeConflicts.h
     bcp/Separator_AgentWaitEdgeConflicts.cpp
+    bcp/Separator_VertexFourEdgeConflicts.h
+    bcp/Separator_VertexFourEdgeConflicts.cpp
     bcp/Separator_GoalConflicts.h
     bcp/Separator_GoalConflicts.cpp
     bcp/BranchingRule.h
@@ -179,6 +181,7 @@ target_compile_options(bcp-mapf PRIVATE -DUSE_TWOEDGE_CONFLICTS)
 target_compile_options(bcp-mapf PRIVATE -DUSE_THREEVERTEX_CONFLICTS)
 target_compile_options(bcp-mapf PRIVATE -DUSE_FIVEEDGE_CONFLICTS)
 target_compile_options(bcp-mapf PRIVATE -DUSE_AGENTWAITEDGE_CONFLICTS)
+target_compile_options(bcp-mapf PRIVATE -DUSE_VERTEX_FOUREDGE_CONFLICTS)
 target_compile_options(bcp-mapf PRIVATE -DUSE_GOAL_CONFLICTS)
 
 # Set node selection options.
