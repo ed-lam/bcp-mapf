@@ -37,7 +37,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifdef USE_RECTANGLE_KNAPSACK_CONFLICTS
 #include "Separator_RectangleKnapsackConflicts.h"
 #endif
-#ifdef USE_CORRIDOR_CONFLICTS
+#if defined(USE_CORRIDOR_CONFLICTS) || defined(USE_LIFTED_CORRIDOR_CONFLICTS)
 #include "Separator_CorridorConflicts.h"
 #endif
 #ifdef USE_STEPASIDE_CONFLICTS
@@ -99,7 +99,7 @@ struct SCIP_ProbData
 #ifdef USE_RECTANGLE_KNAPSACK_CONFLICTS
     SCIP_SEPA* rectangle_knapsack_conflicts;                             // Separator for rectangle knapsack conflicts
 #endif
-#ifdef USE_CORRIDOR_CONFLICTS
+#if defined(USE_CORRIDOR_CONFLICTS) || defined(USE_LIFTED_CORRIDOR_CONFLICTS)
     SCIP_SEPA* corridor_conflicts;                                       // Separator for corridor conflicts
 #endif
 #ifdef USE_STEPASIDE_CONFLICTS
@@ -229,7 +229,7 @@ SCIP_DECL_PROBTRANS(probtrans)
 #endif
 
     // Copy separator for corridor conflicts.
-#ifdef USE_CORRIDOR_CONFLICTS
+#if defined(USE_CORRIDOR_CONFLICTS) || defined(USE_LIFTED_CORRIDOR_CONFLICTS)
     debug_assert(sourcedata->corridor_conflicts);
     (*targetdata)->corridor_conflicts = sourcedata->corridor_conflicts;
 #endif
@@ -1142,7 +1142,7 @@ SCIP_RETCODE SCIPprobdataCreate(
 #endif
 
     // Include separator for corridor conflicts.
-#ifdef USE_CORRIDOR_CONFLICTS
+#if defined(USE_CORRIDOR_CONFLICTS) || defined(USE_LIFTED_CORRIDOR_CONFLICTS)
     SCIP_CALL(SCIPincludeSepaCorridorConflicts(scip, &probdata->corridor_conflicts));
 #endif
 
@@ -1311,7 +1311,7 @@ SCIP_SEPA* SCIPprobdataGetRectangleKnapsackConflictsSepa(
 #endif
 
 // Get separator for corridor conflicts
-#ifdef USE_CORRIDOR_CONFLICTS
+#if defined(USE_CORRIDOR_CONFLICTS) || defined(USE_LIFTED_CORRIDOR_CONFLICTS)
 SCIP_SEPA* SCIPprobdataGetCorridorConflictsSepa(
     SCIP_ProbData* probdata    // Problem data
 )

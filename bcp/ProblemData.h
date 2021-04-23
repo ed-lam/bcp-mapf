@@ -110,7 +110,7 @@ SCIP_SEPA* SCIPprobdataGetRectangleKnapsackConflictsSepa(
 #endif
 
 // Get separator for corridor conflicts
-#ifdef USE_CORRIDOR_CONFLICTS
+#if defined(USE_CORRIDOR_CONFLICTS) || defined(USE_LIFTED_CORRIDOR_CONFLICTS)
 SCIP_SEPA* SCIPprobdataGetCorridorConflictsSepa(
     SCIP_ProbData* probdata    // Problem data
 );

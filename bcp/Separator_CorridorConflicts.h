@@ -17,7 +17,7 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#ifdef USE_CORRIDOR_CONFLICTS
+#if defined(USE_CORRIDOR_CONFLICTS) || defined(USE_LIFTED_CORRIDOR_CONFLICTS)
 
 #ifndef MAPF_SEPARATOR_CORRIDORCONFLICTS_H
 #define MAPF_SEPARATOR_CORRIDORCONFLICTS_H

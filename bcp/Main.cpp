@@ -103,8 +103,11 @@ SCIP_RETCODE start_solver(
 #ifdef USE_RECTANGLE_KNAPSACK_CONFLICTS
     println("Using rectangle knapsack conflict constraints");
 #endif
-#ifdef USE_CORRIDOR_CONFLICTS
+#if !defined(USE_LIFTED_CORRIDOR_CONFLICTS) && defined(USE_CORRIDOR_CONFLICTS)
     println("Using corridor conflict constraints");
+#endif
+#ifdef USE_LIFTED_CORRIDOR_CONFLICTS
+    println("Using lifted corridor conflict constraints");
 #endif
 #ifdef USE_STEPASIDE_CONFLICTS
     println("Using step-aside conflict constraints");
