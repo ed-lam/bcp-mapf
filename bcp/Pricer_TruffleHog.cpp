@@ -461,8 +461,8 @@ SCIP_RETCODE run_trufflehog_pricer(
     for (const auto [row, nt] : vertex_conflicts_conss)
     {
         const auto dual = is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row);
-        debug_assert(SCIPisLE(scip, dual, 0.0));
-        if (SCIPisLT(scip, dual, 0.0))
+        debug_assert(SCIPisFeasLE(scip, dual, 0.0));
+        if (SCIPisFeasLT(scip, dual, 0.0))
         {
             // Add the dual variable value to the edges leading into the vertex.
             const auto t = nt.t - 1;
@@ -498,8 +498,8 @@ SCIP_RETCODE run_trufflehog_pricer(
     for (const auto& [row, edges, t] : edge_conflicts_conss)
     {
         const auto dual = is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row);
-        debug_assert(SCIPisLE(scip, dual, 0.0));
-        if (SCIPisLT(scip, dual, 0.0))
+        debug_assert(SCIPisFeasLE(scip, dual, 0.0));
+        if (SCIPisFeasLT(scip, dual, 0.0))
         {
             // Add the dual variable value to the edges.
             for (const auto e : edges)
@@ -620,8 +620,8 @@ SCIP_RETCODE run_trufflehog_pricer(
                 const auto dual = is_farkas ?
                                   SCIProwGetDualfarkas(cut.row()) :
                                   SCIProwGetDualsol(cut.row());
-                debug_assert(SCIPisLE(scip, dual, 0.0));
-                if (SCIPisLT(scip, dual, 0.0))
+                debug_assert(SCIPisFeasLE(scip, dual, 0.0));
+                if (SCIPisFeasLT(scip, dual, 0.0))
                 {
                     // Add the dual variable value to the edges.
                     if (cut.is_same_time())
@@ -657,8 +657,8 @@ SCIP_RETCODE run_trufflehog_pricer(
                 const auto dual = is_farkas ?
                                   SCIProwGetDualfarkas(row) :
                                   SCIProwGetDualsol(row);
-                debug_assert(SCIPisLE(scip, dual, 0.0));
-                if (SCIPisLT(scip, dual, 0.0))
+                debug_assert(SCIPisFeasLE(scip, dual, 0.0));
+                if (SCIPisFeasLT(scip, dual, 0.0))
                 {
                     auto& goal = goal_crossings.emplace_back();
                     goal.dual = dual;
@@ -676,8 +676,8 @@ SCIP_RETCODE run_trufflehog_pricer(
                 const auto dual = is_farkas ?
                                   SCIProwGetDualfarkas(conflict.row) :
                                   SCIProwGetDualsol(conflict.row);
-                debug_assert(SCIPisLE(scip, dual, 0.0));
-                if (SCIPisLT(scip, dual, 0.0))
+                debug_assert(SCIPisFeasLE(scip, dual, 0.0));
+                if (SCIPisFeasLT(scip, dual, 0.0))
                 {
                     // Add a rectangle crossing penalty.
                     auto& rectangle = rectangle_crossings.emplace_back();
@@ -979,8 +979,8 @@ SCIP_RETCODE run_trufflehog_pricer(
                     const auto dual = is_farkas ?
                                       SCIProwGetDualfarkas(row) :
                                       SCIProwGetDualsol(row);
-                    debug_assert(SCIPisLE(scip, dual, 0.0));
-                    if (SCIPisLT(scip, dual, 0.0))
+                    debug_assert(SCIPisFeasLE(scip, dual, 0.0));
+                    if (SCIPisFeasLT(scip, dual, 0.0))
                     {
                         // Add the penalty if the a1 finishes before time t. The timestep of the
                         // conflict is accounted for in the global edge duals, so this loop has
@@ -1007,8 +1007,8 @@ SCIP_RETCODE run_trufflehog_pricer(
                     const auto dual = is_farkas ?
                                       SCIProwGetDualfarkas(row) :
                                       SCIProwGetDualsol(row);
-                    debug_assert(SCIPisLE(scip, dual, 0.0));
-                    if (SCIPisLT(scip, dual, 0.0))
+                    debug_assert(SCIPisFeasLE(scip, dual, 0.0));
+                    if (SCIPisFeasLT(scip, dual, 0.0))
                     {
                         if (static_cast<Time>(time_finish_penalties.size()) < nt.t + 1)
                         {
