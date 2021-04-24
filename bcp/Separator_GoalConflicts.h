@@ -27,31 +27,18 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "ProblemData.h"
 #include "scip/scip.h"
 
-struct GoalConflict
-{
-    SCIP_ROW* row;    // LP row
-    Agent a1;         // Agent of the goal
-    Agent a2;         // Agent trying to use the goal vertex
-    NodeTime nt;      // Node-time of the conflict
-};
-
 // Create separator for goal conflicts and include it
 SCIP_RETCODE SCIPincludeSepaGoalConflicts(
-    SCIP* scip,         // SCIP
-    SCIP_SEPA** sepa    // Output pointer to separator
+    SCIP* scip    // SCIP
 );
 
 SCIP_RETCODE goal_conflicts_add_var(
-    SCIP* scip,                // SCIP
-    SCIP_SEPA* sepa,           // Separator for goal conflicts
-    SCIP_VAR* var,             // Variable
-    const Agent a,             // Agent
-    const Time path_length,    // Path length
-    const Edge* const path     // Path
-);
-
-const Vector<GoalConflict>& goal_conflicts_get_constraints(
-    SCIP_ProbData* probdata    // Problem data
+    SCIP* scip,                              // SCIP
+    Vector<GoalConflict>& goal_conflicts,    // Goal conflicts
+    SCIP_VAR* var,                           // Variable
+    const Agent a,                           // Agent
+    const Time path_length,                  // Path length
+    const Edge* const path                   // Path
 );
 
 #endif

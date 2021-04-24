@@ -37,6 +37,9 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifdef USE_RECTANGLE_KNAPSACK_CONFLICTS
 #include "Separator_RectangleKnapsackConflicts.h"
 #endif
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+#include "Separator_RectangleCliqueConflicts.h"
+#endif
 #if defined(USE_CORRIDOR_CONFLICTS) || defined(USE_LIFTED_CORRIDOR_CONFLICTS)
 #include "Separator_CorridorConflicts.h"
 #endif
@@ -63,9 +66,6 @@ Author: Edward Lam <ed@ed-lam.com>
 #endif
 #ifdef USE_GOAL_CONFLICTS
 #include "Separator_GoalConflicts.h"
-#endif
-#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-#include "Separator_RectangleCliqueConflicts.h"
 #endif
 #include "BranchingRule.h"
 #include "Constraint_VertexBranching.h"
@@ -99,35 +99,11 @@ struct SCIP_ProbData
 #ifdef USE_RECTANGLE_KNAPSACK_CONFLICTS
     SCIP_SEPA* rectangle_knapsack_conflicts;                             // Separator for rectangle knapsack conflicts
 #endif
-#if defined(USE_CORRIDOR_CONFLICTS) || defined(USE_LIFTED_CORRIDOR_CONFLICTS)
-    SCIP_SEPA* corridor_conflicts;                                       // Separator for corridor conflicts
-#endif
-#ifdef USE_STEPASIDE_CONFLICTS
-    SCIP_SEPA* stepaside_conflicts;                                      // Separator for step-aside conflicts
-#endif
-#ifdef USE_WAITDELAY_CONFLICTS
-    SCIP_SEPA* waitdelay_conflicts;                                      // Separator for wait-delay conflicts
-#endif
-#ifdef USE_EXITENTRY_CONFLICTS
-    SCIP_SEPA* exitentry_conflicts;                                      // Separator for exit-entry conflicts
-#endif
-#ifdef USE_TWOEDGE_CONFLICTS
-    SCIP_SEPA* twoedge_conflicts;                                        // Separator for two-edge conflicts
-#endif
-#ifdef USE_THREEVERTEX_CONFLICTS
-    SCIP_SEPA* threevertex_conflicts;                                    // Separator for three-vertex conflicts
-#endif
-#ifdef USE_FIVEEDGE_CONFLICTS
-    SCIP_SEPA* fiveedge_conflicts;                                       // Separator for five-edge conflicts
-#endif
-#ifdef USE_AGENTWAITEDGE_CONFLICTS
-    SCIP_SEPA* agentwaitedge_conflicts;                                  // Separator for agent wait-edge conflicts
-#endif
-#ifdef USE_GOAL_CONFLICTS
-    SCIP_SEPA* goal_conflicts;                                           // Separator for goal conflicts
-#endif
 #ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
     SCIP_SEPA* rectangle_clique_conflicts;                               // Separator for rectangle clique conflicts
+#endif
+#ifdef USE_GOAL_CONFLICTS
+    Vector<GoalConflict> goal_conflicts;                                 // Goal conflicts
 #endif
 };
 
@@ -226,60 +202,6 @@ SCIP_DECL_PROBTRANS(probtrans)
 #ifdef USE_RECTANGLE_KNAPSACK_CONFLICTS
     debug_assert(sourcedata->rectangle_knapsack_conflicts);
     (*targetdata)->rectangle_knapsack_conflicts = sourcedata->rectangle_knapsack_conflicts;
-#endif
-
-    // Copy separator for corridor conflicts.
-#if defined(USE_CORRIDOR_CONFLICTS) || defined(USE_LIFTED_CORRIDOR_CONFLICTS)
-    debug_assert(sourcedata->corridor_conflicts);
-    (*targetdata)->corridor_conflicts = sourcedata->corridor_conflicts;
-#endif
-
-    // Copy separator for step-aside conflicts.
-#ifdef USE_STEPASIDE_CONFLICTS
-    debug_assert(sourcedata->stepaside_conflicts);
-    (*targetdata)->stepaside_conflicts = sourcedata->stepaside_conflicts;
-#endif
-
-    // Copy separator for wait-delay conflicts.
-#ifdef USE_WAITDELAY_CONFLICTS
-    debug_assert(sourcedata->waitdelay_conflicts);
-    (*targetdata)->waitdelay_conflicts = sourcedata->waitdelay_conflicts;
-#endif
-
-    // Copy separator for exit-entry conflicts.
-#ifdef USE_EXITENTRY_CONFLICTS
-    debug_assert(sourcedata->exitentry_conflicts);
-    (*targetdata)->exitentry_conflicts = sourcedata->exitentry_conflicts;
-#endif
-
-    // Copy separator for two-edge conflicts.
-#ifdef USE_TWOEDGE_CONFLICTS
-    debug_assert(sourcedata->twoedge_conflicts);
-    (*targetdata)->twoedge_conflicts = sourcedata->twoedge_conflicts;
-#endif
-
-    // Copy separator for three-vertex conflicts.
-#ifdef USE_THREEVERTEX_CONFLICTS
-    debug_assert(sourcedata->threevertex_conflicts);
-    (*targetdata)->threevertex_conflicts = sourcedata->threevertex_conflicts;
-#endif
-
-    // Copy separator for five-edge conflicts.
-#ifdef USE_FIVEEDGE_CONFLICTS
-    debug_assert(sourcedata->fiveedge_conflicts);
-    (*targetdata)->fiveedge_conflicts = sourcedata->fiveedge_conflicts;
-#endif
-
-    // Copy separator for agent wait-edge conflicts.
-#ifdef USE_AGENTWAITEDGE_CONFLICTS
-    debug_assert(sourcedata->agentwaitedge_conflicts);
-    (*targetdata)->agentwaitedge_conflicts = sourcedata->agentwaitedge_conflicts;
-#endif
-
-    // Copy separator for goal conflicts.
-#ifdef USE_GOAL_CONFLICTS
-    debug_assert(sourcedata->goal_conflicts);
-    (*targetdata)->goal_conflicts = sourcedata->goal_conflicts;
 #endif
 
     // Copy separator for rectangle clique conflicts.
@@ -397,6 +319,15 @@ SCIP_DECL_PROBEXITSOL(probexitsol)
         auto row = cut.row();
         SCIP_CALL(SCIPreleaseRow(scip, &row));
     }
+
+    // Free rows of goal conflicts.
+#ifdef USE_GOAL_CONFLICTS
+    for (auto& goal_conflict : probdata->goal_conflicts)
+    {
+        auto row = goal_conflict.row;
+        SCIP_CALL(SCIPreleaseRow(scip, &row));
+    }
+#endif
 
     // Done.
     return SCIP_OKAY;
@@ -717,16 +648,6 @@ SCIP_RETCODE SCIPprobdataAddPricedVar(
         }
     }
 
-    // Add coefficient to goal conflicts constraints.
-#ifdef USE_GOAL_CONFLICTS
-    SCIP_CALL(goal_conflicts_add_var(scip,
-                                     probdata->goal_conflicts,
-                                     *var,
-                                     a,
-                                     path_length,
-                                     path));
-#endif
-
     // Add coefficient to rectangle clique conflicts constraints.
 #ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
     SCIP_CALL(rectangle_clique_conflicts_add_var(scip,
@@ -735,6 +656,16 @@ SCIP_RETCODE SCIPprobdataAddPricedVar(
                                                  a,
                                                  path_length,
                                                  path));
+#endif
+
+    // Add coefficient to goal conflicts constraints.
+#ifdef USE_GOAL_CONFLICTS
+    SCIP_CALL(goal_conflicts_add_var(scip,
+                                     probdata->goal_conflicts,
+                                     *var,
+                                     a,
+                                     path_length,
+                                     path));
 #endif
 
     // Store variable in array of all variables.
@@ -1141,54 +1072,54 @@ SCIP_RETCODE SCIPprobdataCreate(
     SCIP_CALL(SCIPincludeSepaRectangleKnapsackConflicts(scip, &probdata->rectangle_knapsack_conflicts));
 #endif
 
+    // Include separator for rectangle clique conflicts.
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+    SCIP_CALL(SCIPincludeSepaRectangleCliqueConflicts(scip, &probdata->rectangle_clique_conflicts));
+#endif
+
     // Include separator for corridor conflicts.
 #if defined(USE_CORRIDOR_CONFLICTS) || defined(USE_LIFTED_CORRIDOR_CONFLICTS)
-    SCIP_CALL(SCIPincludeSepaCorridorConflicts(scip, &probdata->corridor_conflicts));
+    SCIP_CALL(SCIPincludeSepaCorridorConflicts(scip));
 #endif
 
     // Include separator for step-aside conflicts.
 #ifdef USE_STEPASIDE_CONFLICTS
-    SCIP_CALL(SCIPincludeSepaStepAsideConflicts(scip, &probdata->stepaside_conflicts));
+    SCIP_CALL(SCIPincludeSepaStepAsideConflicts(scip));
 #endif
 
     // Include separator for wait-delay conflicts.
 #ifdef USE_WAITDELAY_CONFLICTS
-    SCIP_CALL(SCIPincludeSepaWaitDelayConflicts(scip, &probdata->waitdelay_conflicts));
+    SCIP_CALL(SCIPincludeSepaWaitDelayConflicts(scip));
 #endif
 
     // Include separator for exit-entry conflicts.
 #ifdef USE_EXITENTRY_CONFLICTS
-    SCIP_CALL(SCIPincludeSepaExitEntryConflicts(scip, &probdata->exitentry_conflicts));
+    SCIP_CALL(SCIPincludeSepaExitEntryConflicts(scip));
 #endif
 
     // Include separator for two-edge conflicts.
 #ifdef USE_TWOEDGE_CONFLICTS
-    SCIP_CALL(SCIPincludeSepaTwoEdgeConflicts(scip, &probdata->twoedge_conflicts));
+    SCIP_CALL(SCIPincludeSepaTwoEdgeConflicts(scip));
 #endif
 
     // Include separator for three-vertex conflicts.
 #ifdef USE_THREEVERTEX_CONFLICTS
-    SCIP_CALL(SCIPincludeSepaThreeVertexConflicts(scip, &probdata->threevertex_conflicts));
+    SCIP_CALL(SCIPincludeSepaThreeVertexConflicts(scip));
 #endif
 
     // Include separator for five-edge conflicts.
 #ifdef USE_FIVEEDGE_CONFLICTS
-    SCIP_CALL(SCIPincludeSepaFiveEdgeConflicts(scip, &probdata->fiveedge_conflicts));
+    SCIP_CALL(SCIPincludeSepaFiveEdgeConflicts(scip));
 #endif
 
     // Include separator for agent wait-edge conflicts.
 #ifdef USE_AGENTWAITEDGE_CONFLICTS
-    SCIP_CALL(SCIPincludeSepaAgentWaitEdgeConflicts(scip, &probdata->agentwaitedge_conflicts));
+    SCIP_CALL(SCIPincludeSepaAgentWaitEdgeConflicts(scip));
 #endif
 
     // Include separator for goal conflicts.
 #ifdef USE_GOAL_CONFLICTS
-    SCIP_CALL(SCIPincludeSepaGoalConflicts(scip, &probdata->goal_conflicts));
-#endif
-
-    // Include separator for rectangle clique conflicts.
-#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-    SCIP_CALL(SCIPincludeSepaRectangleCliqueConflicts(scip, &probdata->rectangle_clique_conflicts));
+    SCIP_CALL(SCIPincludeSepaGoalConflicts(scip));
 #endif
 
     // Create dummy paths.
@@ -1310,114 +1241,6 @@ SCIP_SEPA* SCIPprobdataGetRectangleKnapsackConflictsSepa(
 }
 #endif
 
-// Get separator for corridor conflicts
-#if defined(USE_CORRIDOR_CONFLICTS) || defined(USE_LIFTED_CORRIDOR_CONFLICTS)
-SCIP_SEPA* SCIPprobdataGetCorridorConflictsSepa(
-    SCIP_ProbData* probdata    // Problem data
-)
-{
-    debug_assert(probdata);
-    debug_assert(probdata->corridor_conflicts);
-    return probdata->corridor_conflicts;
-}
-#endif
-
-// Get separator for step-aside conflicts
-#ifdef USE_STEPASIDE_CONFLICTS
-SCIP_SEPA* SCIPprobdataGetStepAsideConflictsSepa(
-    SCIP_ProbData* probdata    // Problem data
-)
-{
-    debug_assert(probdata);
-    debug_assert(probdata->stepaside_conflicts);
-    return probdata->stepaside_conflicts;
-}
-#endif
-
-// Get separator for wait-delay conflicts
-#ifdef USE_WAITDELAY_CONFLICTS
-SCIP_SEPA* SCIPprobdataGetWaitDelayConflictsSepa(
-    SCIP_ProbData* probdata    // Problem data
-)
-{
-    debug_assert(probdata);
-    debug_assert(probdata->waitdelay_conflicts);
-    return probdata->waitdelay_conflicts;
-}
-#endif
-
-// Get separator for exit-entry conflicts
-#ifdef USE_EXITENTRY_CONFLICTS
-SCIP_SEPA* SCIPprobdataGetExitEntryConflictsSepa(
-    SCIP_ProbData* probdata    // Problem data
-)
-{
-    debug_assert(probdata);
-    debug_assert(probdata->exitentry_conflicts);
-    return probdata->exitentry_conflicts;
-}
-#endif
-
-// Get separator for two-edge conflicts
-#ifdef USE_TWOEDGE_CONFLICTS
-SCIP_SEPA* SCIPprobdataGetTwoEdgeConflictsSepa(
-    SCIP_ProbData* probdata    // Problem data
-)
-{
-    debug_assert(probdata);
-    debug_assert(probdata->twoedge_conflicts);
-    return probdata->twoedge_conflicts;
-}
-#endif
-
-// Get separator for three-vertex conflicts
-#ifdef USE_THREEVERTEX_CONFLICTS
-SCIP_SEPA* SCIPprobdataGetThreeVertexConflictsSepa(
-    SCIP_ProbData* probdata    // Problem data
-)
-{
-    debug_assert(probdata);
-    debug_assert(probdata->threevertex_conflicts);
-    return probdata->threevertex_conflicts;
-}
-#endif
-
-// Get separator for five-edge conflicts
-#ifdef USE_FIVEEDGE_CONFLICTS
-SCIP_SEPA* SCIPprobdataGetFiveEdgeConflictsSepa(
-    SCIP_ProbData* probdata    // Problem data
-)
-{
-    debug_assert(probdata);
-    debug_assert(probdata->fiveedge_conflicts);
-    return probdata->fiveedge_conflicts;
-}
-#endif
-
-// Get separator for agent wait-edge conflicts
-#ifdef USE_AGENTWAITEDGE_CONFLICTS
-SCIP_SEPA* SCIPprobdataGetAgentWaitEdgeConflictsSepa(
-    SCIP_ProbData* probdata    // Problem data
-)
-{
-    debug_assert(probdata);
-    debug_assert(probdata->agentwaitedge_conflicts);
-    return probdata->agentwaitedge_conflicts;
-}
-#endif
-
-// Get separator for goal conflicts
-#ifdef USE_GOAL_CONFLICTS
-SCIP_SEPA* SCIPprobdataGetGoalConflictsSepa(
-    SCIP_ProbData* probdata    // Problem data
-)
-{
-    debug_assert(probdata);
-    debug_assert(probdata->goal_conflicts);
-    return probdata->goal_conflicts;
-}
-#endif
-
 // Get separator for rectangle clique conflicts
 #ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
 SCIP_SEPA* SCIPprobdataGetRectangleCliqueConflictsSepa(
@@ -1427,6 +1250,17 @@ SCIP_SEPA* SCIPprobdataGetRectangleCliqueConflictsSepa(
     debug_assert(probdata);
     debug_assert(probdata->rectangle_clique_conflicts);
     return probdata->rectangle_clique_conflicts;
+}
+#endif
+
+// Get goal conflicts
+#ifdef USE_GOAL_CONFLICTS
+Vector<GoalConflict>& SCIPprobdataGetGoalConflicts(
+    SCIP_ProbData* probdata    // Problem data
+)
+{
+    debug_assert(probdata);
+    return probdata->goal_conflicts;
 }
 #endif
 
@@ -2091,28 +1925,6 @@ void print_two_agent_robust_cuts_dual(
         }
     }
 }
-#ifdef USE_GOAL_CONFLICTS
-void print_goal_conflicts_dual(
-    SCIP* scip,             // SCIP
-    const bool is_farkas    // Indicates if the master problem is infeasible
-)
-{
-    auto probdata = SCIPgetProbData(scip);
-    const auto& conflicts = goal_conflicts_get_constraints(probdata);
-    for (const auto& goal_conflict : conflicts)
-    {
-        auto row = goal_conflict.row;
-        const auto row_dual =
-            SCIProwIsInLP(row) ?
-            (is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row)) :
-            0.0;
-        if (!SCIPisZero(scip, row_dual))
-        {
-            println("   Dual of {} = {:.4f}", SCIProwGetName(row), row_dual);
-        }
-    }
-}
-#endif
 #ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
 void print_rectangle_clique_conflicts_dual(
     SCIP* scip,             // SCIP
@@ -2124,6 +1936,28 @@ void print_rectangle_clique_conflicts_dual(
     for (const auto& rect_conflict : conflicts)
     {
         auto row = rect_conflict.row;
+        const auto row_dual =
+            SCIProwIsInLP(row) ?
+            (is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row)) :
+            0.0;
+        if (!SCIPisZero(scip, row_dual))
+        {
+            println("   Dual of {} = {:.4f}", SCIProwGetName(row), row_dual);
+        }
+    }
+}
+#endif
+#ifdef USE_GOAL_CONFLICTS
+void print_goal_conflicts_dual(
+    SCIP* scip,             // SCIP
+    const bool is_farkas    // Indicates if the master problem is infeasible
+)
+{
+    auto probdata = SCIPgetProbData(scip);
+    const auto& goal_conflicts = SCIPprobdataGetGoalConflicts(probdata);
+    for (const auto& goal_conflict : goal_conflicts)
+    {
+        auto row = goal_conflict.row;
         const auto row_dual =
             SCIProwIsInLP(row) ?
             (is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row)) :

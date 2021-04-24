@@ -27,8 +27,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 // Create separator for wait-delay conflicts and include it
 SCIP_RETCODE SCIPincludeSepaWaitDelayConflicts(
-    SCIP* scip,         // SCIP
-    SCIP_SEPA** sepa    // Output pointer to separator
+    SCIP* scip    // SCIP
 );
 
 #endif

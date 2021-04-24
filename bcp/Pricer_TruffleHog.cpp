@@ -289,7 +289,7 @@ SCIP_RETCODE run_trufflehog_pricer(
     // Get cuts.
     const auto& two_agent_robust_cuts = SCIPprobdataGetTwoAgentRobustCuts(probdata);
 #ifdef USE_GOAL_CONFLICTS
-    const auto& goal_conflicts_conss = goal_conflicts_get_constraints(probdata);
+    const auto& goal_conflicts = SCIPprobdataGetGoalConflicts(probdata);
 #endif
 #ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
     const auto& rectangle_clique_conflicts_conss = rectangle_clique_conflicts_get_constraints(probdata);
@@ -651,7 +651,7 @@ SCIP_RETCODE run_trufflehog_pricer(
         // Add goal crossings. If a2 uses the goal of a1 at or after time t, incur the penalty.
 #ifdef USE_GOAL_CONFLICTS
         goal_crossings.clear();
-        for (const auto& [row, a1, a2, nt] : goal_conflicts_conss)
+        for (const auto& [row, a1, a2, nt] : goal_conflicts)
             if (a == a2)
             {
                 const auto dual = is_farkas ?
@@ -999,7 +999,7 @@ SCIP_RETCODE run_trufflehog_pricer(
             // Modify edge costs for goal conflicts. If a1 finishes at or before time t, incur the
             // penalty.
 #ifdef USE_GOAL_CONFLICTS
-            for (const auto& [row, a1, a2, nt] : goal_conflicts_conss)
+            for (const auto& [row, a1, a2, nt] : goal_conflicts)
                 if (a == a1)
                 {
                     debug_assert(nt.n == goal);

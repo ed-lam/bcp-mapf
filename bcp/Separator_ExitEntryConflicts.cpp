@@ -210,8 +210,7 @@ SCIP_DECL_SEPACOPY(sepaCopyExitEntryConflicts)
     debug_assert(strcmp(SCIPsepaGetName(sepa), SEPA_NAME) == 0);
 
     // Include separator.
-    SCIP_SEPA* sepa_copy;
-    SCIP_CALL(SCIPincludeSepaExitEntryConflicts(scip, &sepa_copy));
+    SCIP_CALL(SCIPincludeSepaExitEntryConflicts(scip));
 
     // Done.
     return SCIP_OKAY;
@@ -243,18 +242,16 @@ SCIP_DECL_SEPAEXECLP(sepaExeclpExitEntryConflicts)
 
 // Create separator for exit-entry conflicts constraints and include it in SCIP
 SCIP_RETCODE SCIPincludeSepaExitEntryConflicts(
-    SCIP* scip,         // SCIP
-    SCIP_SEPA** sepa    // Output pointer to separator
+    SCIP* scip    // SCIP
 )
 {
     // Check.
     debug_assert(scip);
-    debug_assert(sepa);
 
     // Include separator.
-    *sepa = nullptr;
+    SCIP_Sepa* sepa = nullptr;
     SCIP_CALL(SCIPincludeSepaBasic(scip,
-                                   sepa,
+                                   &sepa,
                                    SEPA_NAME,
                                    SEPA_DESC,
                                    SEPA_PRIORITY,
@@ -265,10 +262,10 @@ SCIP_RETCODE SCIPincludeSepaExitEntryConflicts(
                                    sepaExeclpExitEntryConflicts,
                                    nullptr,
                                    nullptr));
-    debug_assert(*sepa);
+    debug_assert(sepa);
 
     // Set callbacks.
-    SCIP_CALL(SCIPsetSepaCopy(scip, *sepa, sepaCopyExitEntryConflicts));
+    SCIP_CALL(SCIPsetSepaCopy(scip, sepa, sepaCopyExitEntryConflicts));
 
     // Done.
     return SCIP_OKAY;

@@ -27,8 +27,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 // Create separator for corridor conflicts and include it
 SCIP_RETCODE SCIPincludeSepaCorridorConflicts(
-    SCIP* scip,         // SCIP
-    SCIP_SEPA** sepa    // Output pointer to separator
+    SCIP* scip    // SCIP
 );
 
 #endif

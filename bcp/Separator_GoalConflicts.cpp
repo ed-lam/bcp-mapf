@@ -33,22 +33,16 @@ Author: Edward Lam <ed@ed-lam.com>
 #define SEPA_USESSUBSCIP                              FALSE // does the separator use a secondary SCIP instance? */
 #define SEPA_DELAY                                    FALSE // should separation method be delayed, if other separators found cuts? */
 
-// Data for goal conflicts
-struct GoalConflictsSepaData
-{
-    Vector<GoalConflict> conflicts;
-};
-
 SCIP_RETCODE goal_conflicts_create_cut(
-    SCIP* scip,                          // SCIP
-    SCIP_SEPA* sepa,                     // Separator
-    GoalConflictsSepaData* sepadata,     // Separator data
-    const Agent a1,                      // Agent of the goal
-    const Agent a2,                      // Agent trying to use the goal vertex
-    const NodeTime nt,                   // Node-time of the conflict
-    const Vector<SCIP_VAR*>& a1_vars,    // Array of variables for agent 1
-    const Vector<SCIP_VAR*>& a2_vars,    // Array of variables for agent 2
-    SCIP_Result* result                  // Output result
+    SCIP* scip,                              // SCIP
+    SCIP_SEPA* sepa,                         // Separator
+    Vector<GoalConflict>& goal_conflicts,    // Goal conflicts
+    const Agent a1,                          // Agent of the goal
+    const Agent a2,                          // Agent trying to use the goal vertex
+    const NodeTime nt,                       // Node-time of the conflict
+    const Vector<SCIP_VAR*>& a1_vars,        // Array of variables for agent 1
+    const Vector<SCIP_VAR*>& a2_vars,        // Array of variables for agent 2
+    SCIP_Result* result                      // Output result
 )
 {
     // Create constraint name.
@@ -146,7 +140,7 @@ SCIP_RETCODE goal_conflicts_create_cut(
     }
 
     // Store the constraint.
-    sepadata->conflicts.push_back({row, a1, a2, nt});
+    goal_conflicts.push_back({row, a1, a2, nt});
 
     // Done.
     return SCIP_OKAY;
@@ -172,14 +166,11 @@ SCIP_RETCODE goal_conflicts_separate(
     print_used_paths(scip);
 #endif
 
-    // Get separator data.
-    auto sepadata = reinterpret_cast<GoalConflictsSepaData*>(SCIPsepaGetData(sepa));
-    debug_assert(sepadata);
-
     // Get problem data.
     auto probdata = SCIPgetProbData(scip);
     const auto N = SCIPprobdataGetN(probdata);
     const auto& agents = SCIPprobdataGetAgentsData(probdata);
+    auto& goal_conflicts = SCIPprobdataGetGoalConflicts(probdata);
 
     // Get variables.
     const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
@@ -314,7 +305,7 @@ SCIP_RETCODE goal_conflicts_separate(
                         // Create cut.
                         SCIP_CALL(goal_conflicts_create_cut(scip,
                                                             sepa,
-                                                            sepadata,
+                                                            goal_conflicts,
                                                             a1,
                                                             a2,
                                                             nt,
@@ -342,53 +333,7 @@ SCIP_DECL_SEPACOPY(sepaCopyGoalConflicts)
     debug_assert(strcmp(SCIPsepaGetName(sepa), SEPA_NAME) == 0);
 
     // Include separator.
-    SCIP_SEPA* sepa_copy;
-    SCIP_CALL(SCIPincludeSepaGoalConflicts(scip, &sepa_copy));
-
-    // Done.
-    return SCIP_OKAY;
-}
-
-// Free rows
-static
-SCIP_DECL_SEPAEXITSOL(sepaExitsolGoalConflicts)
-{
-    // Check.
-    debug_assert(scip);
-    debug_assert(sepa);
-    debug_assert(strcmp(SCIPsepaGetName(sepa), SEPA_NAME) == 0);
-
-    // Get separator data.
-    auto sepadata = reinterpret_cast<GoalConflictsSepaData*>(SCIPsepaGetData(sepa));
-    debug_assert(sepadata);
-
-    // Free row for each goal conflict.
-    for (auto& conflict : sepadata->conflicts)
-    {
-        SCIP_CALL(SCIPreleaseRow(scip, &conflict.row));
-    }
-    sepadata->conflicts.clear();
-
-    // Done.
-    return SCIP_OKAY;
-}
-
-// Free separator data
-static
-SCIP_DECL_SEPAFREE(sepaFreeGoalConflicts)
-{
-    // Check.
-    debug_assert(scip);
-    debug_assert(sepa);
-    debug_assert(strcmp(SCIPsepaGetName(sepa), SEPA_NAME) == 0);
-
-    // Get separator data.
-    auto sepadata = reinterpret_cast<GoalConflictsSepaData*>(SCIPsepaGetData(sepa));
-    debug_assert(sepadata);
-
-    // Free memory.
-    sepadata->~GoalConflictsSepaData();
-    SCIPfreeBlockMemory(scip, &sepadata);
+    SCIP_CALL(SCIPincludeSepaGoalConflicts(scip));
 
     // Done.
     return SCIP_OKAY;
@@ -420,25 +365,16 @@ SCIP_DECL_SEPAEXECLP(sepaExeclpGoalConflicts)
 
 // Create separator for goal conflicts constraints and include it in SCIP
 SCIP_RETCODE SCIPincludeSepaGoalConflicts(
-    SCIP* scip,         // SCIP
-    SCIP_SEPA** sepa    // Output pointer to separator
+    SCIP* scip    // SCIP
 )
 {
     // Check.
     debug_assert(scip);
-    debug_assert(sepa);
-
-    // Create separator data.
-    GoalConflictsSepaData* sepadata = nullptr;
-    SCIP_CALL(SCIPallocBlockMemory(scip, &sepadata));
-    debug_assert(sepadata);
-    new(sepadata) GoalConflictsSepaData;
-    sepadata->conflicts.reserve(500);
 
     // Include separator.
-    *sepa = nullptr;
+    SCIP_Sepa* sepa = nullptr;
     SCIP_CALL(SCIPincludeSepaBasic(scip,
-                                   sepa,
+                                   &sepa,
                                    SEPA_NAME,
                                    SEPA_DESC,
                                    SEPA_PRIORITY,
@@ -448,39 +384,31 @@ SCIP_RETCODE SCIPincludeSepaGoalConflicts(
                                    SEPA_DELAY,
                                    sepaExeclpGoalConflicts,
                                    nullptr,
-                                   reinterpret_cast<SCIP_SEPADATA*>(sepadata)));
-    debug_assert(*sepa);
+                                   nullptr));
+    debug_assert(sepa);
 
     // Set callbacks.
-    SCIP_CALL(SCIPsetSepaCopy(scip, *sepa, sepaCopyGoalConflicts));
-    SCIP_CALL(SCIPsetSepaFree(scip, *sepa, sepaFreeGoalConflicts));
-    SCIP_CALL(SCIPsetSepaExitsol(scip, *sepa, sepaExitsolGoalConflicts));
+    SCIP_CALL(SCIPsetSepaCopy(scip, sepa, sepaCopyGoalConflicts));
 
     // Done.
     return SCIP_OKAY;
 }
 
 SCIP_RETCODE goal_conflicts_add_var(
-    SCIP* scip,                 // SCIP
-    SCIP_SEPA* sepa,            // Separator for goal conflicts
-    SCIP_VAR* var,              // Variable
-    const Agent a,              // Agent
-    const Time path_length,     // Path length
-    const Edge* const path      // Path
+    SCIP* scip,                              // SCIP
+    Vector<GoalConflict>& goal_conflicts,    // Goal conflicts
+    SCIP_VAR* var,                           // Variable
+    const Agent a,                           // Agent
+    const Time path_length,                  // Path length
+    const Edge* const path                   // Path
 )
 {
-    // Get separator data.
-    debug_assert(sepa);
-    auto sepadata = reinterpret_cast<GoalConflictsSepaData*>(SCIPsepaGetData(sepa));
-    debug_assert(sepadata);
-    auto& conflicts = sepadata->conflicts;
-
     // Check.
     debug_assert(var);
     debug_assert(SCIPvarIsTransformed(var));
 
     // Add variable to constraints.
-    for (const auto& [row, a1, a2, nt] : conflicts)
+    for (const auto& [row, a1, a2, nt] : goal_conflicts)
     {
         if (a == a1)
         {
@@ -503,17 +431,6 @@ SCIP_RETCODE goal_conflicts_add_var(
 
     // Return.
     return SCIP_OKAY;
-}
-
-const Vector<GoalConflict>& goal_conflicts_get_constraints(
-    SCIP_ProbData* probdata    // Problem data
-)
-{
-    auto sepa = SCIPprobdataGetGoalConflictsSepa(probdata);
-    debug_assert(sepa);
-    auto sepadata = reinterpret_cast<GoalConflictsSepaData*>(SCIPsepaGetData(sepa));
-    debug_assert(sepadata);
-    return sepadata->conflicts;
 }
 
 #endif

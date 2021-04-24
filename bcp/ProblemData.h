@@ -28,6 +28,16 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "trufflehog/Instance.h"
 #include "trufflehog/AStar.h"
 
+#ifdef USE_GOAL_CONFLICTS
+struct GoalConflict
+{
+    SCIP_ROW* row;    // LP row
+    Agent a1;         // Agent of the goal
+    Agent a2;         // Agent trying to use the goal vertex
+    NodeTime nt;      // Node-time of the conflict
+};
+#endif
+
 // Create problem data
 SCIP_RETCODE SCIPprobdataCreate(
     SCIP* scip,                       // SCIP
@@ -109,72 +119,16 @@ SCIP_SEPA* SCIPprobdataGetRectangleKnapsackConflictsSepa(
 );
 #endif
 
-// Get separator for corridor conflicts
-#if defined(USE_CORRIDOR_CONFLICTS) || defined(USE_LIFTED_CORRIDOR_CONFLICTS)
-SCIP_SEPA* SCIPprobdataGetCorridorConflictsSepa(
-    SCIP_ProbData* probdata    // Problem data
-);
-#endif
-
-// Get separator for step-aside conflicts
-#ifdef USE_STEPASIDE_CONFLICTS
-SCIP_SEPA* SCIPprobdataGetStepAsideConflictsSepa(
-    SCIP_ProbData* probdata    // Problem data
-);
-#endif
-
-// Get separator for wait-delay conflicts
-#ifdef USE_WAITDELAY_CONFLICTS
-SCIP_SEPA* SCIPprobdataGetWaitDelayConflictsSepa(
-    SCIP_ProbData* probdata    // Problem data
-);
-#endif
-
-// Get separator for exit-entry conflicts
-#ifdef USE_EXITENTRY_CONFLICTS
-SCIP_SEPA* SCIPprobdataGetExitEntryConflictsSepa(
-    SCIP_ProbData* probdata    // Problem data
-);
-#endif
-
-// Get separator for two-edge conflicts
-#ifdef USE_TWOEDGE_CONFLICTS
-SCIP_SEPA* SCIPprobdataGetTwoEdgeConflictsSepa(
-    SCIP_ProbData* probdata    // Problem data
-);
-#endif
-
-// Get separator for three-vertex conflicts
-#ifdef USE_THREEVERTEX_CONFLICTS
-SCIP_SEPA* SCIPprobdataGetThreeVertexConflictsSepa(
-    SCIP_ProbData* probdata    // Problem data
-);
-#endif
-
-// Get separator for five-edge conflicts
-#ifdef USE_FIVEEDGE_CONFLICTS
-SCIP_SEPA* SCIPprobdataGetFiveEdgeConflictsSepa(
-    SCIP_ProbData* probdata    // Problem data
-);
-#endif
-
-// Get separator for agent wait-edge conflicts
-#ifdef USE_AGENTWAITEDGE_CONFLICTS
-SCIP_SEPA* SCIPprobdataGetAgentWaitEdgeConflictsSepa(
-    SCIP_ProbData* probdata    // Problem data
-);
-#endif
-
-// Get separator for goal conflicts
-#ifdef USE_GOAL_CONFLICTS
-SCIP_SEPA* SCIPprobdataGetGoalConflictsSepa(
-    SCIP_ProbData* probdata    // Problem data
-);
-#endif
-
 // Get separator for rectangle clique conflicts
 #ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
 SCIP_SEPA* SCIPprobdataGetRectangleCliqueConflictsSepa(
+    SCIP_ProbData* probdata    // Problem data
+);
+#endif
+
+// Get goal conflicts
+#ifdef USE_GOAL_CONFLICTS
+Vector<GoalConflict>& SCIPprobdataGetGoalConflicts(
     SCIP_ProbData* probdata    // Problem data
 );
 #endif
@@ -277,14 +231,14 @@ void print_two_agent_robust_cuts_dual(
     SCIP* scip,             // SCIP
     const bool is_farkas    // Indicates if the master problem is infeasible
 );
-#ifdef USE_GOAL_CONFLICTS
-void print_goal_conflicts_dual(
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+void print_rectangle_clique_conflicts_dual(
     SCIP* scip,             // SCIP
     const bool is_farkas    // Indicates if the master problem is infeasible
 );
 #endif
-#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-void print_rectangle_clique_conflicts_dual(
+#ifdef USE_GOAL_CONFLICTS
+void print_goal_conflicts_dual(
     SCIP* scip,             // SCIP
     const bool is_farkas    // Indicates if the master problem is infeasible
 );

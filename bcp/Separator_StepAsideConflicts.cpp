@@ -365,8 +365,7 @@ SCIP_DECL_SEPACOPY(sepaCopyStepAsideConflicts)
     debug_assert(strcmp(SCIPsepaGetName(sepa), SEPA_NAME) == 0);
 
     // Include separator.
-    SCIP_SEPA* sepa_copy;
-    SCIP_CALL(SCIPincludeSepaStepAsideConflicts(scip, &sepa_copy));
+    SCIP_CALL(SCIPincludeSepaStepAsideConflicts(scip));
 
     // Done.
     return SCIP_OKAY;
@@ -398,18 +397,16 @@ SCIP_DECL_SEPAEXECLP(sepaExeclpStepAsideConflicts)
 
 // Create separator for step-aside conflicts constraints and include it in SCIP
 SCIP_RETCODE SCIPincludeSepaStepAsideConflicts(
-    SCIP* scip,         // SCIP
-    SCIP_SEPA** sepa    // Output pointer to separator
+    SCIP* scip    // SCIP
 )
 {
     // Check.
     debug_assert(scip);
-    debug_assert(sepa);
 
     // Include separator.
-    *sepa = nullptr;
+    SCIP_Sepa* sepa = nullptr;
     SCIP_CALL(SCIPincludeSepaBasic(scip,
-                                   sepa,
+                                   &sepa,
                                    SEPA_NAME,
                                    SEPA_DESC,
                                    SEPA_PRIORITY,
@@ -420,10 +417,10 @@ SCIP_RETCODE SCIPincludeSepaStepAsideConflicts(
                                    sepaExeclpStepAsideConflicts,
                                    nullptr,
                                    nullptr));
-    debug_assert(*sepa);
+    debug_assert(sepa);
 
     // Set callbacks.
-    SCIP_CALL(SCIPsetSepaCopy(scip, *sepa, sepaCopyStepAsideConflicts));
+    SCIP_CALL(SCIPsetSepaCopy(scip, sepa, sepaCopyStepAsideConflicts));
 
     // Done.
     return SCIP_OKAY;

@@ -374,8 +374,7 @@ SCIP_DECL_SEPACOPY(sepaCopyCorridorConflicts)
     debug_assert(strcmp(SCIPsepaGetName(sepa), SEPA_NAME) == 0);
 
     // Include separator.
-    SCIP_SEPA* sepa_copy;
-    SCIP_CALL(SCIPincludeSepaCorridorConflicts(scip, &sepa_copy));
+    SCIP_CALL(SCIPincludeSepaCorridorConflicts(scip));
 
     // Done.
     return SCIP_OKAY;
@@ -407,18 +406,16 @@ SCIP_DECL_SEPAEXECLP(sepaExeclpCorridorConflicts)
 
 // Create separator for corridor conflicts constraints and include it in SCIP
 SCIP_RETCODE SCIPincludeSepaCorridorConflicts(
-    SCIP* scip,         // SCIP
-    SCIP_SEPA** sepa    // Output pointer to separator
+    SCIP* scip    // SCIP
 )
 {
     // Check.
     debug_assert(scip);
-    debug_assert(sepa);
 
     // Include separator.
-    *sepa = nullptr;
+    SCIP_Sepa* sepa = nullptr;
     SCIP_CALL(SCIPincludeSepaBasic(scip,
-                                   sepa,
+                                   &sepa,
                                    SEPA_NAME,
                                    SEPA_DESC,
                                    SEPA_PRIORITY,
@@ -429,10 +426,10 @@ SCIP_RETCODE SCIPincludeSepaCorridorConflicts(
                                    sepaExeclpCorridorConflicts,
                                    nullptr,
                                    nullptr));
-    debug_assert(*sepa);
+    debug_assert(sepa);
 
     // Set callbacks.
-    SCIP_CALL(SCIPsetSepaCopy(scip, *sepa, sepaCopyCorridorConflicts));
+    SCIP_CALL(SCIPsetSepaCopy(scip, sepa, sepaCopyCorridorConflicts));
 
     // Done.
     return SCIP_OKAY;

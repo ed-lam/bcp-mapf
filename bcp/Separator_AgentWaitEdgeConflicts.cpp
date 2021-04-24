@@ -298,8 +298,7 @@ SCIP_DECL_SEPACOPY(sepaCopyAgentWaitEdgeConflicts)
     debug_assert(strcmp(SCIPsepaGetName(sepa), SEPA_NAME) == 0);
 
     // Include separator.
-    SCIP_SEPA* sepa_copy;
-    SCIP_CALL(SCIPincludeSepaAgentWaitEdgeConflicts(scip, &sepa_copy));
+    SCIP_CALL(SCIPincludeSepaAgentWaitEdgeConflicts(scip));
 
     // Done.
     return SCIP_OKAY;
@@ -331,18 +330,16 @@ SCIP_DECL_SEPAEXECLP(sepaExeclpAgentWaitEdgeConflicts)
 
 // Create separator for agent wait-edge conflicts constraints and include it in SCIP
 SCIP_RETCODE SCIPincludeSepaAgentWaitEdgeConflicts(
-    SCIP* scip,         // SCIP
-    SCIP_SEPA** sepa    // Output pointer to separator
+    SCIP* scip    // SCIP
 )
 {
     // Check.
     debug_assert(scip);
-    debug_assert(sepa);
 
     // Include separator.
-    *sepa = nullptr;
+    SCIP_Sepa* sepa = nullptr;
     SCIP_CALL(SCIPincludeSepaBasic(scip,
-                                   sepa,
+                                   &sepa,
                                    SEPA_NAME,
                                    SEPA_DESC,
                                    SEPA_PRIORITY,
@@ -353,10 +350,10 @@ SCIP_RETCODE SCIPincludeSepaAgentWaitEdgeConflicts(
                                    sepaExeclpAgentWaitEdgeConflicts,
                                    nullptr,
                                    nullptr));
-    debug_assert(*sepa);
+    debug_assert(sepa);
 
     // Set callbacks.
-    SCIP_CALL(SCIPsetSepaCopy(scip, *sepa, sepaCopyAgentWaitEdgeConflicts));
+    SCIP_CALL(SCIPsetSepaCopy(scip, sepa, sepaCopyAgentWaitEdgeConflicts));
 
     // Done.
     return SCIP_OKAY;

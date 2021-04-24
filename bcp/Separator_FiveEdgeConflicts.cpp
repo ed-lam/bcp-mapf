@@ -254,8 +254,7 @@ SCIP_DECL_SEPACOPY(sepaCopyFiveEdgeConflicts)
     debug_assert(strcmp(SCIPsepaGetName(sepa), SEPA_NAME) == 0);
 
     // Include separator.
-    SCIP_SEPA* sepa_copy;
-    SCIP_CALL(SCIPincludeSepaFiveEdgeConflicts(scip, &sepa_copy));
+    SCIP_CALL(SCIPincludeSepaFiveEdgeConflicts(scip));
 
     // Done.
     return SCIP_OKAY;
@@ -287,18 +286,16 @@ SCIP_DECL_SEPAEXECLP(sepaExeclpFiveEdgeConflicts)
 
 // Create separator for five-edge conflicts constraints and include it in SCIP
 SCIP_RETCODE SCIPincludeSepaFiveEdgeConflicts(
-    SCIP* scip,         // SCIP
-    SCIP_SEPA** sepa    // Output pointer to separator
+    SCIP* scip    // SCIP
 )
 {
     // Check.
     debug_assert(scip);
-    debug_assert(sepa);
 
     // Include separator.
-    *sepa = nullptr;
+    SCIP_Sepa* sepa = nullptr;
     SCIP_CALL(SCIPincludeSepaBasic(scip,
-                                   sepa,
+                                   &sepa,
                                    SEPA_NAME,
                                    SEPA_DESC,
                                    SEPA_PRIORITY,
@@ -309,10 +306,10 @@ SCIP_RETCODE SCIPincludeSepaFiveEdgeConflicts(
                                    sepaExeclpFiveEdgeConflicts,
                                    nullptr,
                                    nullptr));
-    debug_assert(*sepa);
+    debug_assert(sepa);
 
     // Set callbacks.
-    SCIP_CALL(SCIPsetSepaCopy(scip, *sepa, sepaCopyFiveEdgeConflicts));
+    SCIP_CALL(SCIPsetSepaCopy(scip, sepa, sepaCopyFiveEdgeConflicts));
 
     // Done.
     return SCIP_OKAY;
