@@ -159,7 +159,6 @@ Edge get_reversed_undirected_edge(
 
 SCIP_RETCODE edge_conflicts_create_cut(
     SCIP* scip,                         // SCIP
-    const Map& map,                     // Map
     SCIP_CONS* cons,                    // Constraint
     EdgeConflictsConsData* consdata,    // Constraint data
     const Time t,                       // Time
@@ -174,6 +173,8 @@ SCIP_RETCODE edge_conflicts_create_cut(
 {
     // Create constraint name.
 #ifdef DEBUG
+    auto probdata = SCIPgetProbData(scip);
+    const auto& map = SCIPprobdataGetMap(probdata);
     const auto [x1, y1] = map.get_xy(edges[0].n);
     const auto [x2, y2] = map.get_destination_xy(edges[0]);
     const auto name = fmt::format("edge_conflict(({},{}),({},{}),{})", x1, y1, x2, y2, t);
@@ -262,7 +263,6 @@ SCIP_RETCODE edge_conflicts_create_cut(
 static
 SCIP_RETCODE edge_conflicts_check(
     SCIP* scip,                 // SCIP
-    SCIP_CONS* cons,            // Constraint
     SCIP_SOL* sol,              // Solution
     SCIP_RESULT* result         // Pointer to store the result
 )
@@ -270,10 +270,6 @@ SCIP_RETCODE edge_conflicts_check(
     // Print.
     debugln("Starting checker for edge conflicts on solution with obj {:.6f}:",
             SCIPgetSolOrigObj(scip, sol));
-
-    // Get constraint data.
-    auto consdata = reinterpret_cast<EdgeConflictsConsData*>(SCIPconsGetData(cons));
-    debug_assert(consdata);
 
     // Get problem data.
     auto probdata = SCIPgetProbData(scip);
@@ -480,7 +476,6 @@ SCIP_RETCODE edge_conflicts_separate(
 
             // Create cut.
             SCIP_CALL(edge_conflicts_create_cut(scip,
-                                                map,
                                                 cons,
                                                 consdata,
                                                 t,
@@ -642,17 +637,9 @@ SCIP_DECL_CONSCHECK(consCheckEdgeConflicts)
     // Start.
     *result = SCIP_FEASIBLE;
 
-    // Loop through all constraints.
-    for (Int c = 0; c < nconss; ++c)
-    {
-        // Get constraint.
-        auto cons = conss[c];
-        debug_assert(cons);
-
-        // Start checker.
-        debug_assert(sol);
-        SCIP_CALL(edge_conflicts_check(scip, cons, sol, result));
-    }
+    // Start checker.
+    debug_assert(sol);
+    SCIP_CALL(edge_conflicts_check(scip, sol, result));
 
     // Done.
     return SCIP_OKAY;
@@ -675,16 +662,13 @@ SCIP_DECL_CONSENFOLP(consEnfolpEdgeConflicts)
     // Start.
     *result = SCIP_FEASIBLE;
 
-    // Loop through all constraints.
-    for (Int c = 0; c < nconss; ++c)
-    {
-        // Get constraint.
-        auto cons = conss[c];
-        debug_assert(cons);
+    // Get constraint.
+    debug_assert(nconss == 1);
+    auto cons = conss[0];
+    debug_assert(cons);
 
-        // Start separator.
-        SCIP_CALL(edge_conflicts_separate(scip, cons, nullptr, result));
-    }
+    // Start separator.
+    SCIP_CALL(edge_conflicts_separate(scip, cons, nullptr, result));
 
     // Done.
     return SCIP_OKAY;
@@ -707,16 +691,8 @@ SCIP_DECL_CONSENFOPS(consEnfopsEdgeConflicts)
     // Start.
     *result = SCIP_FEASIBLE;
 
-    // Loop through all constraints.
-    for (Int c = 0; c < nconss; ++c)
-    {
-        // Get constraint.
-        auto cons = conss[c];
-        debug_assert(cons);
-
-        // Start separator.
-        SCIP_CALL(edge_conflicts_check(scip, cons, nullptr, result));
-    }
+    // Start checker.
+    SCIP_CALL(edge_conflicts_check(scip, nullptr, result));
 
     // Done.
     return SCIP_OKAY;
@@ -739,16 +715,13 @@ SCIP_DECL_CONSSEPALP(consSepalpEdgeConflicts)
     // Start.
     *result = SCIP_DIDNOTFIND;
 
-    // Loop through all constraints.
-    for (Int c = 0; c < nconss; ++c)
-    {
-        // Get constraint.
-        auto cons = conss[c];
-        debug_assert(cons);
+    // Get constraint.
+    debug_assert(nconss == 1);
+    auto cons = conss[0];
+    debug_assert(cons);
 
-        // Start separator.
-        SCIP_CALL(edge_conflicts_separate(scip, cons, nullptr, result));
-    }
+    // Start separator.
+    SCIP_CALL(edge_conflicts_separate(scip, cons, nullptr, result));
 
     // Done.
     return SCIP_OKAY;
@@ -771,17 +744,14 @@ SCIP_DECL_CONSSEPASOL(consSepasolEdgeConflicts)
     // Start.
     *result = SCIP_DIDNOTFIND;
 
-    // Loop through all constraints.
-    for (Int c = 0; c < nconss; ++c)
-    {
-        // Get constraint.
-        auto cons = conss[c];
-        debug_assert(cons);
+    // Get constraint.
+    debug_assert(nconss == 1);
+    auto cons = conss[0];
+    debug_assert(cons);
 
-        // Start separator.
-        debug_assert(sol);
-        SCIP_CALL(edge_conflicts_separate(scip, cons, sol, result));
-    }
+    // Start separator.
+    debug_assert(sol);
+    SCIP_CALL(edge_conflicts_separate(scip, cons, sol, result));
 
     // Done.
     return SCIP_OKAY;

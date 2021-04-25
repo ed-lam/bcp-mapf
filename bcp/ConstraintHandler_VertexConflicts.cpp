@@ -199,7 +199,6 @@ SCIP_RETCODE vertex_conflicts_create_cut(
 static
 SCIP_RETCODE vertex_conflicts_check(
     SCIP* scip,            // SCIP
-    SCIP_CONS* cons,       // Constraint
     SCIP_SOL* sol,         // Solution
     SCIP_RESULT* result    // Pointer to store the result
 )
@@ -207,10 +206,6 @@ SCIP_RETCODE vertex_conflicts_check(
     // Print.
     debugln("Starting checker for vertex conflicts on solution with obj {:.6f}:",
             SCIPgetSolOrigObj(scip, sol));
-
-    // Get constraint data.
-    auto consdata = reinterpret_cast<VertexConflictsConsData*>(SCIPconsGetData(cons));
-    debug_assert(consdata);
 
     // Get problem data.
     auto probdata = SCIPgetProbData(scip);
@@ -537,17 +532,9 @@ SCIP_DECL_CONSCHECK(consCheckVertexConflicts)
     // Start.
     *result = SCIP_FEASIBLE;
 
-    // Loop through all constraints.
-    for (Int c = 0; c < nconss; ++c)
-    {
-        // Get constraint.
-        auto cons = conss[c];
-        debug_assert(cons);
-
-        // Start checker.
-        debug_assert(sol);
-        SCIP_CALL(vertex_conflicts_check(scip, cons, sol, result));
-    }
+    // Start checker.
+    debug_assert(sol);
+    SCIP_CALL(vertex_conflicts_check(scip, sol, result));
 
     // Done.
     return SCIP_OKAY;
@@ -570,16 +557,13 @@ SCIP_DECL_CONSENFOLP(consEnfolpVertexConflicts)
     // Start.
     *result = SCIP_FEASIBLE;
 
-    // Loop through all constraints.
-    for (Int c = 0; c < nconss; ++c)
-    {
-        // Get constraint.
-        auto cons = conss[c];
-        debug_assert(cons);
+    // Get constraint.
+    debug_assert(nconss == 1);
+    auto cons = conss[0];
+    debug_assert(cons);
 
-        // Start separator.
-        SCIP_CALL(vertex_conflicts_separate(scip, cons, nullptr, result));
-    }
+    // Start separator.
+    SCIP_CALL(vertex_conflicts_separate(scip, cons, nullptr, result));
 
     // Done.
     return SCIP_OKAY;
@@ -602,16 +586,8 @@ SCIP_DECL_CONSENFOPS(consEnfopsVertexConflicts)
     // Start.
     *result = SCIP_FEASIBLE;
 
-    // Loop through all constraints.
-    for (Int c = 0; c < nconss; ++c)
-    {
-        // Get constraint.
-        auto cons = conss[c];
-        debug_assert(cons);
-
-        // Start separator.
-        SCIP_CALL(vertex_conflicts_check(scip, cons, nullptr, result));
-    }
+    // Start checker.
+    SCIP_CALL(vertex_conflicts_check(scip, nullptr, result));
 
     // Done.
     return SCIP_OKAY;
@@ -634,16 +610,13 @@ SCIP_DECL_CONSSEPALP(consSepalpVertexConflicts)
     // Start.
     *result = SCIP_DIDNOTFIND;
 
-    // Loop through all constraints.
-    for (Int c = 0; c < nconss; ++c)
-    {
-        // Get constraint.
-        auto cons = conss[c];
-        debug_assert(cons);
+    // Get constraint.
+    debug_assert(nconss == 1);
+    auto cons = conss[0];
+    debug_assert(cons);
 
-        // Start separator.
-        SCIP_CALL(vertex_conflicts_separate(scip, cons, nullptr, result));
-    }
+    // Start separator.
+    SCIP_CALL(vertex_conflicts_separate(scip, cons, nullptr, result));
 
     // Done.
     return SCIP_OKAY;
@@ -666,17 +639,14 @@ SCIP_DECL_CONSSEPASOL(consSepasolVertexConflicts)
     // Start.
     *result = SCIP_DIDNOTFIND;
 
-    // Loop through all constraints.
-    for (Int c = 0; c < nconss; ++c)
-    {
-        // Get constraint.
-        auto cons = conss[c];
-        debug_assert(cons);
+    // Get constraint.
+    debug_assert(nconss == 1);
+    auto cons = conss[0];
+    debug_assert(cons);
 
-        // Start separator.
-        debug_assert(sol);
-        SCIP_CALL(vertex_conflicts_separate(scip, cons, sol, result));
-    }
+    // Start separator.
+    debug_assert(sol);
+    SCIP_CALL(vertex_conflicts_separate(scip, cons, sol, result));
 
     // Done.
     return SCIP_OKAY;
