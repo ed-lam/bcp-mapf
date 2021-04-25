@@ -127,6 +127,9 @@ SCIP_RETCODE start_solver(
 #ifdef USE_FIVEEDGE_CONFLICTS
     println("Using five-edge conflict constraints");
 #endif
+#ifdef USE_SIXEDGE_CONFLICTS
+    println("Using six-edge conflict constraints");
+#endif
 #ifdef USE_AGENTWAITEDGE_CONFLICTS
     println("Using agent wait-edge conflict constraints");
 #endif
