@@ -41,12 +41,12 @@ SCIP_RETCODE agentwaitedge_conflicts_create_cut(
     const Agent a2,             // Agent 2
     const EdgeTime a1_et1,      // Edge 1 of agent 1
     const EdgeTime a1_et2,      // Edge 2 of agent 1
-    const EdgeTime a1_et3,      // Edge 3 of agent 1
-    const EdgeTime a1_et4,      // Edge 4 of agent 1
-    const EdgeTime a1_et5,      // Edge 5 of agent 1
-    const EdgeTime a1_et6,      // Edge 6 of agent 1
-    const EdgeTime a2_et1,      // Edge 1 of other agents
-    const EdgeTime a2_et2,      // Edge 2 of other agents
+    const EdgeTime a2_et1,      // Edge 1 of agent 2
+    const EdgeTime a2_et2,      // Edge 2 of agent 2
+    const EdgeTime a2_et3,      // Edge 3 of agent 2
+    const EdgeTime a2_et4,      // Edge 4 of agent 2
+    const EdgeTime a2_et5,      // Edge 5 of agent 2
+    const EdgeTime a2_et6,      // Edge 6 of agent 2
     SCIP_Result* result         // Output result
 )
 {
@@ -58,6 +58,7 @@ SCIP_RETCODE agentwaitedge_conflicts_create_cut(
     const auto [a1_et1_x2, a1_et1_y2] = map.get_destination_xy(a1_et1.et.e);
 
     const auto [a1_et2_x1, a1_et2_y1] = map.get_xy(a1_et2.n);
+    const auto [a1_et2_x2, a1_et2_y2] = map.get_destination_xy(a1_et2.et.e);
 
     const auto [a2_et1_x1, a2_et1_y1] = map.get_xy(a2_et1.n);
     const auto [a2_et1_x2, a2_et1_y2] = map.get_destination_xy(a2_et1.et.e);
@@ -65,34 +66,54 @@ SCIP_RETCODE agentwaitedge_conflicts_create_cut(
     const auto [a2_et2_x1, a2_et2_y1] = map.get_xy(a2_et2.n);
     const auto [a2_et2_x2, a2_et2_y2] = map.get_destination_xy(a2_et2.et.e);
 
+    const auto [a2_et3_x1, a2_et3_y1] = map.get_xy(a2_et3.n);
+    const auto [a2_et3_x2, a2_et3_y2] = map.get_destination_xy(a2_et3.et.e);
+
+    const auto [a2_et4_x1, a2_et4_y1] = map.get_xy(a2_et4.n);
+    const auto [a2_et4_x2, a2_et4_y2] = map.get_destination_xy(a2_et4.et.e);
+
+    const auto [a2_et5_x1, a2_et5_y1] = map.get_xy(a2_et5.n);
+    const auto [a2_et5_x2, a2_et5_y2] = map.get_destination_xy(a2_et5.et.e);
+
+    const auto [a2_et6_x1, a2_et6_y1] = map.get_xy(a2_et6.n);
+    const auto [a2_et6_x2, a2_et6_y2] = map.get_destination_xy(a2_et6.et.e);
+
     auto name = fmt::format("agentwaitedge_conflict("
                             "{},{},"
                             "(({},{}),({},{}),{}),"
-                            "(({},{}),{}),"
+                            "(({},{}),({},{}),{}),"
+                            "(({},{}),({},{}),{}),"
+                            "(({},{}),({},{}),{}),"
+                            "(({},{}),({},{}),{}),"
+                            "(({},{}),({},{}),{}),"
                             "(({},{}),({},{}),{}),"
                             "(({},{}),({},{}),{})"
                             ")",
                             a1, a2,
                             a1_et1_x1, a1_et1_y1, a1_et1_x2, a1_et1_y2, a1_et1.t,
-                            a1_et2_x1, a1_et2_y1, a1_et2.t,
+                            a1_et2_x1, a1_et2_y1, a1_et2_x2, a1_et2_y2, a1_et2.t,
                             a2_et1_x1, a2_et1_y1, a2_et1_x2, a2_et1_y2, a2_et1.t,
-                            a2_et2_x1, a2_et2_y1, a2_et2_x2, a2_et2_y2, a2_et2.t);
+                            a2_et2_x1, a2_et2_y1, a2_et2_x2, a2_et2_y2, a2_et2.t,
+                            a2_et3_x1, a2_et3_y1, a2_et3_x2, a2_et3_y2, a2_et3.t,
+                            a2_et4_x1, a2_et4_y1, a2_et4_x2, a2_et4_y2, a2_et4.t,
+                            a2_et5_x1, a2_et5_y1, a2_et5_x2, a2_et5_y2, a2_et5.t,
+                            a2_et6_x1, a2_et6_y1, a2_et6_x2, a2_et6_y2, a2_et6.t);
 #endif
 
     // Create data for the cut.
-    TwoAgentRobustCut cut(scip, a1, a2, 6, 2
+    TwoAgentRobustCut cut(scip, a1, a2, 2, 6
 #ifdef DEBUG
         , std::move(name)
 #endif
     );
     cut.edge_times_a1(0) = a1_et1;
     cut.edge_times_a1(1) = a1_et2;
-    cut.edge_times_a1(2) = a1_et3;
-    cut.edge_times_a1(3) = a1_et4;
-    cut.edge_times_a1(4) = a1_et5;
-    cut.edge_times_a1(5) = a1_et6;
     cut.edge_times_a2(0) = a2_et1;
     cut.edge_times_a2(1) = a2_et2;
+    cut.edge_times_a2(2) = a2_et3;
+    cut.edge_times_a2(3) = a2_et4;
+    cut.edge_times_a2(4) = a2_et5;
+    cut.edge_times_a2(5) = a2_et6;
 
     // Store the cut.
     SCIP_CALL(SCIPprobdataAddTwoAgentRobustCut(scip, probdata, sepa, std::move(cut), 1, result));
@@ -101,73 +122,55 @@ SCIP_RETCODE agentwaitedge_conflicts_create_cut(
     return SCIP_OKAY;
 }
 
-Array<Tuple<EdgeTime, EdgeTime, EdgeTime, EdgeTime, EdgeTime, Float, Float, Float, Float, Float>, 2>
-get_remaining_agent_1_edges(
-    const NodeTime nt,
-    const HashTable<EdgeTime, SCIP_Real>& agent_edges_a1, 
+Vector<Array<EdgeTime, 5>>
+get_a2_et23456(
+    const EdgeTime a1_et2,
+    const EdgeTime a2_et1,
     const Map& map
 )
 {
-    // Get the first set of edges of agent 1.
-    const EdgeTime a1_et2_1{nt.n, Direction::NORTH, nt.t};
-    const EdgeTime a1_et3_1{nt.n, Direction::SOUTH, nt.t};
-    const EdgeTime a1_et4_1{nt.n, Direction::EAST, nt.t};
-    const EdgeTime a1_et5_1{nt.n, Direction::WEST, nt.t};
-    const EdgeTime a1_et6_1{nt.n, Direction::WAIT, nt.t};
-    const auto a1_et2_it_1 = agent_edges_a1.find(a1_et2_1);
-    const auto a1_et3_it_1 = agent_edges_a1.find(a1_et3_1);
-    const auto a1_et4_it_1 = agent_edges_a1.find(a1_et4_1);
-    const auto a1_et5_it_1 = agent_edges_a1.find(a1_et5_1);
-    const auto a1_et6_it_1 = agent_edges_a1.find(a1_et6_1);
-    const auto a1_et2_val_1 = a1_et2_it_1 != agent_edges_a1.end() ? a1_et2_it_1->second : 0.0;
-    const auto a1_et3_val_1 = a1_et3_it_1 != agent_edges_a1.end() ? a1_et3_it_1->second : 0.0;
-    const auto a1_et4_val_1 = a1_et4_it_1 != agent_edges_a1.end() ? a1_et4_it_1->second : 0.0;
-    const auto a1_et5_val_1 = a1_et5_it_1 != agent_edges_a1.end() ? a1_et5_it_1->second : 0.0;
-    const auto a1_et6_val_1 = a1_et6_it_1 != agent_edges_a1.end() ? a1_et6_it_1->second : 0.0;
+    Vector<Array<EdgeTime, 5>> a2_et23456;
 
-    // Get the second set of edges of agent 1.
-    debug_assert(nt.t >= 1);
-    const auto prev_time = nt.t - 1;
-    const EdgeTime a1_et2_2{map.get_south(nt.n), Direction::NORTH, prev_time};
-    const EdgeTime a1_et3_2{map.get_north(nt.n), Direction::SOUTH, prev_time};
-    const EdgeTime a1_et4_2{map.get_west(nt.n), Direction::EAST, prev_time};
-    const EdgeTime a1_et5_2{map.get_east(nt.n), Direction::WEST, prev_time};
-    const EdgeTime a1_et6_2{map.get_wait(nt.n), Direction::WAIT, prev_time};
-    const auto a1_et2_it_2 = agent_edges_a1.find(a1_et2_2);
-    const auto a1_et3_it_2 = agent_edges_a1.find(a1_et3_2);
-    const auto a1_et4_it_2 = agent_edges_a1.find(a1_et4_2);
-    const auto a1_et5_it_2 = agent_edges_a1.find(a1_et5_2);
-    const auto a1_et6_it_2 = agent_edges_a1.find(a1_et6_2);
-    const auto a1_et2_val_2 = a1_et2_it_2 != agent_edges_a1.end() ? a1_et2_it_2->second : 0.0;
-    const auto a1_et3_val_2 = a1_et3_it_2 != agent_edges_a1.end() ? a1_et3_it_2->second : 0.0;
-    const auto a1_et4_val_2 = a1_et4_it_2 != agent_edges_a1.end() ? a1_et4_it_2->second : 0.0;
-    const auto a1_et5_val_2 = a1_et5_it_2 != agent_edges_a1.end() ? a1_et5_it_2->second : 0.0;
-    const auto a1_et6_val_2 = a1_et6_it_2 != agent_edges_a1.end() ? a1_et6_it_2->second : 0.0;
+    const auto n = a1_et2.n;
+    const auto t = a1_et2.t;
+    if (n != a2_et1.n)
+    {
+        // One timestep before.
+        if (t > 0)
+        {
+            a2_et23456.push_back(Array<EdgeTime, 5>{EdgeTime{map.get_south(n), Direction::NORTH, t - 1},
+                                                    EdgeTime{map.get_north(n), Direction::SOUTH, t - 1},
+                                                    EdgeTime{map.get_west(n), Direction::EAST, t - 1},
+                                                    EdgeTime{map.get_east(n), Direction::WEST, t - 1},
+                                                    EdgeTime{map.get_wait(n), Direction::WAIT, t - 1}});
+        }
 
-    return {
-        Tuple<EdgeTime, EdgeTime, EdgeTime, EdgeTime, EdgeTime, Float, Float, Float, Float, Float>{
-            a1_et2_1,
-            a1_et3_1,
-            a1_et4_1,
-            a1_et5_1,
-            a1_et6_1,
-            a1_et2_val_1,
-            a1_et3_val_1,
-            a1_et4_val_1,
-            a1_et5_val_1,
-            a1_et6_val_1},
-        Tuple<EdgeTime, EdgeTime, EdgeTime, EdgeTime, EdgeTime, Float, Float, Float, Float, Float>{
-            a1_et2_2,
-            a1_et3_2,
-            a1_et4_2,
-            a1_et5_2,
-            a1_et6_2,
-            a1_et2_val_2,
-            a1_et3_val_2,
-            a1_et4_val_2,
-            a1_et5_val_2,
-            a1_et6_val_2}
-    };
+        // Same timestep.
+        a2_et23456.push_back(Array<EdgeTime, 5>{EdgeTime{n, Direction::NORTH, t},
+                                                EdgeTime{n, Direction::SOUTH, t},
+                                                EdgeTime{n, Direction::EAST, t},
+                                                EdgeTime{n, Direction::WEST, t},
+                                                EdgeTime{n, Direction::WAIT, t}});
+    }
+
+    if (n != map.get_destination(a2_et1.et.e))
+    {
+        // Same timestep.
+        a2_et23456.push_back(Array<EdgeTime, 5>{EdgeTime{map.get_south(n), Direction::NORTH, t},
+                                                EdgeTime{map.get_north(n), Direction::SOUTH, t},
+                                                EdgeTime{map.get_west(n), Direction::EAST, t},
+                                                EdgeTime{map.get_east(n), Direction::WEST, t},
+                                                EdgeTime{map.get_wait(n), Direction::WAIT, t}});
+
+        // One timestep after.
+        a2_et23456.push_back(Array<EdgeTime, 5>{EdgeTime{n, Direction::NORTH, t + 1},
+                                                EdgeTime{n, Direction::SOUTH, t + 1},
+                                                EdgeTime{n, Direction::EAST, t + 1},
+                                                EdgeTime{n, Direction::WEST, t + 1},
+                                                EdgeTime{n, Direction::WAIT, t + 1}});
+    }
+
+    return a2_et23456;
 }
 
 // Separator
@@ -193,44 +196,71 @@ SCIP_RETCODE agentwaitedge_conflicts_separate(
     const auto& map = SCIPprobdataGetMap(probdata);
 
     // Get the edges fractionally used by each agent.
-    const auto& agent_edges = SCIPprobdataGetAgentFractionalEdges(probdata);
+    const auto& agent_edges = SCIPprobdataGetAgentFractionalEdgesNoWaits(probdata);
+    const auto& agent_edges_with_waits = SCIPprobdataGetAgentFractionalEdges(probdata);
 
     // Find conflicts.
     for (Agent a1 = 0; a1 < N; ++a1)
     {
         // Get the edges of agent 1.
         const auto& agent_edges_a1 = agent_edges[a1];
+        const auto& agent_edges_with_waits_a1 = agent_edges_with_waits[a1];
 
         // Loop through the first edge of agent 1.
         for (const auto [a1_et1, a1_et1_val] : agent_edges_a1)
-            if (a1_et1.et.e.d != Direction::WAIT && a1_et1.t >= 1)
-            {
-                // Get the edges of agent 2.
-                debug_assert(a1_et1.et.e.d != Direction::WAIT);
-                const EdgeTime a2_et1{map.get_opposite_edge(a1_et1.et.e), a1_et1.t};
-                const EdgeTime a2_et2{a2_et1.n, Direction::WAIT, a2_et1.t};
+        {
+            debug_assert(a1_et1.d != Direction::WAIT);
 
-                // Loop  through the remaining edges of agent 1.
-                for (const auto [a1_et2, a1_et3, a1_et4, a1_et5, a1_et6, 
-                                 a1_et2_val, a1_et3_val, a1_et4_val, a1_et5_val, a1_et6_val] :
-                    get_remaining_agent_1_edges(a2_et1.nt(), agent_edges_a1, map))
+            // Get the first edge of agent 2.
+            const EdgeTime a2_et1{map.get_opposite_edge(a1_et1.et.e), a1_et1.t};
+
+            // Loop through the second agent.
+            for (Agent a2 = 0; a2 < N; ++a2)
+                if (a2 != a1)
                 {
-                    // Loop through the second agent.
-                    for (Agent a2 = 0; a2 < N; ++a2)
-                        if (a2 != a1)
-                        {
-                            // Get the edges of agent 2.
-                            const auto& agent_edges_a2 = agent_edges[a2];
+                    // Get the edges of agent 2.
+                    const auto& agent_edges_a2 = agent_edges[a2];
+                    const auto& agent_edges_with_waits_a2 = agent_edges_with_waits[a2];
 
+                    // Get the values of the first edge of agent 2.
+                    const auto a2_et1_it = agent_edges_a2.find(a2_et1);
+                    if (a2_et1_it == agent_edges_a2.end())
+                    {
+                        continue;
+                    }
+                    const auto a2_et1_val = a2_et1_it->second;
+
+                    // Loop through the second edge of agent 1.
+                    const Array<EdgeTime, 2> a1_et2s{EdgeTime{a1_et1.n, Direction::WAIT, a1_et1.t},
+                                                     EdgeTime{map.get_destination(a1_et1.et.e), Direction::WAIT, a1_et1.t}};
+                    for (const auto a1_et2 : a1_et2s)
+                    {
+                        // Get the values of the second edge of agent 1.
+                        const auto a1_et2_it = agent_edges_with_waits_a1.find(a1_et2);
+                        if (a1_et2_it == agent_edges_with_waits_a1.end())
+                        {
+                            continue;
+                        }
+                        const auto a1_et2_val = a1_et2_it->second;
+
+                        // Get the remaining edges of agent 2.
+                        for (const auto [a2_et2, a2_et3, a2_et4, a2_et5, a2_et6] : get_a2_et23456(a1_et2, a2_et1, map))
+                        {
                             // Get the values of the edges of agent 2.
-                            const auto a2_et1_it = agent_edges_a2.find(a2_et1);
-                            const auto a2_et2_it = agent_edges_a2.find(a2_et2);
-                            const auto a2_et1_val = a2_et1_it != agent_edges_a2.end() ? a2_et1_it->second : 0.0;
-                            const auto a2_et2_val = a2_et2_it != agent_edges_a2.end() ? a2_et2_it->second : 0.0;
+                            const auto a2_et2_it = agent_edges_with_waits_a2.find(a2_et2);
+                            const auto a2_et3_it = agent_edges_with_waits_a2.find(a2_et3);
+                            const auto a2_et4_it = agent_edges_with_waits_a2.find(a2_et4);
+                            const auto a2_et5_it = agent_edges_with_waits_a2.find(a2_et5);
+                            const auto a2_et6_it = agent_edges_with_waits_a2.find(a2_et6);
+                            const auto a2_et2_val = a2_et2_it != agent_edges_with_waits_a2.end() ? a2_et2_it->second : 0;
+                            const auto a2_et3_val = a2_et3_it != agent_edges_with_waits_a2.end() ? a2_et3_it->second : 0;
+                            const auto a2_et4_val = a2_et4_it != agent_edges_with_waits_a2.end() ? a2_et4_it->second : 0;
+                            const auto a2_et5_val = a2_et5_it != agent_edges_with_waits_a2.end() ? a2_et5_it->second : 0;
+                            const auto a2_et6_val = a2_et6_it != agent_edges_with_waits_a2.end() ? a2_et6_it->second : 0;
 
                             // Create the cut if violated.
-                            const auto lhs = a1_et1_val + a1_et2_val + a1_et3_val + a1_et4_val + a1_et5_val + 
-                                             a1_et6_val + a2_et1_val + a2_et2_val;
+                            const auto lhs = a1_et1_val + a1_et2_val +
+                                a2_et1_val + a2_et2_val + a2_et3_val + a2_et4_val + a2_et5_val + a2_et6_val;
                             if (SCIPisGT(scip, lhs, 1.0))
                             {
                                 // Print.
@@ -239,22 +269,43 @@ SCIP_RETCODE agentwaitedge_conflicts_separate(
                                     const auto [a1_et1_x1, a1_et1_y1] = map.get_xy(a1_et1.n);
                                     const auto [a1_et1_x2, a1_et1_y2] = map.get_destination_xy(a1_et1.et.e);
 
+                                    const auto [a1_et2_x1, a1_et2_y1] = map.get_xy(a1_et2.n);
+                                    const auto [a1_et2_x2, a1_et2_y2] = map.get_destination_xy(a1_et2.et.e);
+
                                     const auto [a2_et1_x1, a2_et1_y1] = map.get_xy(a2_et1.n);
                                     const auto [a2_et1_x2, a2_et1_y2] = map.get_destination_xy(a2_et1.et.e);
 
                                     const auto [a2_et2_x1, a2_et2_y1] = map.get_xy(a2_et2.n);
                                     const auto [a2_et2_x2, a2_et2_y2] = map.get_destination_xy(a2_et2.et.e);
 
+                                    const auto [a2_et3_x1, a2_et3_y1] = map.get_xy(a2_et3.n);
+                                    const auto [a2_et3_x2, a2_et3_y2] = map.get_destination_xy(a2_et3.et.e);
+
+                                    const auto [a2_et4_x1, a2_et4_y1] = map.get_xy(a2_et4.n);
+                                    const auto [a2_et4_x2, a2_et4_y2] = map.get_destination_xy(a2_et4.et.e);
+
+                                    const auto [a2_et5_x1, a2_et5_y1] = map.get_xy(a2_et5.n);
+                                    const auto [a2_et5_x2, a2_et5_y2] = map.get_destination_xy(a2_et5.et.e);
+
+                                    const auto [a2_et6_x1, a2_et6_y1] = map.get_xy(a2_et6.n);
+                                    const auto [a2_et6_x2, a2_et6_y2] = map.get_destination_xy(a2_et6.et.e);
+
                                     debugln("   Creating agent wait-edge conflict cut on edges "
-                                            "(({},{}),({},{}),{}) and (({},{}),{}) for agent {} and "
-                                            "(({},{}),({},{}),{}) and (({},{}),({},{}),{}) for agent {} "
+                                            "(({},{}),({},{}),{}) and (({},{}),({},{}),{}) for agent {} and "
+                                            "(({},{}),({},{}),{}), (({},{}),({},{}),{}), "
+                                            "(({},{}),({},{}),{}), (({},{}),({},{}),{}), "
+                                            "(({},{}),({},{}),{}), (({},{}),({},{}),{}) for agent {} "
                                             "with value {} in "
                                             "branch-and-bound node {}",
                                             a1_et1_x1, a1_et1_y1, a1_et1_x2, a1_et1_y2, a1_et1.t,
-                                            a2_et1_x1, a2_et1_y1, a1_et2.t,
+                                            a1_et2_x1, a1_et2_y1, a1_et2_x2, a1_et2_y2, a1_et2.t,
                                             a1,
                                             a2_et1_x1, a2_et1_y1, a2_et1_x2, a2_et1_y2, a2_et1.t,
                                             a2_et2_x1, a2_et2_y1, a2_et2_x2, a2_et2_y2, a2_et2.t,
+                                            a2_et3_x1, a2_et3_y1, a2_et3_x2, a2_et3_y2, a2_et3.t,
+                                            a2_et4_x1, a2_et4_y1, a2_et4_x2, a2_et4_y2, a2_et4.t,
+                                            a2_et5_x1, a2_et5_y1, a2_et5_x2, a2_et5_y2, a2_et5.t,
+                                            a2_et6_x1, a2_et6_y1, a2_et6_x2, a2_et6_y2, a2_et6.t,
                                             a2,
                                             lhs,
                                             SCIPnodeGetNumber(SCIPgetCurrentNode(scip)));
@@ -269,17 +320,20 @@ SCIP_RETCODE agentwaitedge_conflicts_separate(
                                                                              a2,
                                                                              a1_et1,
                                                                              a1_et2,
-                                                                             a1_et3,
-                                                                             a1_et4,
-                                                                             a1_et5,
-                                                                             a1_et6,
                                                                              a2_et1,
                                                                              a2_et2,
+                                                                             a2_et3,
+                                                                             a2_et4,
+                                                                             a2_et5,
+                                                                             a2_et6,
                                                                              result));
+                                goto NEXT_AGENT;
                             }
                         }
+                    }
                 }
-            }
+        }
+        NEXT_AGENT:;
     }
 
     // Done.
