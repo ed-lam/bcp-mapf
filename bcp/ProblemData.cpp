@@ -64,6 +64,9 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifdef USE_SIXEDGE_CONFLICTS
 #include "Separator_SixEdgeConflicts.h"
 #endif
+#ifdef USE_TRIPLEEDGE_CONFLICTS
+#include "Separator_TripleEdgeConflicts.h"
+#endif
 #ifdef USE_AGENTWAITEDGE_CONFLICTS
 #include "Separator_AgentWaitEdgeConflicts.h"
 #endif
@@ -1121,6 +1124,11 @@ SCIP_RETCODE SCIPprobdataCreate(
     // Include separator for six-edge conflicts.
 #ifdef USE_SIXEDGE_CONFLICTS
     SCIP_CALL(SCIPincludeSepaSixEdgeConflicts(scip));
+#endif
+
+    // Include separator for triple-edge conflicts.
+#ifdef USE_TRIPLEEDGE_CONFLICTS
+    SCIP_CALL(SCIPincludeSepaTripleEdgeConflicts(scip));
 #endif
 
     // Include separator for agent wait-edge conflicts.
