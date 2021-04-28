@@ -996,6 +996,33 @@ SCIP_RETCODE run_trufflehog_pricer(
                     }
                 }
 
+            // Modify edge costs for wait-edge conflicts at the goal. Incur a penalty for staying at the goal.
+#ifdef USE_WAITEDGE_CONFLICTS
+            for (const auto [row, edges, conflict_time] : edge_conflicts_conss)
+            {
+                const auto e = edges[2];
+                debug_assert(e.d == Direction::WAIT);
+                if (e.n == goal)
+                {
+                    const auto dual = is_farkas ?
+                                      SCIProwGetDualfarkas(row) :
+                                      SCIProwGetDualsol(row);
+                    debug_assert(SCIPisFeasLE(scip, dual, 0.0));
+                    if (SCIPisFeasLT(scip, dual, 0.0))
+                    {
+                        if (static_cast<Time>(time_finish_penalties.size()) < conflict_time + 1)
+                        {
+                            time_finish_penalties.resize(conflict_time + 1);
+                        }
+                        for (Time t = 0; t <= conflict_time; ++t)
+                        {
+                            time_finish_penalties[t] -= dual;
+                        }
+                    }
+                }
+            }
+#endif
+
             // Modify edge costs for goal conflicts. If a1 finishes at or before time t, incur the
             // penalty.
 #ifdef USE_GOAL_CONFLICTS

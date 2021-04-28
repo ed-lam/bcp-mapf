@@ -211,26 +211,24 @@ SCIP_RETCODE edge_conflicts_create_cut(
         const auto path = SCIPvardataGetPath(vardata);
 
         // Add coefficients.
-        const SCIP_Real coeff =
 #ifdef USE_WAITEDGE_CONFLICTS
-            (t < path_length - 1 && (path[t] == edges[0] || path[t] == edges[1] || path[t] == edges[2]));
+        if ((t < path_length - 1 && (path[t] == edges[0] || path[t] == edges[1] || path[t] == edges[2])) ||
+            (t >= path_length - 1 && path[path_length - 1].n == edges[2].n))
 #else
-            (t < path_length - 1 && (path[t] == edges[0] || path[t] == edges[1]));
+        if (t < path_length - 1 && (path[t] == edges[0] || path[t] == edges[1]))
 #endif
-        if (coeff)
         {
-            // Add the coefficient.
-            SCIP_CALL(SCIPaddVarToRow(scip, row, var, coeff));
-#ifdef DEBUG
-            lhs += SCIPgetSolVal(scip, nullptr, var) * coeff;
-#endif
-
             // Print.
-            debugln("      val: {:7.4f}:, agent: {:2d}, coeff: {}, path: {}",
-                    SCIPgetSolVal(scip, nullptr, var),
+            debugln("      Agent: {:2d}, Val: {:7.4f}, Path: {}",
                     SCIPvardataGetAgent(vardata),
-                    coeff,
+                    SCIPgetSolVal(scip, nullptr, var),
                     format_path_spaced(SCIPgetProbData(scip), path_length, path));
+
+            // Add the coefficient.
+            SCIP_CALL(SCIPaddVarToRow(scip, row, var, 1));
+#ifdef DEBUG
+            lhs += SCIPgetSolVal(scip, nullptr, var);
+#endif
         }
     }
     SCIP_CALL(SCIPflushRowExtensions(scip, row));
@@ -343,6 +341,11 @@ SCIP_RETCODE edge_conflicts_separate(
     debugln("Starting separator for edge conflicts on solution with obj {:.6f}:",
             SCIPgetSolOrigObj(scip, sol));
 
+    // Print paths.
+#ifdef PRINT_DEBUG
+    print_used_paths(scip);
+#endif
+
     // Get constraint data.
     auto consdata = reinterpret_cast<EdgeConflictsConsData*>(SCIPconsGetData(cons));
     debug_assert(consdata);
@@ -354,10 +357,29 @@ SCIP_RETCODE edge_conflicts_separate(
     // Get variables.
     const auto& vars = SCIPprobdataGetVars(probdata);
 
+    // Find the makespan.
+    Time makespan = 0;
+    for (auto var : vars)
+    {
+        // Get the path length.
+        debug_assert(var);
+        auto vardata = SCIPvarGetData(var);
+        const auto path_length = SCIPvardataGetPathLength(vardata);
+
+        // Get the variable value.
+        const auto var_val = SCIPgetSolVal(scip, sol, var);
+
+        // Store the length of the longest path.
+        if (path_length > makespan && SCIPisPositive(scip, var_val))
+        {
+            makespan = path_length;
+        }
+    }
+
     // Calculate the number of times an edge is used by summing the columns.
-    HashTable<EdgeTime, SCIP_Real> edge_times_used;
+    HashTable<EdgeTime, SCIP_Real> move_edges_used;
 #ifdef USE_WAITEDGE_CONFLICTS
-    HashTable<EdgeTime, SCIP_Real> waits_used;
+    HashTable<EdgeTime, SCIP_Real> wait_edges_used;
 #endif
     for (auto var : vars)
     {
@@ -370,32 +392,42 @@ SCIP_RETCODE edge_conflicts_separate(
         // Get the variable value.
         const auto var_val = SCIPgetSolVal(scip, sol, var);
 
-        // Sum.
+        // Sum edge value.
         if (SCIPisPositive(scip, var_val))
         {
-            for (Time t = 0; t < path_length - 1; ++t)
+            Time t = 0;
+            for (; t < path_length - 1; ++t)
             {
                 if (path[t].d != Direction::WAIT)
                 {
                     const auto e = get_undirected_edge(path[t], map);
-                    const EdgeTime et(e, t);
-                    edge_times_used[et] += var_val;
+                    const EdgeTime et{e, t};
+                    move_edges_used[et] += var_val;
                 }
 #ifdef USE_WAITEDGE_CONFLICTS
                 else
                 {
                     const auto e = path[t];
                     debug_assert(e.d == Direction::WAIT);
-                    const EdgeTime et(e, t);
-                    waits_used[et] += var_val;
+                    const EdgeTime et{e, t};
+                    wait_edges_used[et] += var_val;
                 }
 #endif
             }
+
+#ifdef USE_WAITEDGE_CONFLICTS
+            const auto n = path[path_length - 1].n;
+            for (; t < makespan - 1; ++t)
+            {
+                const EdgeTime et{n, Direction::WAIT, t};
+                wait_edges_used[et] += var_val;
+            }
+#endif
         }
     }
 
     // Create cuts.
-    for (const auto [et, val] : edge_times_used)
+    for (const auto [et, move_val] : move_edges_used)
     {
         // Get the time.
         const auto t = et.t;
@@ -417,13 +449,11 @@ SCIP_RETCODE edge_conflicts_separate(
             // Get the edge weight of the wait edge.
             SCIP_Real wait0_val = 0.0;
             SCIP_Real wait1_val = 0.0;
-            if (auto it = waits_used.find(EdgeTime(edges[0].n, Direction::WAIT, t));
-                it != waits_used.end())
+            if (auto it = wait_edges_used.find(EdgeTime{edges[0].n, Direction::WAIT, t}); it != wait_edges_used.end())
             {
                 wait0_val = it->second;
             }
-            if (auto it = waits_used.find(EdgeTime(edges[1].n, Direction::WAIT, t));
-                it != waits_used.end())
+            if (auto it = wait_edges_used.find(EdgeTime{edges[1].n, Direction::WAIT, t}); it != wait_edges_used.end())
             {
                 wait1_val = it->second;
             }
@@ -445,43 +475,29 @@ SCIP_RETCODE edge_conflicts_separate(
 #endif
 
         // Determine if there is a conflict.
-        if (SCIPisGT(scip, val + wait_val, 1.0))
+        const auto lhs = move_val + wait_val;
+        if (SCIPisGT(scip, lhs, 1.0))
         {
             // Print.
 #ifdef PRINT_DEBUG
             {
-                const auto [x1, y1] = map.get_xy(edges[0].n);
-                const auto [x2, y2] = map.get_destination_xy(edges[0]);
+                const auto [e1_x1, e1_y1] = map.get_xy(edges[0].n);
+                const auto [e1_x2, e1_y2] = map.get_destination_xy(edges[0]);
 
-#ifdef USE_WAITEDGE_CONFLICTS
-                const auto [x3, y3] = map.get_xy(edges[2].n);
-                debugln("   Creating edge conflict cut for edges (({},{}),({},{})) and "
-                        "(({},{}),({},{})) at time {} with value {} in branch-and-bound "
-                        "node {}",
-                        x1, y1, x2, y2,
-                        x3, y3, x3, y3,
-                        t,
-                        val,
+                const auto [e2_x1, e2_y1] = map.get_xy(edges[1].n);
+                const auto [e2_x2, e2_y2] = map.get_destination_xy(edges[1]);
+
+                debugln("   Creating edge conflict cut on (({},{}),({},{}),{}) and (({},{}),({},{}),{}) with value {} "
+                        "in branch-and-bound node {}",
+                        e1_x1, e1_y1, e1_x2, e1_y2, t,
+                        e2_x1, e2_y1, e2_x2, e2_y2, t,
+                        lhs,
                         SCIPnodeGetNumber(SCIPgetCurrentNode(scip)));
-#else
-                debugln("   Creating edge conflict cut for edge (({},{}),({},{})) at "
-                        "time {} with value {} in branch-and-bound node {}",
-                        x1, y1, x2, y2,
-                        t,
-                        val,
-                        SCIPnodeGetNumber(SCIPgetCurrentNode(scip)));
-#endif
             }
 #endif
 
             // Create cut.
-            SCIP_CALL(edge_conflicts_create_cut(scip,
-                                                cons,
-                                                consdata,
-                                                t,
-                                                edges,
-                                                vars,
-                                                result));
+            SCIP_CALL(edge_conflicts_create_cut(scip, cons, consdata, t, edges, vars, result));
         }
     }
 
@@ -903,10 +919,11 @@ SCIP_RETCODE edge_conflicts_add_var(
     SCIP_CALL(SCIPlockVarCons(scip, var, cons, FALSE, TRUE));
 
     // Add variable to constraints.
-    for (auto& [row, edges, t] : conflicts)
+    for (auto [row, edges, t] : conflicts)
     {
 #ifdef USE_WAITEDGE_CONFLICTS
-        if (t < path_length - 1 && (path[t] == edges[0] || path[t] == edges[1] || path[t] == edges[2]))
+        if ((t < path_length - 1 && (path[t] == edges[0] || path[t] == edges[1] || path[t] == edges[2])) ||
+            (t >= path_length - 1 && path[path_length - 1].n == edges[2].n))
 #else
         if (t < path_length - 1 && (path[t] == edges[0] || path[t] == edges[1]))
 #endif
