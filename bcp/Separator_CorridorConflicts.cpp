@@ -118,6 +118,23 @@ SCIP_RETCODE corridor_conflicts_separate(
     const auto N = SCIPprobdataGetN(probdata);
     const auto& map = SCIPprobdataGetMap(probdata);
 
+    // Create two-agent robust cuts for debugging purposes.
+//    {
+//        static int iter = 0;
+//        ++iter;
+//        if (iter == 1)
+//        {
+//            {
+//                TwoAgentRobustCut cut(scip, 8, 10, 2, 2, "debug");
+//                cut.edge_times_a1(0) = EdgeTime{map.get_id(61, 25), Direction::EAST, 24};
+//                cut.edge_times_a1(1) = EdgeTime{map.get_id(62, 25), Direction::EAST, 25};
+//                cut.edge_times_a2(0) = EdgeTime{map.get_id(62, 25), Direction::WEST, 24};
+//                cut.edge_times_a2(1) = EdgeTime{map.get_id(61, 25), Direction::WEST, 25};
+//                SCIP_CALL(SCIPprobdataAddTwoAgentRobustCut(scip, probdata, sepa, std::move(cut), 2, result));
+//            }
+//        }
+//    }
+
     // Get the edges fractionally used by each agent.
     const auto& agent_edges = SCIPprobdataGetAgentFractionalEdgesNoWaits(probdata);
 #ifdef USE_LIFTED_CORRIDOR_CONFLICTS
