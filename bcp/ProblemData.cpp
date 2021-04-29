@@ -637,7 +637,8 @@ SCIP_RETCODE SCIPprobdataAddPricedVar(
                 for (auto [it, end] = cut.edges(a); it != end; ++it)
                 {
                     const auto e = *it;
-                    coeff += (t < path_length && path[t] == e);
+                    coeff += (t < path_length - 1 && e == path[t]) ||
+                             (t >= path_length - 1 && e.n == path[path_length - 1].n && e.d == Direction::WAIT);
                 }
             }
             else
@@ -645,7 +646,8 @@ SCIP_RETCODE SCIPprobdataAddPricedVar(
                 for (auto [it, end] = cut.edge_times(a); it != end; ++it)
                 {
                     const auto [e, t] = it->et;
-                    coeff += (t < path_length && path[t] == e);
+                    coeff += (t < path_length - 1 && e == path[t]) ||
+                             (t >= path_length - 1 && e.n == path[path_length - 1].n && e.d == Direction::WAIT);
                 }
             }
         }
@@ -746,7 +748,8 @@ SCIP_RETCODE SCIPprobdataAddTwoAgentRobustCut(
                 for (auto [it, end] = cut.edges(a); it != end; ++it)
                 {
                     const auto e = *it;
-                    coeff += (t < path_length && path[t] == e);
+                    coeff += (t < path_length - 1 && e == path[t]) ||
+                             (t >= path_length - 1 && e.n == path[path_length - 1].n && e.d == Direction::WAIT);
                 }
             }
             else
@@ -754,7 +757,8 @@ SCIP_RETCODE SCIPprobdataAddTwoAgentRobustCut(
                 for (auto [it, end] = cut.edge_times(a); it != end; ++it)
                 {
                     const auto [e, t] = it->et;
-                    coeff += (t < path_length && path[t] == e);
+                    coeff += (t < path_length - 1 && e == path[t]) ||
+                             (t >= path_length - 1 && e.n == path[path_length - 1].n && e.d == Direction::WAIT);
                 }
             }
 
@@ -1328,7 +1332,27 @@ void update_fractional_vertices_and_edges(
     const auto N = SCIPprobdataGetN(probdata);
 
     // Get variables.
+    const auto& vars = SCIPprobdataGetVars(probdata);
     const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
+
+    // Find the makespan.
+    Time makespan = 0;
+    for (auto var : vars)
+    {
+        // Get the path length.
+        debug_assert(var);
+        auto vardata = SCIPvarGetData(var);
+        const auto path_length = SCIPvardataGetPathLength(vardata);
+
+        // Get the variable value.
+        const auto var_val = SCIPgetSolVal(scip, nullptr, var);
+
+        // Store the length of the longest path.
+        if (path_length > makespan && SCIPisPositive(scip, var_val))
+        {
+            makespan = path_length;
+        }
+    }
 
     // Get vertices of each agent.
     auto& fractional_vertices = probdata->fractional_vertices;
@@ -1390,13 +1414,28 @@ void update_fractional_vertices_and_edges(
                     }
                 }
 
-                // Store the last vertex.
-                debug_assert(t == path_length - 1);
+                // Store the edges after the agent reaches its goal.
+                const auto n = path[t].n;
+                for (; t < makespan - 1; ++t)
                 {
-                    const NodeTime nt{path[t].n, t};
-                    agent_vertices[nt] += var_val;
+                    // Store the vertex.
+                    {
+                        const NodeTime nt{n, t};
+                        agent_vertices[nt] += var_val;
+                    }
+
+                    // Store the edge.
+                    {
+                        const EdgeTime et{n, Direction::WAIT, t};
+                        agent_edges[et] += var_val;
+                    }
                 }
 
+                // Store the last vertex.
+                {
+                    const NodeTime nt{n, t};
+                    agent_vertices[nt] += var_val;
+                }
             }
         }
 

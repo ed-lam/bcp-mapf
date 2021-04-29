@@ -1023,6 +1023,59 @@ SCIP_RETCODE run_trufflehog_pricer(
             }
 #endif
 
+            // Modify edge costs for waits in robust cuts. Incur a penalty for staying at the goal.
+            for (const auto& cut : two_agent_robust_cuts)
+                if (a == cut.a1() || a == cut.a2())
+                {
+                    const auto dual = is_farkas ?
+                                      SCIProwGetDualfarkas(cut.row()) :
+                                      SCIProwGetDualsol(cut.row());
+                    debug_assert(SCIPisFeasLE(scip, dual, 0.0));
+                    if (SCIPisFeasLT(scip, dual, 0.0))
+                    {
+                        // Add the dual variable value to the edges.
+                        if (cut.is_same_time())
+                        {
+                            const auto conflict_time = cut.t();
+                            for (auto [it, end] = cut.edges(a); it != end; ++it)
+                            {
+                                const auto e = *it;
+                                if (e.n == goal && e.d == Direction::WAIT)
+                                {
+                                    if (static_cast<Time>(time_finish_penalties.size()) < conflict_time + 1)
+                                    {
+                                        time_finish_penalties.resize(conflict_time + 1);
+                                    }
+                                    for (Time t = 0; t <= conflict_time; ++t)
+                                    {
+                                        time_finish_penalties[t] -= dual;
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            for (auto [it, end] = cut.edge_times(a); it != end; ++it)
+                            {
+                                const auto n = it->n;
+                                const auto d = it->d;
+                                const auto conflict_time = it->t;
+                                if (n == goal && d == Direction::WAIT)
+                                {
+                                    if (static_cast<Time>(time_finish_penalties.size()) < conflict_time + 1)
+                                    {
+                                        time_finish_penalties.resize(conflict_time + 1);
+                                    }
+                                    for (Time t = 0; t <= conflict_time; ++t)
+                                    {
+                                        time_finish_penalties[t] -= dual;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
             // Modify edge costs for goal conflicts. If a1 finishes at or before time t, incur the
             // penalty.
 #ifdef USE_GOAL_CONFLICTS
