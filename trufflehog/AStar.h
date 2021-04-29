@@ -29,8 +29,6 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "EdgePenalties.h"
 #include "Crossings.h"
 #include "Heuristic.h"
-#include <unordered_map>
-#include <functional>
 
 namespace TruffleHog
 {

@@ -99,6 +99,33 @@ class Map
     {
         return n;
     }
+    inline Direction get_direction(const Node n1, const Node n2) const
+    {
+        // Check.
+        debug_assert(n2 == get_north(n1) || n2 == get_south(n1) || n2 == get_east(n1) || n2 == get_west(n1) || n2 == get_wait(n1));
+
+        // Return direction.
+        if (n2 == get_north(n1))
+        {
+            return Direction::NORTH;
+        }
+        else if (n2 == get_south(n1))
+        {
+            return Direction::SOUTH;
+        }
+        else if (n2 == get_east(n1))
+        {
+            return Direction::EAST;
+        }
+        else if (n2 == get_west(n1))
+        {
+            return Direction::WEST;
+        }
+        else
+        {
+            return Direction::WAIT;
+        }
+    }
     inline Node get_destination(const Edge e) const
     {
         switch (e.d) 

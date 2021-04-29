@@ -36,9 +36,6 @@ Author: Edward Lam <ed@ed-lam.com>
 //#include "Constraint_WaitBranching.h"
 #include "Constraint_LengthBranching.h"
 #include <chrono>
-#ifdef DEBUG
-#include <numeric>
-#endif
 
 #include "trufflehog/Instance.h"
 #include "trufflehog/AStar.h"
@@ -195,45 +192,6 @@ void calculate_agents_order(
                       return (a.must_price >  b.must_price) ||
                              (a.must_price == b.must_price && price_priority[a.a] > price_priority[b.a]);
                   });
-    }
-}
-
-// Get the direction of movement from one node to the next
-inline Direction get_direction(
-    const NodeTime nt1,    // Outgoing node
-    const NodeTime nt2,    // Incoming node
-    const Map& map         // Map
-)
-{
-    // Check.
-    debug_assert(
-        nt2.n == map.get_north(nt1.n) ||
-        nt2.n == map.get_south(nt1.n) ||
-        nt2.n == map.get_east(nt1.n) ||
-        nt2.n == map.get_west(nt1.n) ||
-        nt2.n == map.get_wait(nt1.n)
-    );
-
-    // Return direction.
-    if (nt2.n == map.get_north(nt1.n))
-    {
-        return Direction::NORTH;
-    }
-    else if (nt2.n == map.get_south(nt1.n))
-    {
-        return Direction::SOUTH;
-    }
-    else if (nt2.n == map.get_east(nt1.n))
-    {
-        return Direction::EAST;
-    }
-    else if (nt2.n == map.get_west(nt1.n))
-    {
-        return Direction::WEST;
-    }
-    else
-    {
-        return Direction::WAIT;
     }
 }
 
@@ -416,22 +374,24 @@ SCIP_RETCODE run_trufflehog_pricer(
 
         // Store the length of the longest path.
         if (path_length > makespan)
+        {
             makespan = path_length;
+        }
     }
 
     // Print dual values.
-#ifdef PRINT_DEBUG
-    print_agent_part_dual(scip, is_farkas);
-    print_vertex_conflicts_dual(scip, is_farkas);
-    print_edge_conflicts_dual(scip, is_farkas);
-    print_two_agent_robust_cuts_dual(scip, is_farkas);
-#ifdef USE_GOAL_CONFLICTS
-    print_goal_conflicts_dual(scip, is_farkas);
-#endif
-#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-    print_rectangle_clique_conflicts_dual(scip, is_farkas);
-#endif
-#endif
+//#ifdef PRINT_DEBUG
+//    print_agent_part_dual(scip, is_farkas);
+//    print_vertex_conflicts_dual(scip, is_farkas);
+//    print_edge_conflicts_dual(scip, is_farkas);
+//    print_two_agent_robust_cuts_dual(scip, is_farkas);
+//#ifdef USE_GOAL_CONFLICTS
+//    print_goal_conflicts_dual(scip, is_farkas);
+//#endif
+//#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+//    print_rectangle_clique_conflicts_dual(scip, is_farkas);
+//#endif
+//#endif
 
     // Get dual variable values of agent partition constraints.
     auto agent_part_dual = pricerdata->agent_part_dual;
@@ -448,9 +408,7 @@ SCIP_RETCODE run_trufflehog_pricer(
         debug_assert(SCIPgetNFixedonesSetppc(scip, cons) == 0);
 
         // Store dual value.
-        agent_part_dual[a] = is_farkas ?
-                             SCIPgetDualfarkasSetppc(scip, cons) :
-                             SCIPgetDualsolSetppc(scip, cons);
+        agent_part_dual[a] = is_farkas ? SCIPgetDualfarkasSetppc(scip, cons) : SCIPgetDualsolSetppc(scip, cons);
         debug_assert(SCIPisGE(scip, agent_part_dual[a], 0.0));
     }
 
@@ -961,7 +919,7 @@ SCIP_RETCODE run_trufflehog_pricer(
             path_cost += segment_cost;
             for (auto it = segment.begin(); it != segment.end() - 1; ++it)
             {
-                const auto d = get_direction(*it, *(it + 1), map);
+                const auto d = map.get_direction(it->n, (it + 1)->n);
                 path.push_back(Edge{it->n, d});
             }
         }
@@ -1132,7 +1090,7 @@ SCIP_RETCODE run_trufflehog_pricer(
             for (auto it = segment.begin(); it != segment.end(); ++it)
             {
                 const auto d = it != segment.end() - 1 ?
-                               get_direction(*it, *(it + 1), map) :
+                               map.get_direction(it->n, (it + 1)->n) :
                                Direction::INVALID;
                 path.push_back(Edge{it->n, d});
             }
@@ -1180,7 +1138,10 @@ SCIP_RETCODE run_trufflehog_pricer(
     debugln("   Added {} new columns", nb_new_cols);
 
     // Done.
-    *result = SCIP_SUCCESS;
+    if (!SCIPisStopped(scip))
+    {
+        *result = SCIP_SUCCESS;
+    }
     return SCIP_OKAY;
 }
 
@@ -1289,7 +1250,7 @@ SCIP_RETCODE add_initial_solution(
         for (auto it = segment.begin(); it != segment.end(); ++it)
         {
             const auto d = it != segment.end() - 1 ?
-                           get_direction(*it, *(it + 1), map) :
+                           map.get_direction(it->n, (it + 1)->n) :
                            Direction::INVALID;
             path.push_back(Edge{it->n, d});
         }

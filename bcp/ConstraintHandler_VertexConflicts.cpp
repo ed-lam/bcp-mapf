@@ -160,15 +160,13 @@ SCIP_RETCODE vertex_conflicts_create_cut(
         if ((nt.t < path_length && path[nt.t].n == nt.n) ||
             (nt.t >= path_length && path[path_length - 1].n == nt.n))
         {
-//#ifdef PRINT_DEBUG
-//            {
-//                auto probdata = SCIPgetProbData(scip);
-//                const auto a = SCIPvardataGetAgent(vardata);
-//                const auto var_val = SCIPgetSolVal(scip, nullptr, var);
-//                debugln("      agent: {}, path: {}, val: {}",
-//                        a, format_path(probdata, path_length, path), var_val);
-//            }
-//#endif
+            // Print.
+            debugln("      Agent: {:2d}, Val: {:7.4f}, Path: {}",
+                    SCIPvardataGetAgent(vardata),
+                    SCIPgetSolVal(scip, nullptr, var),
+                    format_path_spaced(SCIPgetProbData(scip), path_length, path));
+
+            // Add the coefficient.
             SCIP_CALL(SCIPaddVarToRow(scip, row, var, 1.0));
         }
     }
@@ -225,9 +223,11 @@ SCIP_RETCODE vertex_conflicts_check(
         // Get the variable value.
         const auto var_val = SCIPgetSolVal(scip, sol, var);
 
-        // Store the longest path.
+        // Store the length of the longest path.
         if (path_length > makespan && SCIPisPositive(scip, var_val))
+        {
             makespan = path_length;
+        }
     }
 
     // Calculate the number of times a vertex is used by summing the columns.
@@ -270,9 +270,8 @@ SCIP_RETCODE vertex_conflicts_check(
             {
                 const auto& map = SCIPprobdataGetMap(probdata);
                 const auto [x, y] = map.get_xy(nt.n);
-                debugln("   Infeasible solution has vertex (({},{}),{}) (node ID {}) "
-                        "with value {}",
-                        x, y, nt.t, nt.n, val);
+                debugln("   Infeasible solution has vertex (({},{}),{}) with value {}",
+                        x, y, nt.t, val);
             }
 #endif
 
@@ -298,6 +297,11 @@ SCIP_RETCODE vertex_conflicts_separate(
     debugln("Starting separator for vertex conflicts on solution with obj {:.6f}:",
             SCIPgetSolOrigObj(scip, nullptr));
 
+    // Print paths.
+#ifdef PRINT_DEBUG
+    print_used_paths(scip);
+#endif
+
     // Get constraint data.
     auto consdata = reinterpret_cast<VertexConflictsConsData*>(SCIPconsGetData(cons));
     debug_assert(consdata);
@@ -320,9 +324,11 @@ SCIP_RETCODE vertex_conflicts_separate(
         // Get the variable value.
         const auto var_val = SCIPgetSolVal(scip, sol, var);
 
-        // Store the longest path.
+        // Store the length of the longest path.
         if (path_length > makespan && SCIPisPositive(scip, var_val))
+        {
             makespan = path_length;
+        }
     }
 
     // Calculate the number of times a vertex is used by summing the columns.
@@ -365,19 +371,13 @@ SCIP_RETCODE vertex_conflicts_separate(
             {
                 const auto& map = SCIPprobdataGetMap(probdata);
                 const auto [x, y] = map.get_xy(nt.n);
-                debugln("   Creating cut for vertex (({},{}),{}) (node ID {}) in "
-                        "branch-and-bound node {}",
-                        x, y, nt.t, nt.n, SCIPnodeGetNumber(SCIPgetCurrentNode(scip)));
+                debugln("   Creating vertex conflict cut on (({},{}),{}) with value {} in branch-and-bound node {}",
+                        x, y, nt.t, val, SCIPnodeGetNumber(SCIPgetCurrentNode(scip)));
             }
 #endif
 
             // Create cut.
-            SCIP_CALL(vertex_conflicts_create_cut(scip,
-                                                  cons,
-                                                  consdata,
-                                                  nt,
-                                                  vars,
-                                                  result));
+            SCIP_CALL(vertex_conflicts_create_cut(scip, cons, consdata, nt, vars, result));
         }
 
     // Done.

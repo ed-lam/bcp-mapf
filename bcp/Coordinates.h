@@ -105,7 +105,7 @@ struct formatter<AgentNodeTime>
     template<typename FormatContext>
     inline auto format(const AgentNodeTime& ant, FormatContext& ctx)
     {
-        return format_to(ctx.begin(), "(a={},n={},t={})", ant.a, ant.n, ant.t);
+        return format_to(ctx.out(), "(a={},n={},t={})", ant.a, ant.n, ant.t);
     }
 };
 

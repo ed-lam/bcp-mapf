@@ -137,7 +137,9 @@ SCIP_RETCODE branch_on_vertex(
             // Ignore constraints that are not active since these are not on the current
             // active path of the search tree.
             if (!SCIPconsIsActive(cons))
+            {
                 continue;
+            }
 
             // Get the decision.
             const auto a = SCIPgetVertexBranchingAgent(cons);
@@ -242,7 +244,9 @@ SCIP_RETCODE branch_on_vertex(
 //            // Ignore constraints that are not active since these are not on the current
 //            // active path of the search tree.
 //            if (!SCIPconsIsActive(cons))
+//            {
 //                continue;
+//            }
 //
 //            // Get the decision.
 //            const auto a = SCIPgetWaitBranchingAgent(cons);
@@ -354,7 +358,9 @@ SCIP_RETCODE branch_on_length(
             // Ignore constraints that are not active since these are not on the current
             // active path of the search tree.
             if (!SCIPconsIsActive(cons))
+            {
                 continue;
+            }
 
             // Get the decision.
             const auto a = SCIPgetLengthBranchingAgent(cons);

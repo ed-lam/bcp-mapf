@@ -151,8 +151,7 @@ get_lp_branch_candidates(
             }
         }
     }
-    release_assert(!candidates.empty(),
-                   "No candidates for branching in fractional LP");
+    release_assert(!candidates.empty(), "No candidates for branching in fractional LP");
 
     // Separate integral and fractional vertices.
     for (auto it = candidates.begin(); it != candidates.end();)
@@ -699,7 +698,9 @@ Pair<AgentNodeTime, bool> find_decision_vertex(
     bool prefer_branch_0 = false;
 
     // Get agent variables.
+#ifdef DEBUG
     const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
+#endif
 
     // Prefer vertices inside a rectangle clique conflict.
 #ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
@@ -1091,8 +1092,7 @@ SCIP_RETCODE branch_lp(
 #endif
 
     // Get branching candidates.
-    auto [candidates, succ_dirs, nb_paths, goal_time_bounds] =
-        get_lp_branch_candidates(scip, probdata, N);
+    const auto [candidates, succ_dirs, nb_paths, goal_time_bounds] = get_lp_branch_candidates(scip, probdata, N);
 
     // If the LP is solved to optimality, the B&B node is infeasible if any dummy variable
     // is used.
@@ -1124,8 +1124,7 @@ SCIP_RETCODE branch_lp(
 
     // Attempt to branch on finishing early.
     {
-        const auto [ant, prefer_branch_0] =
-            find_decision_early_goal(scip, probdata, N, goal_time_bounds);
+        const auto [ant, prefer_branch_0] = find_decision_early_goal(scip, probdata, N, goal_time_bounds);
         if (ant.a >= 0)
         {
             debug_assert(ant.t >= 0);
@@ -1136,8 +1135,7 @@ SCIP_RETCODE branch_lp(
 
     // Attempt to branch on waits.
 //    {
-//        const auto [at, prefer_branch_0] =
-//            find_decision_wait(scip, probdata, succ_dirs, goal_time_bounds);
+//        const auto [at, prefer_branch_0] = find_decision_wait(scip, probdata, succ_dirs, goal_time_bounds);
 //        if (at.a >= 0)
 //        {
 //            debug_assert(at.t >= 0);
@@ -1148,8 +1146,7 @@ SCIP_RETCODE branch_lp(
 
     // Attempt to branch on vertices.
     {
-        const auto [ant, prefer_branch_0] =
-            find_decision_vertex(scip, probdata, candidates, goal_time_bounds, nb_paths);
+        const auto [ant, prefer_branch_0] = find_decision_vertex(scip, probdata, candidates, goal_time_bounds, nb_paths);
         if (ant.a >= 0)
         {
             debug_assert(ant.t > 0);

@@ -111,7 +111,8 @@ SCIP_RETCODE write_best_solution(
                 const auto path = SCIPvardataGetPath(vardata);
 
                 // Write.
-                fmt::print(f, "{:.0f}: {}\n",
+                fmt::print(f, "Agent {}, cost {:.0f}, path {}\n",
+                           a,
                            SCIPround(scip, SCIPvarGetObj(var)),
                            format_path(probdata, path_length, path));
 

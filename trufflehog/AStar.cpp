@@ -129,8 +129,7 @@ AStar::Label* AStar::dominated_without_resources(Label* const new_label)
 //#endif
 
     // Try to put in the new label.
-    auto [it, success] = frontier_without_resources_.emplace(
-        NodeTime{new_label->nt}, new_label);
+    auto [it, success] = frontier_without_resources_.try_emplace(NodeTime{new_label->nt}, new_label);
 
     // Check for dominance if a label already exists.
     if (!success)
@@ -251,18 +250,6 @@ bool AStar::dominated_with_resources(Label* const new_label)
 template <bool without_resources>
 void AStar::generate_start(const NodeTime start)
 {
-    // Get number of resources.
-#ifdef USE_GOAL_CONFLICTS
-    const auto nb_goal_crossings = static_cast<Int>(goal_crossings_.size());
-#else
-    constexpr Int nb_goal_crossings = 0;
-#endif
-#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-    const auto nb_rect_crossings = static_cast<Int>(rectangle_crossings_.size());
-#else
-    constexpr Int nb_rect_crossings = 0;
-#endif
-
     // Create label.
     auto new_label = reinterpret_cast<Label*>(label_pool_.get_label_buffer());
     memset(new_label, 0, label_pool_.label_size());
@@ -300,6 +287,17 @@ void AStar::generate_start(const NodeTime start)
 #ifdef DEBUG
     if (verbose)
     {
+#ifdef USE_GOAL_CONFLICTS
+    const auto nb_goal_crossings = static_cast<Int>(goal_crossings_.size());
+#else
+    constexpr Int nb_goal_crossings = 0;
+#endif
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+    const auto nb_rect_crossings = static_cast<Int>(rectangle_crossings_.size());
+#else
+    constexpr Int nb_rect_crossings = 0;
+#endif
+
         println("   Generating start label {} (n {}, t {}, nt {}, position ({},{}), g {}, h {}, f {}{}{})",
                 new_label->label_id,
                 decltype(new_label->n){new_label->n},
@@ -319,7 +317,7 @@ void AStar::generate_start(const NodeTime start)
 void AStar::generate_end(Label* const current, const Cost max_cost)
 {
     // Compute node-time.
-    const NodeTime nt(-1, current->t);
+    const NodeTime nt{-1, current->t};
 
     // Create label.
     auto new_label = reinterpret_cast<Label*>(label_pool_.get_label_buffer());
@@ -402,7 +400,7 @@ void AStar::generate(Label* const current,
 {
     // Compute node-time.
     const auto new_t = current->t + 1;
-    const NodeTime nt(node, new_t);
+    const NodeTime nt{node, new_t};
 
     // Check if time-infeasible.
     const auto h_to_goal = (*h_)[nt.n];
@@ -920,7 +918,7 @@ Pair<Vector<NodeTime>, Cost> AStar::solve_internal(const NodeTime start,
         open_.pop();
 
         // Expand the neighbours of the current label or exit if the goal is reached.
-        if (current->n != -1) [[likely]]
+        if (current->n != -1)
         {
             // Generate neighbours.
             generate_neighbours<without_resources, default_cost>(current,
@@ -1016,7 +1014,7 @@ template Pair<Vector<NodeTime>, Cost> AStar::solve_internal<false, true>(const N
 
 #ifdef DEBUG
 template<bool without_resources>
-Cost AStar::calculate_cost(const Vector<Pair<Position, Position>>& path)
+Cost AStar::calculate_cost(const Vector<Pair<Position, Position>>&)
 {
     err("not yet implemented"); // TODO
 

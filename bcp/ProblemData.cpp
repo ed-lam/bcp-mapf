@@ -189,14 +189,14 @@ SCIP_DECL_PROBTRANS(probtrans)
                                  sourcedata->agent_part.data(),
                                  (*targetdata)->agent_part.data()));
 
-    // Copy constraints for vertex conflicts.
+    // Copy constraint for vertex conflicts.
     debug_assert(sourcedata->vertex_conflicts);
     (*targetdata)->vertex_conflicts = sourcedata->vertex_conflicts;
     SCIP_CALL(SCIPtransformCons(scip,
                                 (*targetdata)->vertex_conflicts,
                                 &(*targetdata)->vertex_conflicts));
 
-    // Copy constraints for edge conflicts.
+    // Copy constraint for edge conflicts.
     debug_assert(sourcedata->edge_conflicts);
     (*targetdata)->edge_conflicts = sourcedata->edge_conflicts;
     SCIP_CALL(SCIPtransformCons(scip,
@@ -263,10 +263,10 @@ SCIP_RETCODE probdataFree(
         SCIP_CALL(SCIPreleaseCons(scip, &cons));
     }
 
-    // Release constraints for vertex conflicts.
+    // Release constraint for vertex conflicts.
     SCIP_CALL(SCIPreleaseCons(scip, &(*probdata)->vertex_conflicts));
 
-    // Release constraints for edge conflicts.
+    // Release constraint for edge conflicts.
     SCIP_CALL(SCIPreleaseCons(scip, &(*probdata)->edge_conflicts));
 
     // Release two-agent robust cuts.
