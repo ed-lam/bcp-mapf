@@ -46,6 +46,8 @@ Author: Edward Lam <ed@ed-lam.com>
 #define PRICER_PRIORITY                      0
 #define PRICER_DELAY                      TRUE  // Only call pricer if all problem variables have non-negative reduced costs
 
+#define EPS (1e-6)
+
 struct PricingOrder
 {
     Agent a;
@@ -902,7 +904,7 @@ SCIP_RETCODE run_trufflehog_pricer(
 #endif
 
             // Solve.
-            const auto max_cost = agent_part_dual[a] - path_cost;
+            const auto max_cost = agent_part_dual[a] - path_cost - EPS;
             const auto [segment, segment_cost] = astar.solve<is_farkas>(segment_start,
                                                                         segment_goal.n,
                                                                         segment_goal.t,
@@ -1072,7 +1074,7 @@ SCIP_RETCODE run_trufflehog_pricer(
 #endif
 
             // Solve.
-            const auto max_cost = agent_part_dual[a] - path_cost;
+            const auto max_cost = agent_part_dual[a] - path_cost - EPS;
             const auto [segment, segment_cost] = astar.solve<is_farkas>(segment_start,
                                                                         goal,
                                                                         earliest_finish,

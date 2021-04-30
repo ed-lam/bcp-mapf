@@ -22,7 +22,8 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "AStar.h"
 #include <cstddef>
 
-#define isLE(x,y) ((x)-(y) <= (1e-06))
+#define EPS (1e-6)
+#define isLE(x,y) ((x)-(y) <= EPS)
 
 namespace TruffleHog
 {
