@@ -156,11 +156,18 @@ void calculate_agents_order(
     const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
 
     // Calculate the order of the agents.
+    bool fractional = false;
+    bool infeasible = false;
     auto order = pricerdata->order;
     for (Agent a = 0; a < N; ++a)
     {
         // Must price an agent if it is using an artificial variable.
-        bool must_price = SCIPisPositive(scip, SCIPgetSolVal(scip, nullptr, dummy_vars[a]));
+        bool must_price = false;
+        if (SCIPisPositive(scip, SCIPgetSolVal(scip, nullptr, dummy_vars[a])))
+        {
+            must_price = true;
+            infeasible = true;
+        }
 
         // Must price an agent if it is fractional.
         if (!must_price)
@@ -175,6 +182,7 @@ void calculate_agents_order(
                 if (!SCIPisIntegral(scip, var_val))
                 {
                     must_price = true;
+                    fractional = true;
                     break;
                 }
             }
@@ -182,6 +190,15 @@ void calculate_agents_order(
 
         // Store.
         order[a] = {a, must_price, nullptr};
+    }
+
+    // Price all agents if the master problem solution is integral.
+    if (!infeasible && !fractional)
+    {
+        for (Agent a = 0; a < N; ++a)
+        {
+            order[a].must_price = true;
+        }
     }
 
     // Sort.
