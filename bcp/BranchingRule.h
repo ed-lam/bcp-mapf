@@ -28,8 +28,14 @@ SCIP_RETCODE SCIPincludeBranchrule(
     SCIP* scip    // SCIP
 );
 
-// Branching methods
+// Branching on fractional LP solution
 SCIP_RETCODE branch_lp(
+    SCIP* scip,            // SCIP
+    SCIP_RESULT* result    // Output status
+);
+
+// Branching on pseudosolution
+SCIP_RETCODE branch_pseudosolution(
     SCIP* scip,            // SCIP
     SCIP_RESULT* result    // Output status
 );

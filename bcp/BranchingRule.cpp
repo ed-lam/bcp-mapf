@@ -51,25 +51,32 @@ SCIP_DECL_BRANCHEXECLP(branchExeclpMAPF)
 }
 #pragma GCC diagnostic pop
 
-// Branching execution method for pseudosolutions (integer solutions)
-//static
-//SCIP_DECL_BRANCHEXECPS(branchExecpsMAPF)
-//{
-//    // Check.
-//    debug_assert(scip);
-//    debug_assert(branchrule);
-//    debug_assert(strcmp(SCIPbranchruleGetName(branchrule), BRANCHRULE_NAME) == 0);
-//    debug_assert(result);
-//
-//    unreachable();
-//}
+// Branching execution method for pseudosolutions
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+static
+SCIP_DECL_BRANCHEXECPS(branchExecpsMAPF)
+{
+    // Check.
+    debug_assert(scip);
+    debug_assert(branchrule);
+    debug_assert(strcmp(SCIPbranchruleGetName(branchrule), BRANCHRULE_NAME) == 0);
+    debug_assert(result);
+
+    // Branch.
+    return branch_pseudosolution(scip, result);
+}
+#pragma GCC diagnostic pop
 
 // Unused branching method
-//static
-//SCIP_DECL_BRANCHEXECEXT(branchExecextMAPF)
-//{
-//    unreachable();
-//}
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+static
+SCIP_DECL_BRANCHEXECEXT(branchExecextMAPF)
+{
+    unreachable();
+}
+#pragma GCC diagnostic pop
 
 // Create the branching rule and include it in SCIP
 SCIP_RETCODE SCIPincludeBranchrule(
@@ -90,8 +97,8 @@ SCIP_RETCODE SCIPincludeBranchrule(
 
     // Activate branching rule.
     SCIP_CALL(SCIPsetBranchruleExecLp(scip, branchrule, branchExeclpMAPF));
-//    SCIP_CALL(SCIPsetBranchruleExecPs(scip, branchrule, branchExecpsMAPF));
-//    SCIP_CALL(SCIPsetBranchruleExecExt(scip, branchrule, branchExecextMAPF));
+    SCIP_CALL(SCIPsetBranchruleExecPs(scip, branchrule, branchExecpsMAPF));
+    SCIP_CALL(SCIPsetBranchruleExecExt(scip, branchrule, branchExecextMAPF));
 
     // Done.
     return SCIP_OKAY;

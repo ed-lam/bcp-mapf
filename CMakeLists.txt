@@ -90,6 +90,7 @@ set(BCP_MAPF_SOURCE_FILES
     bcp/BranchingRule.h
     bcp/BranchingRule.cpp
     bcp/BranchingRule_Fractional.cpp
+    bcp/BranchingRule_Pseudosolution.cpp
     bcp/Constraint_VertexBranching.h
     bcp/Constraint_VertexBranching.cpp
     bcp/Constraint_LengthBranching.h
