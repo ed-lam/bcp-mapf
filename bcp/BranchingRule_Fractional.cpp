@@ -79,7 +79,7 @@ get_lp_branch_candidates(
                                      &nb_candidate_vars,
                                      nullptr,
                                      nullptr));
-    debug_assert(nb_candidate_vars > 0);
+    release_assert(nb_candidate_vars > 0, "LP is not fractional");
 
     // Find the makespan.
     Time makespan = 0;

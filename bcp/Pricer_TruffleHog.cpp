@@ -36,6 +36,7 @@ Author: Edward Lam <ed@ed-lam.com>
 //#include "Constraint_WaitBranching.h"
 #include "Constraint_LengthBranching.h"
 #include <chrono>
+#include <numeric>
 
 #include "trufflehog/Instance.h"
 #include "trufflehog/AStar.h"
@@ -47,6 +48,8 @@ Author: Edward Lam <ed@ed-lam.com>
 #define PRICER_DELAY                      TRUE  // Only call pricer if all problem variables have non-negative reduced costs
 
 #define EPS (1e-6)
+#define STALLED_NB_ROUNDS (4)
+#define STALLED_ABSOLUTE_CHANGE (-1)
 
 struct PricingOrder
 {
@@ -58,17 +61,22 @@ struct PricingOrder
 // Pricer data
 struct SCIP_PricerData
 {
-    Agent N;                                     // Number of agents
-    SCIP_Real* price_priority;                   // Pricing priority of each agent
-    PricingOrder* order;                         // Order of agents to price
-    SCIP_Real* agent_part_dual;                  // Dual variable values of agent partition constraints
+    Agent N;                                            // Number of agents
+    SCIP_CONSHDLR* vertex_branching_conshdlr;           // Constraint handler for vertex branching
+//    SCIP_CONSHDLR* wait_branching_conshdlr;             // Constraint handler for wait branching
+    SCIP_CONSHDLR* length_branching_conshdlr;           // Constraint handler for length branching
 
-    SCIP_CONSHDLR* vertex_branching_conshdlr;    // Constraint handler for vertex branching
-//    SCIP_CONSHDLR* wait_branching_conshdlr;      // Constraint handler for wait branching
-    SCIP_CONSHDLR* length_branching_conshdlr;    // Constraint handler for length branching
+    SCIP_Real* agent_part_dual;                         // Dual variable values of agent partition constraints
+    SCIP_Real* price_priority;                          // Pricing priority of each agent
+    PricingOrder* order;                                // Order of agents to price
+
+    SCIP_Longint last_solved_node;                      // Node number of the last node pricing
+    SCIP_Real last_solved_lp_obj[STALLED_NB_ROUNDS];    // LP objective in the last few rounds of pricing
 };
 
 // Initialize pricer (called after the problem was transformed)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wuninitialized"
 static
 SCIP_DECL_PRICERINIT(pricerTruffleHogInit)
 {
@@ -85,19 +93,7 @@ SCIP_DECL_PRICERINIT(pricerTruffleHogInit)
     SCIP_CALL(SCIPallocBlockMemory(scip, &pricerdata));
     new (pricerdata) SCIP_PricerData;
     pricerdata->N = SCIPprobdataGetN(probdata);
-    debug_assert(pricerdata->N > 0);
-
-    // Create array for agent priority in pricing.
-    SCIP_CALL(SCIPallocBlockMemoryArray(scip, &pricerdata->price_priority, pricerdata->N));
-    memset(pricerdata->price_priority, 0, sizeof(SCIP_Real) * pricerdata->N);
-
-    // Create array for order of agents to price.
-    SCIP_CALL(SCIPallocBlockMemoryArray(scip, &pricerdata->order, pricerdata->N));
-    // Overwritten in each run. No need for initialisation.
-
-    // Create array for dual variable values of agent partition constraints.
-    SCIP_CALL(SCIPallocBlockMemoryArray(scip, &pricerdata->agent_part_dual, pricerdata->N));
-    // Overwritten in each run. No need for initialisation.
+    pricerdata->last_solved_node = -1;
 
     // Find constraint handler for branching decisions.
     pricerdata->vertex_branching_conshdlr = SCIPfindConshdlr(scip, "vertex_branching");
@@ -110,6 +106,18 @@ SCIP_DECL_PRICERINIT(pricerTruffleHogInit)
     release_assert(pricerdata->length_branching_conshdlr,
                    "Constraint handler for length branching rule is missing");
 
+    // Create array for dual variable values of agent partition constraints.
+    SCIP_CALL(SCIPallocBlockMemoryArray(scip, &pricerdata->agent_part_dual, pricerdata->N));
+    // Overwritten in each run. No need for initialisation.
+
+    // Create array for agent priority in pricing.
+    SCIP_CALL(SCIPallocBlockMemoryArray(scip, &pricerdata->price_priority, pricerdata->N));
+    memset(pricerdata->price_priority, 0, sizeof(SCIP_Real) * pricerdata->N);
+
+    // Create array for order of agents to price.
+    SCIP_CALL(SCIPallocBlockMemoryArray(scip, &pricerdata->order, pricerdata->N));
+    // Overwritten in each run. No need for initialisation.
+
     // Set pointer to pricer data.
     SCIPpricerSetData(pricer, pricerdata);
     SCIPprobdataSetPricerData(probdata, pricerdata);
@@ -117,6 +125,7 @@ SCIP_DECL_PRICERINIT(pricerTruffleHogInit)
     // Done.
     return SCIP_OKAY;
 }
+#pragma GCC diagnostic pop
 
 // Free pricer
 static
@@ -132,8 +141,8 @@ SCIP_DECL_PRICERFREE(pricerTruffleHogFree)
 
     // Deallocate.
     SCIPfreeBlockMemoryArray(scip, &pricerdata->agent_part_dual, pricerdata->N);
-    SCIPfreeBlockMemoryArray(scip, &pricerdata->order, pricerdata->N);
     SCIPfreeBlockMemoryArray(scip, &pricerdata->price_priority, pricerdata->N);
+    SCIPfreeBlockMemoryArray(scip, &pricerdata->order, pricerdata->N);
     pricerdata->~SCIP_PricerData();
     SCIPfreeBlockMemory(scip, &pricerdata);
 
@@ -141,8 +150,15 @@ SCIP_DECL_PRICERFREE(pricerTruffleHogFree)
     return SCIP_OKAY;
 }
 
+enum class MasterProblemStatus
+{
+    Infeasible = 0,
+    Fractional = 1,
+    Integral = 2
+};
+
 // Compute ordering of agents to price
-void calculate_agents_order(
+MasterProblemStatus calculate_agents_order(
     SCIP* scip,                    // SCIP
     SCIP_PROBDATA* probdata,       // Problem data
     SCIP_PricerData* pricerdata    // Pricer data
@@ -156,21 +172,20 @@ void calculate_agents_order(
     const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
 
     // Calculate the order of the agents.
-    bool fractional = false;
-    bool infeasible = false;
+    MasterProblemStatus master_lp_status = MasterProblemStatus::Integral;
     auto order = pricerdata->order;
     for (Agent a = 0; a < N; ++a)
     {
         // Must price an agent if it is using an artificial variable.
-        bool must_price = false;
+        bool must_price_agent = false;
         if (SCIPisPositive(scip, SCIPgetSolVal(scip, nullptr, dummy_vars[a])))
         {
-            must_price = true;
-            infeasible = true;
+            master_lp_status = MasterProblemStatus::Infeasible;
+            must_price_agent = true;
         }
 
         // Must price an agent if it is fractional.
-        if (!must_price)
+        if (!must_price_agent)
         {
             for (auto var : agent_vars[a])
             {
@@ -181,19 +196,19 @@ void calculate_agents_order(
                 // Set.
                 if (!SCIPisIntegral(scip, var_val))
                 {
-                    must_price = true;
-                    fractional = true;
+                    master_lp_status = std::min(master_lp_status, MasterProblemStatus::Fractional);
+                    must_price_agent = true;
                     break;
                 }
             }
         }
 
         // Store.
-        order[a] = {a, must_price, nullptr};
+        order[a] = {a, must_price_agent, nullptr};
     }
 
     // Price all agents if the master problem solution is integral.
-    if ((!infeasible && !fractional) || (rand() % 10 < 1))
+    if (master_lp_status == MasterProblemStatus::Integral)
     {
         for (Agent a = 0; a < N; ++a)
         {
@@ -212,6 +227,9 @@ void calculate_agents_order(
                              (a.must_price == b.must_price && price_priority[a.a] > price_priority[b.a]);
                   });
     }
+
+    // Done.
+    return master_lp_status;
 }
 
 static
@@ -219,7 +237,7 @@ SCIP_RETCODE run_trufflehog_pricer(
     SCIP* scip,               // SCIP
     SCIP_PRICER* pricer,      // Pricer
     SCIP_RESULT* result,      // Output result
-    SCIP_Bool*,               // Output flag to indicate early branching is required
+    SCIP_Bool* stopearly,     // Output flag to indicate early branching is required
     SCIP_Real* lower_bound    // Output lower bound
 )
 {
@@ -254,6 +272,61 @@ SCIP_RETCODE run_trufflehog_pricer(
     const auto N = SCIPprobdataGetN(probdata);
     const auto& map = SCIPprobdataGetMap(probdata);
     const auto& agents = SCIPprobdataGetAgentsData(probdata);
+
+    // Create order of agents to solve.
+    auto order = pricerdata->order;
+    const auto master_lp_status = calculate_agents_order(scip, probdata, pricerdata);
+    for (Agent a = 0; a < N; ++a)
+    {
+        pricerdata->price_priority[a] /= PRICE_PRIORITY_DECAY_FACTOR;
+    }
+
+    // Early branching if LP is stalled.
+    if constexpr (!is_farkas)
+    {
+        if (master_lp_status == MasterProblemStatus::Fractional)
+        {
+            const auto current_node = SCIPnodeGetNumber(SCIPgetCurrentNode(scip));
+            if (pricerdata->last_solved_node != current_node)
+            {
+                constexpr auto nan = std::numeric_limits<SCIP_Real>::quiet_NaN();
+                std::fill(pricerdata->last_solved_lp_obj, pricerdata->last_solved_lp_obj + STALLED_NB_ROUNDS, nan);
+                pricerdata->last_solved_node = current_node;
+            }
+            else
+            {
+                std::memmove(pricerdata->last_solved_lp_obj,
+                             pricerdata->last_solved_lp_obj + 1,
+                             sizeof(SCIP_Real) * (STALLED_NB_ROUNDS - 1));
+                pricerdata->last_solved_lp_obj[STALLED_NB_ROUNDS - 1] = SCIPgetLPObjval(scip);
+
+                debugln("");
+                debugln("   LP history: {}", fmt::join(pricerdata->last_solved_lp_obj, pricerdata->last_solved_lp_obj + STALLED_NB_ROUNDS, " "));
+
+                bool stalled = true;
+                for (Int idx = 0; idx < STALLED_NB_ROUNDS - 1; ++idx)
+                {
+                    const auto change = pricerdata->last_solved_lp_obj[idx + 1] - pricerdata->last_solved_lp_obj[idx];
+                    debugln("   LP absolute change {}", change);
+                    if (!(change <= 0 && change >= STALLED_ABSOLUTE_CHANGE)) // Stalled if change is positive or less than some amount
+                    {
+                        stalled = false;
+                        break;
+                    }
+                }
+                if (stalled)
+                {
+                    debugln("   LP stalled - skip pricing");
+                    *stopearly = true;
+                    return SCIP_OKAY;
+                }
+                else
+                {
+                    debugln("   LP not stalled - start pricing");
+                }
+            }
+        }
+    }
 
     // Get variables.
     auto& vars = SCIPprobdataGetVars(probdata);
@@ -301,86 +374,66 @@ SCIP_RETCODE run_trufflehog_pricer(
 #endif
 
     // Use debug solution.
-    // {
-    //     static int iter = 0;
-    //     if (iter++ == 0)
-    //     {
-    //         Vector<Vector<Pair<Position,Position>>> init_paths{
-    //             {     {13,8},    {12,8},    {11,8},    {10,8},     {9,8},     {8,8},     {7,8},     {6,8},     {6,9},    {6,10},    {6,11}, },
-    //             {     {3,17},    {4,17},    {5,17},    {6,17},    {7,17},    {8,17},    {9,17},    {9,18},   {10,18},   {11,18},   {12,18},   {13,18},   {14,18},   {15,18},   {15,19},   {16,19},   {17,19},   {18,19}, },
-    //             {     {6,12},    {5,12},    {4,12},    {3,12},    {3,13},    {2,13},    {2,14},    {2,15}, },
-    //             {     {5,16},    {5,15},    {5,14},    {5,13},    {4,13},    {4,12},    {3,12},    {3,11},    {3,10},     {3,9},     {3,8}, },
-    //             {     {16,1},    {15,1},    {15,2},    {15,3},    {15,4},    {14,4},    {14,5},    {14,6},    {13,6},    {13,7},    {13,8},    {13,9},    {12,9},    {11,9},    {10,9},     {9,9},     {8,9}, },
-    //             {    {17,13},   {16,13},   {16,14},   {16,15},   {16,16},   {15,16}, },
-    //             {     {9,19},    {9,18},    {9,17},    {9,16},    {9,15},    {9,14},    {9,13},    {9,12},    {9,11},    {8,11},    {8,10},    {7,10},     {7,9},     {7,8},     {6,8},     {5,8},     {5,7},     {5,6},     {5,5},     {5,4},     {5,3},     {5,2},     {4,2},     {3,2},     {3,1},     {2,1}, },
-    //             {     {8,16},    {8,17},    {8,18},    {7,18},    {6,18},    {5,18},    {4,18},    {3,18},    {2,18},    {1,18}, },
-    //             {      {7,4},     {7,5},     {7,6},     {7,7},     {7,8},     {7,9},    {7,10},    {7,11},    {7,12},    {7,13},    {8,13},    {9,13}, },
-    //             {      {7,4},     {7,4},     {7,5},     {7,6},     {7,7},     {7,8},     {7,9},    {7,10},    {7,11},    {7,12},    {7,13},    {8,13},    {9,13}, },
-    //             {    {12,17},   {12,16},   {11,16},   {11,15},   {11,14},   {11,13},   {10,13},    {9,13},    {9,12},    {9,11},    {8,11},    {8,10},     {8,9},     {8,8}, },
-    //             {      {2,4},     {2,5},     {3,5},     {4,5},     {5,5},     {6,5},     {7,5},     {7,6},     {7,7},     {8,7}, },
-    //             {    {16,15},   {16,16},   {15,16},   {14,16},   {13,16},   {12,16},   {11,16}, },
-    //             {    {15,13},   {14,13},   {13,13},   {13,12},   {13,11},   {13,10},    {13,9},    {12,9},    {12,8},    {12,7},    {12,6},    {12,5},    {11,5},    {10,5},    {10,4}, },
-    //             {      {6,5},     {6,6},     {7,6},     {8,6},     {9,6},    {10,6},    {10,7},    {11,7},    {11,8},    {11,9},   {11,10},   {12,10},   {13,10},   {13,11},   {14,11},   {14,12}, },
-    //             {      {6,5},     {6,6},     {6,7},     {6,8},     {6,9},     {7,9},     {8,9},     {9,9},    {10,9},   {10,10},   {11,10},   {11,11},   {12,11},   {13,11},   {14,11},   {14,12}, },
-    //             {     {19,7},    {19,8},    {18,8},    {17,8},    {16,8},    {16,9},    {15,9},    {14,9},    {13,9},    {12,9},    {11,9},    {10,9},     {9,9},     {8,9},     {7,9},    {7,10},    {7,11}, },
-    //             {    {20,14},   {20,15},   {20,16},   {20,17},   {19,17},   {19,18},   {18,18},   {18,19},   {17,19},   {16,19},   {15,19},   {14,19}, },
-    //             {     {6,18},    {7,18},    {7,17},    {8,17},    {8,16},    {9,16},    {9,15},   {10,15},   {11,15},   {11,14},   {11,13},   {12,13},   {13,13},   {13,12},   {13,11},   {13,10},    {13,9},    {14,9}, },
-    //             {     {13,9},    {12,9},    {11,9},    {10,9},     {9,9},     {8,9},    {8,10},    {8,11},    {7,11},    {7,12},    {6,12},    {5,12},    {5,13},    {5,14},    {5,15}, },
-    //             {     {13,9},    {12,9},    {11,9},    {10,9},     {9,9},     {8,9},    {8,10},    {7,10},    {6,10},    {6,11},    {6,12},    {5,12},    {5,13},    {5,14},    {5,15}, },
-    //             {     {6,13},    {7,13},    {7,12},    {7,11},    {8,11},    {9,11},   {10,11}, },
-    //             {     {12,6},    {11,6},    {10,6},    {10,7},     {9,7},     {9,8},     {8,8},     {7,8},     {7,9},    {7,10},    {7,11},    {7,12},    {7,13},    {6,13},    {6,14},    {5,14}, },
-    //         };
-    //         // Vector<Agent> path_agents{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 13, 14, 15, 16, 17, 17, 18, 19 };
-    //         Vector<Agent> path_agents(N);
-    //         std::iota(path_agents.begin(), path_agents.end(), 0);
-
-    //         static bool done = false;
-    //         if (!done)
-    //         {
-    //             constexpr Position padding = 1;
-
-    //             for (Int idx = 0; idx < init_paths.size(); ++idx)
-    //             {
-    //                 const auto& init_path = init_paths.at(idx);
-    //                 const auto a = path_agents.at(idx);
-    //                 // const auto tmp = astar.calculate_cost<true>(init_path);
-
-    //                 Vector<Edge> path;
-    //                 for (Int idx = 0; idx < init_path.size() - 1; ++idx)
-    //                 {
-    //                     const auto [x1, y1] = init_path[idx];
-    //                     const auto [x2, y2] = init_path[idx+1];
-    //                     const auto i = map.get_id(x1 + padding, y1 + padding);
-    //                     const auto j = map.get_id(x2 + padding, y2 + padding);
-    //                     const auto d = get_direction(NodeTime{i,idx}, NodeTime{j,idx+1}, map);
-    //                     path.push_back(Edge{i,d});
-    //                 }
-    //                 {
-    //                     Int idx = init_path.size() - 1;
-    //                     const auto [x1, y1] = init_path[idx];
-    //                     const auto i = map.get_id(x1 + padding, y1 + padding);
-    //                     const auto d = Direction::INVALID;
-    //                     path.push_back(Edge{i,d});
-    //                 }
-    //                 debug_assert(path.front().n == agents[a].start);
-    //                 debug_assert(path.back().n == agents[a].goal);
-
-    //                 // Add column.
-    //                 SCIP_VAR* var = nullptr;
-    //                 SCIP_CALL(SCIPprobdataAddPricedVar(scip, probdata, a, path.size(), path.data(), &var));
-    //                 debug_assert(var);
-    //             }
-    //             done = true;
-    //         }
-    //         *result = SCIP_SUCCESS;
-    //         return SCIP_OKAY;
-    //     }
-    //     else
-    //     {
-    //         *result = SCIP_DIDNOTRUN;
-    //         return SCIP_OKAY;
-    //     }
-    // }
+//    {
+//        static int iter = 0;
+//        ++iter;
+//        if (iter == 1)
+//        {
+//            Vector<Vector<Pair<Position,Position>>> init_paths{
+//                { {224,134},{224,133},{224,132},{224,131},{224,130},{224,129},{224,128} },
+//                { {188,172},{188,171},{189,171},{190,171},{191,171},{191,170},{192,170} },
+//            };
+//            // Vector<Agent> path_agents{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 13, 14, 15, 16, 17, 17, 18, 19 };
+//            Vector<Agent> path_agents(N);
+//            std::iota(path_agents.begin(), path_agents.end(), 0);
+//
+//            static bool done = false;
+//            if (!done)
+//            {
+//                constexpr Position padding = 1;
+//
+//                for (Int idx = 0; idx < static_cast<Int>(init_paths.size()); ++idx)
+//                {
+//                    const auto& init_path = init_paths.at(idx);
+//                    const auto a = path_agents.at(idx);
+//                    // const auto tmp = astar.calculate_cost<true>(init_path);
+//
+//                    Vector<Edge> path;
+//                    for (Int idx = 0; idx < static_cast<Int>(init_path.size() - 1); ++idx)
+//                    {
+//                        const auto [x1, y1] = init_path[idx];
+//                        const auto [x2, y2] = init_path[idx+1];
+//                        const auto i = map.get_id(x1 + padding, y1 + padding);
+//                        const auto j = map.get_id(x2 + padding, y2 + padding);
+//                        const auto d = map.get_direction(i, j);
+//                        path.push_back(Edge{i,d});
+//                    }
+//                    {
+//                        Int idx = init_path.size() - 1;
+//                        const auto [x1, y1] = init_path[idx];
+//                        const auto i = map.get_id(x1 + padding, y1 + padding);
+//                        const auto d = Direction::INVALID;
+//                        path.push_back(Edge{i,d});
+//                    }
+//                    debug_assert(path.front().n == agents[a].start);
+//                    debug_assert(path.back().n == agents[a].goal);
+//
+//                    // Add column.
+//                    SCIP_VAR* var = nullptr;
+//                    SCIP_CALL(SCIPprobdataAddPricedVar(scip, probdata, a, path.size(), path.data(), &var));
+//                    debug_assert(var);
+//                }
+//                done = true;
+//            }
+//            *result = SCIP_SUCCESS;
+//            return SCIP_OKAY;
+//        }
+////        else
+////        {
+////            *result = SCIP_DIDNOTRUN;
+////            return SCIP_OKAY;
+////        }
+//    }
 
     // Find the makespan.
     Time makespan = 0;
@@ -485,14 +538,6 @@ SCIP_RETCODE run_trufflehog_pricer(
                 penalties.d[e.d] -= dual;
             }
         }
-    }
-
-    // Create order of agents to solve.
-    auto order = pricerdata->order;
-    calculate_agents_order(scip, probdata, pricerdata);
-    for (Agent a = 0; a < N; ++a)
-    {
-        pricerdata->price_priority[a] /= PRICE_PRIORITY_DECAY_FACTOR;
     }
 
     // Price each agent.
