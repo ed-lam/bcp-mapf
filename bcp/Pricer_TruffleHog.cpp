@@ -216,11 +216,11 @@ void calculate_agents_order(
 
 static
 SCIP_RETCODE run_trufflehog_pricer(
-    SCIP* scip,             // SCIP
-    SCIP_PRICER* pricer,    // Pricer
-    SCIP_RESULT* result,    // Output result
-    SCIP_Bool*,             // Output flag to indicate early branching is required
-    SCIP_Real*              // Output lower bound
+    SCIP* scip,               // SCIP
+    SCIP_PRICER* pricer,      // Pricer
+    SCIP_RESULT* result,      // Output result
+    SCIP_Bool*,               // Output flag to indicate early branching is required
+    SCIP_Real* lower_bound    // Output lower bound
 )
 {
     // No Farkas pricing.
@@ -496,6 +496,8 @@ SCIP_RETCODE run_trufflehog_pricer(
     }
 
     // Price each agent.
+    Float min_reduced_cost = 0;
+    Vector<bool> agent_priced(N);
 #ifdef PRINT_DEBUG
     Int nb_new_cols = 0;
 #endif
@@ -1116,6 +1118,7 @@ SCIP_RETCODE run_trufflehog_pricer(
         }
 
         // Add a column only if the path has negative reduced cost.
+        min_reduced_cost = std::min(min_reduced_cost, path_cost - agent_part_dual[a]);
         if (SCIPisSumLT(scip, path_cost - agent_part_dual[a], 0.0))
         {
             // Print.
@@ -1142,7 +1145,8 @@ SCIP_RETCODE run_trufflehog_pricer(
         }
 
         // End of this agent.
-        NEXT_AGENT:;
+        NEXT_AGENT:
+        agent_priced[a] = true;
 
         // End timer.
 #ifdef PRINT_DEBUG
@@ -1156,9 +1160,27 @@ SCIP_RETCODE run_trufflehog_pricer(
     // Print.
     debugln("   Added {} new columns", nb_new_cols);
 
-    // Done.
+    // Finish.
     if (!SCIPisStopped(scip))
     {
+        // Compute lower bound.
+        if constexpr (!is_farkas)
+        {
+            bool all_agents_priced = true;
+            for (Agent a = 0; a < N; ++a)
+                if (!agent_priced[a])
+                {
+                    all_agents_priced = false;
+                    break;
+                }
+            if (all_agents_priced)
+            {
+                *lower_bound = SCIPgetLPObjval(scip) + N * min_reduced_cost;
+                debugln("   Computed lower bound {}", *lower_bound);
+            }
+        }
+
+        // Mark as completed.
         *result = SCIP_SUCCESS;
     }
     return SCIP_OKAY;
