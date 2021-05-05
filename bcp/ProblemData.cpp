@@ -1028,21 +1028,21 @@ SCIP_RETCODE SCIPprobdataCreate(
         SCIPsnprintf(name, SCIP_MAXSTRLEN, "agent_part(%d)", a);
 
         // Create constraint.
-        SCIP_CALL(SCIPcreateConsSetpart(scip,
-                                        &(probdata->agent_part[a]),
-                                        name,
-                                        0,
-                                        nullptr,
-                                        TRUE,
-                                        TRUE,
-                                        TRUE,
-                                        TRUE,
-                                        TRUE,
-                                        FALSE,
-                                        TRUE,
-                                        FALSE,
-                                        FALSE,
-                                        FALSE));
+        SCIP_CALL(SCIPcreateConsSetcover(scip,
+                                         &(probdata->agent_part[a]),
+                                         name,
+                                         0,
+                                         nullptr,
+                                         TRUE,
+                                         TRUE,
+                                         TRUE,
+                                         TRUE,
+                                         TRUE,
+                                         FALSE,
+                                         TRUE,
+                                         FALSE,
+                                         FALSE,
+                                         FALSE));
         debug_assert(&(probdata->agent_part[a]));
 
         // Add the constraint to the problem.
