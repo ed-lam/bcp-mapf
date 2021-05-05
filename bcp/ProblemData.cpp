@@ -58,6 +58,9 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifdef USE_THREEVERTEX_CONFLICTS
 #include "Separator_ThreeVertexConflicts.h"
 #endif
+#ifdef USE_FOUREDGE_CONFLICTS
+#include "Separator_FourEdgeConflicts.h"
+#endif
 #ifdef USE_FIVEEDGE_CONFLICTS
 #include "Separator_FiveEdgeConflicts.h"
 #endif
@@ -1118,6 +1121,11 @@ SCIP_RETCODE SCIPprobdataCreate(
     // Include separator for three-vertex conflicts.
 #ifdef USE_THREEVERTEX_CONFLICTS
     SCIP_CALL(SCIPincludeSepaThreeVertexConflicts(scip));
+#endif
+
+    // Include separator for four-edge conflicts.
+#ifdef USE_FOUREDGE_CONFLICTS
+    SCIP_CALL(SCIPincludeSepaFourEdgeConflicts(scip));
 #endif
 
     // Include separator for five-edge conflicts.

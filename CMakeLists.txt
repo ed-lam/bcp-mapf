@@ -75,6 +75,8 @@ set(BCP_MAPF_SOURCE_FILES
     bcp/Separator_TwoEdgeConflicts.cpp
     bcp/Separator_ThreeVertexConflicts.h
     bcp/Separator_ThreeVertexConflicts.cpp
+    bcp/Separator_FourEdgeConflicts.h
+    bcp/Separator_FourEdgeConflicts.cpp
     bcp/Separator_FiveEdgeConflicts.h
     bcp/Separator_FiveEdgeConflicts.cpp
     bcp/Separator_SixEdgeConflicts.h
@@ -184,6 +186,7 @@ target_compile_options(bcp-mapf PRIVATE -DUSE_WAITDELAY_CONFLICTS)
 target_compile_options(bcp-mapf PRIVATE -DUSE_EXITENTRY_CONFLICTS)
 target_compile_options(bcp-mapf PRIVATE -DUSE_TWOEDGE_CONFLICTS)
 target_compile_options(bcp-mapf PRIVATE -DUSE_THREEVERTEX_CONFLICTS)
+target_compile_options(bcp-mapf PRIVATE -DUSE_FOUREDGE_CONFLICTS)
 target_compile_options(bcp-mapf PRIVATE -DUSE_FIVEEDGE_CONFLICTS)
 target_compile_options(bcp-mapf PRIVATE -DUSE_SIXEDGE_CONFLICTS)
 target_compile_options(bcp-mapf PRIVATE -DUSE_TRIPLEEDGE_CONFLICTS)
