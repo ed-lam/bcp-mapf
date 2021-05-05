@@ -193,7 +193,7 @@ void calculate_agents_order(
     }
 
     // Price all agents if the master problem solution is integral.
-    if (!infeasible && !fractional)
+    if ((!infeasible && !fractional) || (rand() % 10 < 1))
     {
         for (Agent a = 0; a < N; ++a)
         {
