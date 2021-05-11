@@ -77,7 +77,7 @@ inline bool operator==(const NodeTime a, const NodeTime b)
 }
 inline bool operator!=(const NodeTime a, const NodeTime b)
 {
-    return !(a == b);
+    return a.nt != b.nt;
 }
 
 union EdgeTime

@@ -61,17 +61,27 @@ struct PricingOrder
 // Pricer data
 struct SCIP_PricerData
 {
-    Agent N;                                            // Number of agents
-    SCIP_CONSHDLR* vertex_branching_conshdlr;           // Constraint handler for vertex branching
-//    SCIP_CONSHDLR* wait_branching_conshdlr;             // Constraint handler for wait branching
-    SCIP_CONSHDLR* length_branching_conshdlr;           // Constraint handler for length branching
+    SCIP_CONSHDLR* vertex_branching_conshdlr;                                      // Constraint handler for vertex branching
+//    SCIP_CONSHDLR* wait_branching_conshdlr;                                      // Constraint handler for wait branching
+    SCIP_CONSHDLR* length_branching_conshdlr;                                      // Constraint handler for length branching
+    Agent N;                                                                       // Number of agents
 
-    SCIP_Real* agent_part_dual;                         // Dual variable values of agent partition constraints
-    SCIP_Real* price_priority;                          // Pricing priority of each agent
-    PricingOrder* order;                                // Order of agents to price
+    SCIP_Real* agent_part_dual;                                                    // Dual variable values of agent set partition constraints
+    SCIP_Real* price_priority;                                                     // Pricing priority of each agent
+    PricingOrder* order;                                                           // Order of agents to price
 
-    SCIP_Longint last_solved_node;                      // Node number of the last node pricing
-    SCIP_Real last_solved_lp_obj[STALLED_NB_ROUNDS];    // LP objective in the last few rounds of pricing
+#ifdef USE_ASTAR_SOLUTION_CACHING
+    Vector<Vector<NodeTime>> previous_segments;                                    // End-points of segments in previous failed iteration
+    Vector<Float> previous_agent_part_dual;                                        // Dual variable values of agent set partition constraints in previous failed iteration
+    Vector<HashTable<NodeTime, TruffleHog::EdgeCosts>> previous_edge_penalties;    // Edge penalties used in previous failed iteration
+    Vector<Vector<Cost>> previous_time_finish_penalties;                           // Time to finish penalties in previous failed iteration
+#ifdef USE_GOAL_CONFLICTS
+    Vector<Vector<GoalCrossing>> previous_goal_crossings;                          // Goal crossing penalties in previous failed iteration
+#endif
+#endif
+
+    SCIP_Longint last_solved_node;                                                 // Node number of the last node pricing
+    SCIP_Real last_solved_lp_obj[STALLED_NB_ROUNDS];                               // LP objective in the last few rounds of pricing
 };
 
 // Initialize pricer (called after the problem was transformed)
@@ -117,6 +127,17 @@ SCIP_DECL_PRICERINIT(pricerTruffleHogInit)
     // Create array for order of agents to price.
     SCIP_CALL(SCIPallocBlockMemoryArray(scip, &pricerdata->order, pricerdata->N));
     // Overwritten in each run. No need for initialisation.
+
+    // Create space to store the penalties from the previous failed iteration.
+#ifdef USE_ASTAR_SOLUTION_CACHING
+    pricerdata->previous_segments.resize(pricerdata->N);
+    pricerdata->previous_agent_part_dual.resize(pricerdata->N, -std::numeric_limits<Float>::infinity());
+    pricerdata->previous_edge_penalties.resize(pricerdata->N);
+    pricerdata->previous_time_finish_penalties.resize(pricerdata->N);
+#ifdef USE_GOAL_CONFLICTS
+    pricerdata->previous_goal_crossings.resize(pricerdata->N);
+#endif
+#endif
 
     // Set pointer to pricer data.
     SCIPpricerSetData(pricer, pricerdata);
@@ -949,6 +970,7 @@ SCIP_RETCODE run_trufflehog_pricer(
 #endif
 
         // Solve each segment.
+//        bool skipping = false;
         size_t idx = 0;
         for (; idx < segments.size() - 1; ++idx)
         {
@@ -977,7 +999,7 @@ SCIP_RETCODE run_trufflehog_pricer(
             // Advance to the next agent if no path is found.
             if (segment.empty())
             {
-                goto NEXT_AGENT;
+                goto AGENT_FAILED;
             }
 
             // Get the solution.
@@ -1136,6 +1158,108 @@ SCIP_RETCODE run_trufflehog_pricer(
             }
 #endif
 
+            // Skip running A* if the penalties in the last iteration of this agent have stayed the same or worsened.
+#ifdef USE_ASTAR_SOLUTION_CACHING
+            {
+//                println("Agent {}", a);
+//                println("Previous segments:");
+//                println("{}", fmt::join(pricerdata->previous_segments[a], ","));
+//                println("Current segments:");
+//                println("{}", fmt::join(segments, ","));
+//                println("Previous agent dual:");
+//                println("{}", pricerdata->previous_agent_part_dual[a]);
+//                println("Current agent dual:");
+//                println("{}", agent_part_dual[a]);
+//                println("Previous edge penalties:");
+//                for (const auto& [nt, e] : pricerdata->previous_edge_penalties[a])
+//                {
+//                    println("({},{}) time {}, north {}, south {}, east {}, west {}, wait {}",
+//                            map.get_x(nt.n), map.get_y(nt.n), nt.t, e.d[0], e.d[1], e.d[2], e.d[3], e.d[4]);
+//                }
+//                println("Current edge penalties:");
+//                for (const auto& [nt, e] : astar.edge_penalties())
+//                {
+//                    println("({},{}) time {}, north {}, south {}, east {}, west {}, wait {}",
+//                            map.get_x(nt.n), map.get_y(nt.n), nt.t, e.d[0], e.d[1], e.d[2], e.d[3], e.d[4]);
+//                }
+//                println("Previous time finish penalties:");
+//                for (const auto x : pricerdata->previous_time_finish_penalties[a])
+//                {
+//                    println("{}", x);
+//                }
+//                println("Current time finish penalties:");
+//                for (const auto x : astar.time_finish_penalties())
+//                {
+//                    println("{}", x);
+//                }
+//                println("Previous goal crossing:");
+//                for (const auto [dual, nt] : pricerdata->previous_goal_crossings[a])
+//                {
+//                    println("{} {}", dual, nt);
+//                }
+//                println("Current goal crossing:");
+//                for (const auto [dual, nt] : astar.goal_crossings())
+//                {
+//                    println("{} {}", dual, nt);
+//                }
+
+                if (segments != pricerdata->previous_segments[a])
+                {
+                    goto SOLVE;
+                }
+
+                if (agent_part_dual[a] > pricerdata->previous_agent_part_dual[a])
+                {
+                    goto SOLVE;
+                }
+
+                if (time_finish_penalties.size() != pricerdata->previous_time_finish_penalties[a].size())
+                {
+                    goto SOLVE;
+                }
+                for (Time t = 0; t < static_cast<Time>(time_finish_penalties.size()); ++t)
+                    if (time_finish_penalties[t] < pricerdata->previous_time_finish_penalties[a][t])
+                    {
+                        goto SOLVE;
+                    }
+
+#ifdef USE_GOAL_CONFLICTS
+                if (goal_crossings.size() != pricerdata->previous_goal_crossings[a].size())
+                {
+                    goto SOLVE;
+                }
+                for (Int idx = 0; idx < static_cast<Int>(goal_crossings.size()); ++idx)
+                    if (goal_crossings[idx].nt != pricerdata->previous_goal_crossings[a][idx].nt ||
+                        goal_crossings[idx].dual > pricerdata->previous_goal_crossings[a][idx].dual)
+                    {
+                        goto SOLVE;
+                    }
+#endif
+
+                for (const auto& [nt, previous_edge_costs] : pricerdata->previous_edge_penalties[a])
+                {
+                    const auto it = edge_penalties.find(nt);
+                    if (it == edge_penalties.end())
+                    {
+                        goto SOLVE;
+                    }
+                    const auto& current_edge_costs = it->second;
+                    if (current_edge_costs.north < previous_edge_costs.north ||
+                        current_edge_costs.south < previous_edge_costs.south ||
+                        current_edge_costs.east < previous_edge_costs.east ||
+                        current_edge_costs.west < previous_edge_costs.west ||
+                        current_edge_costs.wait < previous_edge_costs.wait)
+                    {
+                        goto SOLVE;
+                    }
+                }
+
+//                skipping = true;
+                goto AGENT_SUCCESS;
+            }
+
+            SOLVE:
+#endif
             // Solve.
             const auto max_cost = agent_part_dual[a] - path_cost - EPS;
             const auto [segment, segment_cost] = astar.solve<is_farkas>(segment_start,
@@ -1147,7 +1271,7 @@ SCIP_RETCODE run_trufflehog_pricer(
             // Advance to next agent if no path is found.
             if (segment.empty())
             {
-                goto NEXT_AGENT;
+                goto AGENT_FAILED;
             }
 
             // Get the solution.
@@ -1172,6 +1296,7 @@ SCIP_RETCODE run_trufflehog_pricer(
                     format_path(probdata, path.size(), path.data()));
 
             // Add column.
+//            debug_assert(!skipping);
             SCIP_VAR* var = nullptr;
             SCIP_CALL(SCIPprobdataAddPricedVar(scip,
                                                probdata,
@@ -1186,10 +1311,28 @@ SCIP_RETCODE run_trufflehog_pricer(
 #ifdef PRINT_DEBUG
             nb_new_cols++;
 #endif
+            goto AGENT_SUCCESS;
         }
 
+        // Store the penalties of the run.
+        AGENT_FAILED:
+#ifdef USE_ASTAR_SOLUTION_CACHING
+        pricerdata->previous_segments[a] = segments;
+        pricerdata->previous_agent_part_dual[a] = agent_part_dual[a];
+        pricerdata->previous_edge_penalties[a].clear();
+        for (const auto& [nt, edge_costs] : astar.edge_penalties())
+            if (edge_costs.used)
+            {
+                pricerdata->previous_edge_penalties[a][nt] = edge_costs;
+            }
+        pricerdata->previous_time_finish_penalties[a] = time_finish_penalties;
+#ifdef USE_GOAL_CONFLICTS
+        pricerdata->previous_goal_crossings[a] = goal_crossings;
+#endif
+#endif
+
         // End of this agent.
-        NEXT_AGENT:
+        AGENT_SUCCESS:
         agent_priced[a] = true;
 
         // End timer.

@@ -27,30 +27,27 @@ Author: Edward Lam <ed@ed-lam.com>
 namespace TruffleHog
 {
 
-union EdgeCosts
+struct EdgeCosts
 {
-    Cost d[5];
-    struct
+    union
     {
-        Cost north;
-        Cost south;
-        Cost east;
-        Cost west;
-        Cost wait;
+        Cost d[5];
+        struct
+        {
+            Cost north;
+            Cost south;
+            Cost east;
+            Cost west;
+            Cost wait;
+        };
     };
+    bool used;
 
-    inline EdgeCosts() : north(0), south(0), east(0), west(0), wait(0) {}
-    inline EdgeCosts(const Cost default_cost) :
-        north(default_cost),
-        south(default_cost),
-        east(default_cost),
-        west(default_cost),
-        wait(default_cost)
-    {
-    }
+    inline EdgeCosts(const Cost x) : north(x), south(x), east(x), west(x), wait(x), used(false) {}
+    inline EdgeCosts() : EdgeCosts(0) {}
 };
 static_assert(std::is_trivially_copyable<EdgeCosts>::value);
-static_assert(sizeof(EdgeCosts) == 5 * 8);
+static_assert(sizeof(EdgeCosts) == 6 * 8);
 
 class EdgePenalties
 {
@@ -65,9 +62,14 @@ class EdgePenalties
     EdgePenalties& operator=(EdgePenalties&& other) noexcept = default;
     ~EdgePenalties() noexcept = default;
 
+    // Iterators
+    inline auto begin() const { return edge_penalties_.begin(); }
+    inline auto end() const { return edge_penalties_.end(); }
+    inline auto find(const NodeTime nt) const { return edge_penalties_.find(nt); }
+
     // Return the edge costs of a node-time
     template<IntCost default_cost>
-    inline EdgeCosts get_edge_costs(const NodeTime nt) const
+    inline EdgeCosts get_edge_costs(const NodeTime nt)
     {
         // Make default edge costs.
         EdgeCosts costs(default_cost);
@@ -76,13 +78,15 @@ class EdgePenalties
         auto it = edge_penalties_.find(nt);
         if (it != edge_penalties_.end())
         {
-            const auto& values = it->second;
+            auto& values = it->second;
 
             costs.north += values.north;
             costs.south += values.south;
             costs.east += values.east;
             costs.west += values.west;
             costs.wait += values.wait;
+
+            values.used = true;
         }
 
         // Return.

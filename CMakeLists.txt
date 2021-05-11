@@ -175,6 +175,9 @@ endif ()
 target_link_libraries(trufflehog fmt::fmt-header-only)
 target_link_libraries(bcp-mapf fmt::fmt-header-only libscip ${LIBM})
 
+# Set options.
+target_compile_options(bcp-mapf PRIVATE -DUSE_ASTAR_SOLUTION_CACHING)
+
 # Set separator options.
 target_compile_options(bcp-mapf PRIVATE -DUSE_WAITEDGE_CONFLICTS)
 target_compile_options(bcp-mapf PRIVATE -DUSE_RECTANGLE_KNAPSACK_CONFLICTS)
