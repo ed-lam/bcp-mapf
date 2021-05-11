@@ -685,13 +685,13 @@ void AStar::generate_neighbours(Label* const current,
 
     // Expand in five directions.
     const auto current_n = current->n;
-    debug_assert(edge_costs.north >= 0 || std::isnan(edge_costs.north));
-    debug_assert(edge_costs.south >= 0 || std::isnan(edge_costs.south));
-    debug_assert(edge_costs.east >= 0 || std::isnan(edge_costs.east));
-    debug_assert(edge_costs.west >= 0 || std::isnan(edge_costs.west));
-    debug_assert(edge_costs.wait >= 0 || std::isnan(edge_costs.wait));
+    debug_assert(edge_costs.north >= 0 && !std::isnan(edge_costs.north));
+    debug_assert(edge_costs.south >= 0 && !std::isnan(edge_costs.south));
+    debug_assert(edge_costs.east >= 0 && !std::isnan(edge_costs.east));
+    debug_assert(edge_costs.west >= 0 && !std::isnan(edge_costs.west));
+    debug_assert(edge_costs.wait >= 0 && !std::isnan(edge_costs.wait));
     if (const auto next_n = map_.get_north(current_n);
-        map_[next_n] && !std::isnan(edge_costs.north))
+        map_[next_n] && edge_costs.north < std::numeric_limits<Cost>::infinity())
     {
         generate<without_resources>(current,
                                     next_n,
@@ -703,7 +703,7 @@ void AStar::generate_neighbours(Label* const current,
                                     max_cost);
     }
     if (const auto next_n = map_.get_south(current_n);
-        map_[next_n] && !std::isnan(edge_costs.south))
+        map_[next_n] && edge_costs.south < std::numeric_limits<Cost>::infinity())
     {
         generate<without_resources>(current,
                                     next_n,
@@ -715,7 +715,7 @@ void AStar::generate_neighbours(Label* const current,
                                     max_cost);
     }
     if (const auto next_n = map_.get_east(current_n);
-        map_[next_n] && !std::isnan(edge_costs.east))
+        map_[next_n] && edge_costs.east < std::numeric_limits<Cost>::infinity())
     {
         generate<without_resources>(current,
                                     next_n,
@@ -727,7 +727,7 @@ void AStar::generate_neighbours(Label* const current,
                                     max_cost);
     }
     if (const auto next_n = map_.get_west(current_n);
-        map_[next_n] && !std::isnan(edge_costs.west))
+        map_[next_n] && edge_costs.west < std::numeric_limits<Cost>::infinity())
     {
         generate<without_resources>(current,
                                     next_n,
@@ -739,7 +739,7 @@ void AStar::generate_neighbours(Label* const current,
                                     max_cost);
     }
     if (const auto next_n = map_.get_wait(current_n);
-        map_[next_n] && !std::isnan(edge_costs.wait))
+        map_[next_n] && edge_costs.wait < std::numeric_limits<Cost>::infinity())
     {
         generate<without_resources>(current,
                                     next_n,

@@ -366,7 +366,6 @@ SCIP_RETCODE run_trufflehog_pricer(
 #ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
     auto& rectangle_crossings = astar.rectangle_crossings();
 #endif
-    static_assert(std::numeric_limits<Cost>::has_quiet_NaN);
 
     // Print used paths.
 #ifdef PRINT_DEBUG
@@ -748,27 +747,27 @@ SCIP_RETCODE run_trufflehog_pricer(
                 {
                     const auto n = map.get_south(nt.n);
                     auto& penalties = edge_penalties.get_edge_penalties(n, prev_time);
-                    penalties.north = NAN;
+                    penalties.north = std::numeric_limits<Cost>::infinity();
                 }
                 {
                     const auto n = map.get_north(nt.n);
                     auto& penalties = edge_penalties.get_edge_penalties(n, prev_time);
-                    penalties.south = NAN;
+                    penalties.south = std::numeric_limits<Cost>::infinity();
                 }
                 {
                     const auto n = map.get_west(nt.n);
                     auto& penalties = edge_penalties.get_edge_penalties(n, prev_time);
-                    penalties.east = NAN;
+                    penalties.east = std::numeric_limits<Cost>::infinity();
                 }
                 {
                     const auto n = map.get_east(nt.n);
                     auto& penalties = edge_penalties.get_edge_penalties(n, prev_time);
-                    penalties.west = NAN;
+                    penalties.west = std::numeric_limits<Cost>::infinity();
                 }
                 {
                     const auto n = map.get_wait(nt.n);
                     auto& penalties = edge_penalties.get_edge_penalties(n, prev_time);
-                    penalties.wait = NAN;
+                    penalties.wait = std::numeric_limits<Cost>::infinity();
                 }
             }
         }
@@ -796,10 +795,10 @@ SCIP_RETCODE run_trufflehog_pricer(
 //                    {
 //                        const auto n = map.get_id(x, y);
 //                        auto& duals = edge_duals.get_edge_duals(n, t);
-//                        duals.north = NAN;
-//                        duals.south = NAN;
-//                        duals.east = NAN;
-//                        duals.west = NAN;
+//                        duals.north = std::numeric_limits<Cost>::infinity();
+//                        duals.south = std::numeric_limits<Cost>::infinity();
+//                        duals.east = std::numeric_limits<Cost>::infinity();
+//                        duals.west = std::numeric_limits<Cost>::infinity();
 //                    }
 //
 //                if (t + 1 > earliest_finish)
@@ -812,7 +811,7 @@ SCIP_RETCODE run_trufflehog_pricer(
 //                    {
 //                        const auto n = map.get_id(x, y);
 //                        auto& duals = edge_duals.get_edge_duals(n, t);
-//                        duals.wait = NAN;
+//                        duals.wait = std::numeric_limits<Cost>::infinity();
 //                    }
 //            }
 //            edge_duals_changed = true;
@@ -869,27 +868,27 @@ SCIP_RETCODE run_trufflehog_pricer(
                     {
                         const auto n = map.get_south(nt.n);
                         auto& penalties = edge_penalties.get_edge_penalties(n, prev_time);
-                        penalties.north = NAN;
+                        penalties.north = std::numeric_limits<Cost>::infinity();
                     }
                     {
                         const auto n = map.get_north(nt.n);
                         auto& penalties = edge_penalties.get_edge_penalties(n, prev_time);
-                        penalties.south = NAN;
+                        penalties.south = std::numeric_limits<Cost>::infinity();
                     }
                     {
                         const auto n = map.get_west(nt.n);
                         auto& penalties = edge_penalties.get_edge_penalties(n, prev_time);
-                        penalties.east = NAN;
+                        penalties.east = std::numeric_limits<Cost>::infinity();
                     }
                     {
                         const auto n = map.get_east(nt.n);
                         auto& penalties = edge_penalties.get_edge_penalties(n, prev_time);
-                        penalties.west = NAN;
+                        penalties.west = std::numeric_limits<Cost>::infinity();
                     }
                     {
                         const auto n = map.get_wait(nt.n);
                         auto& penalties = edge_penalties.get_edge_penalties(n, prev_time);
-                        penalties.wait = NAN;
+                        penalties.wait = std::numeric_limits<Cost>::infinity();
                     }
                 }
             }
@@ -1312,7 +1311,6 @@ SCIP_RETCODE add_initial_solution(
     auto& goal_crossings = astar.goal_crossings();
     release_assert(goal_crossings.empty(), "Cannot have goal crossings in warm-start solution");
 #endif
-    static_assert(std::numeric_limits<Cost>::has_quiet_NaN);
 
     // Find a path for each agent.
     for (Agent a = 0; a < N; ++a)
