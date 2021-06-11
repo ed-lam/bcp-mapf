@@ -17,7 +17,7 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#ifdef USE_TWOEDGE_CONFLICTS
+#if defined(USE_TWOEDGE_CONFLICTS) || defined(USE_WAITTWOEDGE_CONFLICTS)
 
 #ifndef MAPF_SEPARATOR_TWOEDGECONFLICTS_H
 #define MAPF_SEPARATOR_TWOEDGECONFLICTS_H

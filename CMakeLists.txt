@@ -81,8 +81,6 @@ set(BCP_MAPF_SOURCE_FILES
     bcp/Separator_FiveEdgeConflicts.cpp
     bcp/Separator_SixEdgeConflicts.h
     bcp/Separator_SixEdgeConflicts.cpp
-    bcp/Separator_TripleEdgeConflicts.h
-    bcp/Separator_TripleEdgeConflicts.cpp
     bcp/Separator_AgentWaitEdgeConflicts.h
     bcp/Separator_AgentWaitEdgeConflicts.cpp
     bcp/Separator_VertexFourEdgeConflicts.h
@@ -188,11 +186,11 @@ target_compile_options(bcp-mapf PRIVATE -DUSE_STEPASIDE_CONFLICTS)
 target_compile_options(bcp-mapf PRIVATE -DUSE_WAITDELAY_CONFLICTS)
 target_compile_options(bcp-mapf PRIVATE -DUSE_EXITENTRY_CONFLICTS)
 target_compile_options(bcp-mapf PRIVATE -DUSE_TWOEDGE_CONFLICTS)
+target_compile_options(bcp-mapf PRIVATE -DUSE_WAITTWOEDGE_CONFLICTS)
 #target_compile_options(bcp-mapf PRIVATE -DUSE_THREEVERTEX_CONFLICTS)
 #target_compile_options(bcp-mapf PRIVATE -DUSE_FOUREDGE_CONFLICTS)
 #target_compile_options(bcp-mapf PRIVATE -DUSE_FIVEEDGE_CONFLICTS)
 #target_compile_options(bcp-mapf PRIVATE -DUSE_SIXEDGE_CONFLICTS)
-target_compile_options(bcp-mapf PRIVATE -DUSE_TRIPLEEDGE_CONFLICTS)
 target_compile_options(bcp-mapf PRIVATE -DUSE_AGENTWAITEDGE_CONFLICTS)
 #target_compile_options(bcp-mapf PRIVATE -DUSE_VERTEX_FOUREDGE_CONFLICTS)
 target_compile_options(bcp-mapf PRIVATE -DUSE_GOAL_CONFLICTS)

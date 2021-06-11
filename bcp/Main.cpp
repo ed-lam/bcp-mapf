@@ -121,6 +121,9 @@ SCIP_RETCODE start_solver(
 #ifdef USE_TWOEDGE_CONFLICTS
     println("Using two-edge conflict constraints");
 #endif
+#ifdef USE_WAITTWOEDGE_CONFLICTS
+    println("Using wait-two-edge conflict constraints");
+#endif
 #ifdef USE_THREEVERTEX_CONFLICTS
     println("Using three-vertex conflict constraints");
 #endif
@@ -132,9 +135,6 @@ SCIP_RETCODE start_solver(
 #endif
 #ifdef USE_SIXEDGE_CONFLICTS
     println("Using six-edge conflict constraints");
-#endif
-#ifdef USE_TRIPLEEDGE_CONFLICTS
-    println("Using triple-edge conflict constraints");
 #endif
 #ifdef USE_AGENTWAITEDGE_CONFLICTS
     println("Using agent wait-edge conflict constraints");
