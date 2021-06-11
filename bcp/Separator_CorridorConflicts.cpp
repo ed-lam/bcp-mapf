@@ -17,7 +17,7 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#if defined(USE_CORRIDOR_CONFLICTS) || defined(USE_LIFTED_CORRIDOR_CONFLICTS)
+#if defined(USE_CORRIDOR_CONFLICTS) || defined(USE_WAITCORRIDOR_CONFLICTS)
 
 //#define PRINT_DEBUG
 
@@ -25,8 +25,8 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "ProblemData.h"
 #include "VariableData.h"
 
-#ifdef USE_LIFTED_CORRIDOR_CONFLICTS
-#define SEPA_NAME                   "lifted_corridor_conflicts"
+#ifdef USE_WAITCORRIDOR_CONFLICTS
+#define SEPA_NAME                     "wait_corridor_conflicts"
 #else
 #define SEPA_NAME                          "corridor_conflicts"
 #endif
@@ -45,8 +45,9 @@ SCIP_RETCODE corridor_conflicts_create_cut(
     const Agent a2,             // Agent 2
     const EdgeTime a1_et1,      // Edge-time 1 of agent 1
     const EdgeTime a1_et2,      // Edge-time 2 of agent 1
-#ifdef USE_LIFTED_CORRIDOR_CONFLICTS
+#ifdef USE_WAITCORRIDOR_CONFLICTS
     const EdgeTime a1_et3,      // Edge-time 3 of agent 1
+    const EdgeTime a1_et4,      // Edge-time 4 of agent 1
 #endif
     const EdgeTime a2_et1,      // Edge-time 1 of agent 2
     const EdgeTime a2_et2,      // Edge-time 2 of agent 2
@@ -71,8 +72,8 @@ SCIP_RETCODE corridor_conflicts_create_cut(
     TwoAgentRobustCut cut(scip,
                           a1,
                           a2,
-#ifdef USE_LIFTED_CORRIDOR_CONFLICTS
-                          3,
+#ifdef USE_WAITCORRIDOR_CONFLICTS
+                          4,
 #else
                           2,
 #endif
@@ -83,8 +84,9 @@ SCIP_RETCODE corridor_conflicts_create_cut(
     );
     cut.edge_times_a1(0) = a1_et1;
     cut.edge_times_a1(1) = a1_et2;
-#ifdef USE_LIFTED_CORRIDOR_CONFLICTS
+#ifdef USE_WAITCORRIDOR_CONFLICTS
     cut.edge_times_a1(2) = a1_et3;
+    cut.edge_times_a1(3) = a1_et4;
 #endif
     cut.edge_times_a2(0) = a2_et1;
     cut.edge_times_a2(1) = a2_et2;
@@ -137,7 +139,7 @@ SCIP_RETCODE corridor_conflicts_separate(
 
     // Get the edges fractionally used by each agent.
     const auto& agent_edges = SCIPprobdataGetAgentFractionalEdgesNoWaits(probdata);
-#ifdef USE_LIFTED_CORRIDOR_CONFLICTS
+#ifdef USE_WAITCORRIDOR_CONFLICTS
     const auto& agent_edges_with_waits = SCIPprobdataGetAgentFractionalEdges(probdata);
 #endif
 
@@ -146,7 +148,7 @@ SCIP_RETCODE corridor_conflicts_separate(
     {
         // Get the edges of agent 1.
         const auto& agent_edges_a1 = agent_edges[a1];
-#ifdef USE_LIFTED_CORRIDOR_CONFLICTS
+#ifdef USE_WAITCORRIDOR_CONFLICTS
         const auto& agent_edges_with_waits_a1 = agent_edges_with_waits[a1];
 #endif
 
@@ -155,7 +157,7 @@ SCIP_RETCODE corridor_conflicts_separate(
         {
             // Get the edges of agent 2.
             const auto& agent_edges_a2 = agent_edges[a2];
-#ifdef USE_LIFTED_CORRIDOR_CONFLICTS
+#ifdef USE_WAITCORRIDOR_CONFLICTS
             const auto& agent_edges_with_waits_a2 = agent_edges_with_waits[a2];
 #endif
 
@@ -193,26 +195,40 @@ SCIP_RETCODE corridor_conflicts_separate(
                             // Calculate the LHS.
                             const auto lhs = a1_et1_val + a1_et2_val + a2_et1_val + a2_et2_val;
 
-#ifdef USE_LIFTED_CORRIDOR_CONFLICTS
-                            // Lift the constraint to include one more edge of agent 1.
-                            const EdgeTime a1_et3{offset == 1 ? a1_et1.n : a2_et1.n,
+#ifdef USE_WAITCORRIDOR_CONFLICTS
+                            // Lift the constraint to include two more edges of agent 1.
+                            const EdgeTime a1_et3{a2_et1.n,
                                                   Direction::WAIT,
-                                                  t + offset};
+                                                  offset == 1 ? t : t - 1};
                             const auto a1_et3_it = agent_edges_with_waits_a1.find(a1_et3);
                             const auto a1_et3_val = a1_et3_it != agent_edges_with_waits_a1.end() ?
                                                     a1_et3_it->second :
                                                     0.0;
-                            const auto lhs_lift_a1 = lhs + a1_et3_val;
-
-                            // Lift the constraint to include one more edge of agent 2.
-                            const EdgeTime a2_et3{offset == 1 ? a2_et1.n : a1_et1.n,
+                            const EdgeTime a1_et4{a1_et1.n,
                                                   Direction::WAIT,
-                                                  t + offset};
+                                                  offset == 1 ? t + 1 : t};
+                            const auto a1_et4_it = agent_edges_with_waits_a1.find(a1_et4);
+                            const auto a1_et4_val = a1_et4_it != agent_edges_with_waits_a1.end() ?
+                                                    a1_et4_it->second :
+                                                    0.0;
+                            const auto lhs_lift_a1 = lhs + a1_et3_val + a1_et4_val;
+
+                            // Lift the constraint to include two more edges of agent 2.
+                            const EdgeTime a2_et3{a1_et1.n,
+                                                  Direction::WAIT,
+                                                  offset == 1 ? t : t - 1};
                             const auto a2_et3_it = agent_edges_with_waits_a2.find(a2_et3);
                             const auto a2_et3_val = a2_et3_it != agent_edges_with_waits_a2.end() ?
                                                     a2_et3_it->second :
                                                     0.0;
-                            const auto lhs_lift_a2 = lhs + a2_et3_val;
+                            const EdgeTime a2_et4{a2_et1.n,
+                                                  Direction::WAIT,
+                                                  offset == 1 ? t + 1 : t};
+                            const auto a2_et4_it = agent_edges_with_waits_a2.find(a2_et4);
+                            const auto a2_et4_val = a2_et4_it != agent_edges_with_waits_a2.end() ?
+                                                    a2_et4_it->second :
+                                                    0.0;
+                            const auto lhs_lift_a2 = lhs + a2_et3_val + a2_et4_val;
 
                             if (SCIPisGT(scip, lhs_lift_a1, 1.0) || SCIPisGT(scip, lhs_lift_a2, 1.0))
                             {
@@ -221,29 +237,34 @@ SCIP_RETCODE corridor_conflicts_separate(
                                     // Print.
 #ifdef PRINT_DEBUG
                                     {
-                                        const auto[a1_et1_x1, a1_et1_y1] = map.get_xy(a1_et1.n);
-                                        const auto[a1_et1_x2, a1_et1_y2] = map.get_xy(map.get_destination(a1_et1.et.e));
+                                        const auto [a1_et1_x1, a1_et1_y1] = map.get_xy(a1_et1.n);
+                                        const auto [a1_et1_x2, a1_et1_y2] = map.get_xy(map.get_destination(a1_et1.et.e));
 
-                                        const auto[a1_et2_x1, a1_et2_y1] = map.get_xy(a1_et2.n);
-                                        const auto[a1_et2_x2, a1_et2_y2] = map.get_xy(map.get_destination(a1_et2.et.e));
+                                        const auto [a1_et2_x1, a1_et2_y1] = map.get_xy(a1_et2.n);
+                                        const auto [a1_et2_x2, a1_et2_y2] = map.get_xy(map.get_destination(a1_et2.et.e));
 
-                                        const auto[a1_et3_x1, a1_et3_y1] = map.get_xy(a1_et3.n);
-                                        const auto[a1_et3_x2, a1_et3_y2] = map.get_xy(map.get_destination(a1_et3.et.e));
+                                        const auto [a1_et3_x1, a1_et3_y1] = map.get_xy(a1_et3.n);
+                                        const auto [a1_et3_x2, a1_et3_y2] = map.get_xy(map.get_destination(a1_et3.et.e));
 
-                                        const auto[a2_et1_x1, a2_et1_y1] = map.get_xy(a2_et1.n);
-                                        const auto[a2_et1_x2, a2_et1_y2] = map.get_xy(map.get_destination(a2_et1.et.e));
+                                        const auto [a1_et4_x1, a1_et4_y1] = map.get_xy(a1_et4.n);
+                                        const auto [a1_et4_x2, a1_et4_y2] = map.get_xy(map.get_destination(a1_et4.et.e));
 
-                                        const auto[a2_et2_x1, a2_et2_y1] = map.get_xy(a2_et2.n);
-                                        const auto[a2_et2_x2, a2_et2_y2] = map.get_xy(map.get_destination(a2_et2.et.e));
+                                        const auto [a2_et1_x1, a2_et1_y1] = map.get_xy(a2_et1.n);
+                                        const auto [a2_et1_x2, a2_et1_y2] = map.get_xy(map.get_destination(a2_et1.et.e));
+
+                                        const auto [a2_et2_x1, a2_et2_y1] = map.get_xy(a2_et2.n);
+                                        const auto [a2_et2_x2, a2_et2_y2] = map.get_xy(map.get_destination(a2_et2.et.e));
 
                                         debugln("   Creating corridor conflict cut on edges "
-                                                "(({},{}),{},({},{})), (({},{}),{},({},{})) and (({},{}),{},({},{})) for agent {} "
+                                                "(({},{}),{},({},{})), (({},{}),{},({},{})), (({},{}),{},({},{})) and "
+                                                "(({},{}),{},({},{})) for agent {} "
                                                 "and edges "
                                                 "(({},{}),{},({},{})) and (({},{}),{},({},{})) for agent {} "
                                                 "with value {} in branch-and-bound node {}",
                                                 a1_et1_x1, a1_et1_y1, a1_et1.t, a1_et1_x2, a1_et1_y2,
                                                 a1_et2_x1, a1_et2_y1, a1_et2.t, a1_et2_x2, a1_et2_y2,
                                                 a1_et3_x1, a1_et3_y1, a1_et3.t, a1_et3_x2, a1_et3_y2,
+                                                a1_et4_x1, a1_et4_y1, a1_et4.t, a1_et4_x2, a1_et4_y2,
                                                 a1,
                                                 a2_et1_x1, a2_et1_y1, a2_et1.t, a2_et1_x2, a2_et1_y2,
                                                 a2_et2_x1, a2_et2_y1, a2_et2.t, a2_et2_x2, a2_et2_y2,
@@ -262,6 +283,7 @@ SCIP_RETCODE corridor_conflicts_separate(
                                                                             a1_et1,
                                                                             a1_et2,
                                                                             a1_et3,
+                                                                            a1_et4,
                                                                             a2_et1,
                                                                             a2_et2,
                                                                             result));
@@ -272,25 +294,29 @@ SCIP_RETCODE corridor_conflicts_separate(
                                     // Print.
 #ifdef PRINT_DEBUG
                                     {
-                                        const auto[a1_et1_x1, a1_et1_y1] = map.get_xy(a1_et1.n);
-                                        const auto[a1_et1_x2, a1_et1_y2] = map.get_xy(map.get_destination(a1_et1.et.e));
+                                        const auto [a1_et1_x1, a1_et1_y1] = map.get_xy(a1_et1.n);
+                                        const auto [a1_et1_x2, a1_et1_y2] = map.get_xy(map.get_destination(a1_et1.et.e));
 
-                                        const auto[a1_et2_x1, a1_et2_y1] = map.get_xy(a1_et2.n);
-                                        const auto[a1_et2_x2, a1_et2_y2] = map.get_xy(map.get_destination(a1_et2.et.e));
+                                        const auto [a1_et2_x1, a1_et2_y1] = map.get_xy(a1_et2.n);
+                                        const auto [a1_et2_x2, a1_et2_y2] = map.get_xy(map.get_destination(a1_et2.et.e));
 
-                                        const auto[a2_et1_x1, a2_et1_y1] = map.get_xy(a2_et1.n);
-                                        const auto[a2_et1_x2, a2_et1_y2] = map.get_xy(map.get_destination(a2_et1.et.e));
+                                        const auto [a2_et1_x1, a2_et1_y1] = map.get_xy(a2_et1.n);
+                                        const auto [a2_et1_x2, a2_et1_y2] = map.get_xy(map.get_destination(a2_et1.et.e));
 
-                                        const auto[a2_et2_x1, a2_et2_y1] = map.get_xy(a2_et2.n);
-                                        const auto[a2_et2_x2, a2_et2_y2] = map.get_xy(map.get_destination(a2_et2.et.e));
+                                        const auto [a2_et2_x1, a2_et2_y1] = map.get_xy(a2_et2.n);
+                                        const auto [a2_et2_x2, a2_et2_y2] = map.get_xy(map.get_destination(a2_et2.et.e));
 
-                                        const auto[a2_et3_x1, a2_et3_y1] = map.get_xy(a2_et3.n);
-                                        const auto[a2_et3_x2, a2_et3_y2] = map.get_xy(map.get_destination(a2_et3.et.e));
+                                        const auto [a2_et3_x1, a2_et3_y1] = map.get_xy(a2_et3.n);
+                                        const auto [a2_et3_x2, a2_et3_y2] = map.get_xy(map.get_destination(a2_et3.et.e));
+
+                                        const auto [a2_et4_x1, a2_et4_y1] = map.get_xy(a2_et4.n);
+                                        const auto [a2_et4_x2, a2_et4_y2] = map.get_xy(map.get_destination(a2_et4.et.e));
 
                                         debugln("   Creating corridor conflict cut on edges "
                                                 "(({},{}),{},({},{})) and (({},{}),{},({},{})) for agent {} "
                                                 "and edges "
-                                                "(({},{}),{},({},{})), (({},{}),{},({},{})) and (({},{}),{},({},{})) for agent {} "
+                                                "(({},{}),{},({},{})), (({},{}),{},({},{})), (({},{}),{},({},{})) and "
+                                                "(({},{}),{},({},{})) for agent {} "
                                                 "with value {} in branch-and-bound node {}",
                                                 a1_et1_x1, a1_et1_y1, a1_et1.t, a1_et1_x2, a1_et1_y2,
                                                 a1_et2_x1, a1_et2_y1, a1_et2.t, a1_et2_x2, a1_et2_y2,
@@ -298,6 +324,7 @@ SCIP_RETCODE corridor_conflicts_separate(
                                                 a2_et1_x1, a2_et1_y1, a2_et1.t, a2_et1_x2, a2_et1_y2,
                                                 a2_et2_x1, a2_et2_y1, a2_et2.t, a2_et2_x2, a2_et2_y2,
                                                 a2_et3_x1, a2_et3_y1, a2_et3.t, a2_et3_x2, a2_et3_y2,
+                                                a2_et4_x1, a2_et4_y1, a2_et4.t, a2_et4_x2, a2_et4_y2,
                                                 a2,
                                                 lhs_lift_a2,
                                                 SCIPnodeGetNumber(SCIPgetCurrentNode(scip)));
@@ -313,6 +340,7 @@ SCIP_RETCODE corridor_conflicts_separate(
                                                                             a2_et1,
                                                                             a2_et2,
                                                                             a2_et3,
+                                                                            a2_et4,
                                                                             a1_et1,
                                                                             a1_et2,
                                                                             result));

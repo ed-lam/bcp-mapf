@@ -40,7 +40,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
 #include "Separator_RectangleCliqueConflicts.h"
 #endif
-#if defined(USE_CORRIDOR_CONFLICTS) || defined(USE_LIFTED_CORRIDOR_CONFLICTS)
+#if defined(USE_CORRIDOR_CONFLICTS) || defined(USE_WAITCORRIDOR_CONFLICTS)
 #include "Separator_CorridorConflicts.h"
 #endif
 #ifdef USE_STEPASIDE_CONFLICTS
@@ -1091,7 +1091,7 @@ SCIP_RETCODE SCIPprobdataCreate(
 #endif
 
     // Include separator for corridor conflicts.
-#if defined(USE_CORRIDOR_CONFLICTS) || defined(USE_LIFTED_CORRIDOR_CONFLICTS)
+#if defined(USE_CORRIDOR_CONFLICTS) || defined(USE_WAITCORRIDOR_CONFLICTS)
     SCIP_CALL(SCIPincludeSepaCorridorConflicts(scip));
 #endif
 
