@@ -1939,12 +1939,12 @@ void print_vertex_conflicts_dual(
 {
     auto probdata = SCIPgetProbData(scip);
     const auto& conflicts = vertex_conflicts_get_constraints(probdata);
-    for (auto [row, tn] : conflicts)
+    for (const auto& [nt, vertex_conflict] : conflicts)
     {
-        const auto row_dual =
-            SCIProwIsInLP(row) ?
-            (is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row)) :
-            0.0;
+        const auto& [row] = vertex_conflict;
+        const auto row_dual = SCIProwIsInLP(row) ?
+                              (is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row)) :
+                              0.0;
         if (!SCIPisZero(scip, row_dual))
         {
             println("   Dual of {} = {:.4f}", SCIProwGetName(row), row_dual);

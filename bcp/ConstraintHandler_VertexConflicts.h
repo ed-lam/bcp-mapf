@@ -27,8 +27,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 struct VertexConflict
 {
-    SCIP_ROW* row;    // LP row
-    NodeTime nt;      // Node-time of the conflict
+    SCIP_ROW* row;          // LP row
 };
 
 // Create the constraint handler for vertex conflicts and include it
@@ -62,7 +61,7 @@ SCIP_RETCODE vertex_conflicts_add_var(
     const Edge* const path     // Path
 );
 
-const Vector<VertexConflict>& vertex_conflicts_get_constraints(
+const HashTable<NodeTime, VertexConflict>& vertex_conflicts_get_constraints(
     SCIP_ProbData* probdata    // Problem data
 );
 

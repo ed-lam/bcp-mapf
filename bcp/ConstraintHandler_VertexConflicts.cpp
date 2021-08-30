@@ -37,7 +37,7 @@ Author: Edward Lam <ed@ed-lam.com>
 // Data for vertex conflicts
 struct VertexConflictsConsData
 {
-    Vector<VertexConflict> conflicts;
+    HashTable<NodeTime, VertexConflict> conflicts;
 };
 
 // Create a constraint for vertex conflicts and include it
@@ -95,7 +95,7 @@ SCIP_RETCODE vertex_conflicts_create_cut(
     SCIP_CONS* cons,                      // Constraint
     VertexConflictsConsData* consdata,    // Constraint data
     const NodeTime nt,                    // Node-time of the conflict
-    const Vector<SCIP_VAR*>& vars,        // Array of variables
+    const Vector<SCIP_VAR*>& vars,        // Variables
     SCIP_Result* result                   // Output result
 )
 {
@@ -126,6 +126,9 @@ SCIP_RETCODE vertex_conflicts_create_cut(
 
     // Add variables to the constraint.
     SCIP_CALL(SCIPcacheRowExtensions(scip, row));
+#ifdef DEBUG
+    SCIP_Real lhs = 0.0;
+#endif
     for (auto var : vars)
     {
         // Get the path.
@@ -146,13 +149,19 @@ SCIP_RETCODE vertex_conflicts_create_cut(
 
             // Add the coefficient.
             SCIP_CALL(SCIPaddVarToRow(scip, row, var, 1.0));
+#ifdef DEBUG
+            lhs += SCIPgetSolVal(scip, nullptr, var);
+#endif
         }
     }
     SCIP_CALL(SCIPflushRowExtensions(scip, row));
+#ifdef DEBUG
+    debug_assert(SCIPisGT(scip, lhs, 1.0));
+#endif
 
     // Add the row to the LP.
     SCIP_Bool infeasible;
-    SCIP_CALL(SCIPaddRow(scip, row, TRUE, &infeasible));
+    SCIP_CALL(SCIPaddRow(scip, row, true, &infeasible));
 
     // Set status.
     if (infeasible)
@@ -165,7 +174,8 @@ SCIP_RETCODE vertex_conflicts_create_cut(
     }
 
     // Store the constraint.
-    consdata->conflicts.push_back({row, nt});
+    debug_assert(consdata->conflicts.find(nt) == consdata->conflicts.end());
+    consdata->conflicts[nt] = {row};
 
     // Done.
     return SCIP_OKAY;
@@ -310,7 +320,7 @@ SCIP_RETCODE vertex_conflicts_separate(
     }
 
     // Calculate the number of times a vertex is used by summing the columns.
-    HashTable<NodeTime, SCIP_Real> vertex_times_used;
+    HashTable<NodeTime, SCIP_Real> vertex_used;
     for (auto var : vars)
     {
         // Get the path.
@@ -329,19 +339,19 @@ SCIP_RETCODE vertex_conflicts_separate(
             for (; t < path_length; ++t)
             {
                 const NodeTime nt{path[t].n, t};
-                vertex_times_used[nt] += var_val;
+                vertex_used[nt] += var_val;
             }
             const auto n = path[path_length - 1].n;
             for (; t < makespan; ++t)
             {
                 const NodeTime nt{n, t};
-                vertex_times_used[nt] += var_val;
+                vertex_used[nt] += var_val;
             }
         }
     }
 
     // Create cuts.
-    for (const auto [nt, val] : vertex_times_used)
+    for (const auto [nt, val] : vertex_used)
         if (SCIPisGT(scip, val, 1.0))
         {
             // Print.
@@ -354,8 +364,21 @@ SCIP_RETCODE vertex_conflicts_separate(
             }
 #endif
 
-            // Create cut.
-            SCIP_CALL(vertex_conflicts_create_cut(scip, cons, consdata, nt, vars, result));
+            // Reactive the cut if it already exists. Otherwise create the cut.
+            if (auto it = consdata->conflicts.find(nt); it != consdata->conflicts.end())
+            {
+                // Reactivate the row if it is not in the LP.
+                const auto& [row] = it->second;
+                release_assert(!SCIProwIsInLP(row), "Vertex conflict constraint is violated but is already active");
+                SCIP_Bool infeasible;
+                SCIP_CALL(SCIPaddRow(scip, row, true, &infeasible));
+                *result = SCIP_SEPARATED;
+            }
+            else
+            {
+                // Create cut.
+                SCIP_CALL(vertex_conflicts_create_cut(scip, cons, consdata, nt, vars, result));
+            }
         }
 
     // Done.
@@ -433,8 +456,9 @@ SCIP_DECL_CONSEXITSOL(consExitsolVertexConflicts)
         debug_assert(consdata);
 
         // Free row for each vertex conflict.
-        for (auto [row, nt] : consdata->conflicts)
+        for (auto& [nt, vertex_conflict] : consdata->conflicts)
         {
+            auto& [row] = vertex_conflict;
             SCIP_CALL(SCIPreleaseRow(scip, &row));
         }
         consdata->conflicts.clear();
@@ -765,7 +789,6 @@ SCIP_RETCODE vertex_conflicts_add_var(
     debug_assert(cons);
     auto consdata = reinterpret_cast<VertexConflictsConsData*>(SCIPconsGetData(cons));
     debug_assert(consdata);
-    auto& conflicts = consdata->conflicts;
 
     // Check.
     debug_assert(var);
@@ -776,18 +799,21 @@ SCIP_RETCODE vertex_conflicts_add_var(
     SCIP_CALL(SCIPlockVarCons(scip, var, cons, FALSE, TRUE));
 
     // Add variable to constraints.
-    for (auto [row, nt] : conflicts)
+    for (const auto& [nt, vertex_conflict] : consdata->conflicts)
+    {
+        const auto& [row] = vertex_conflict;
         if ((nt.t < path_length && path[nt.t].n == nt.n) ||
             (nt.t >= path_length && path[path_length - 1].n == nt.n))
         {
             SCIP_CALL(SCIPaddVarToRow(scip, row, var, 1.0));
         }
+    }
 
     // Return.
     return SCIP_OKAY;
 }
 
-const Vector<VertexConflict>& vertex_conflicts_get_constraints(
+const HashTable<NodeTime, VertexConflict>& vertex_conflicts_get_constraints(
     SCIP_ProbData* probdata    // Problem data
 )
 {

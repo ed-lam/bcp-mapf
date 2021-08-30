@@ -508,8 +508,9 @@ SCIP_RETCODE run_trufflehog_pricer(
     EdgePenalties global_edge_penalties;
 
     // Input dual values for vertex conflicts.
-    for (const auto [row, nt] : vertex_conflicts_conss)
+    for (const auto& [nt, vertex_conflict] : vertex_conflicts_conss)
     {
+        const auto& [row] = vertex_conflict;
         const auto dual = is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row);
         debug_assert(SCIPisFeasLE(scip, dual, 0.0));
         if (SCIPisFeasLT(scip, dual, 0.0))
@@ -1018,7 +1019,9 @@ SCIP_RETCODE run_trufflehog_pricer(
 
             // Modify edge costs for vertex conflicts at the goal after the agent has completed its
             // path. Incur a penalty for staying at the goal.
-            for (const auto [row, nt] : vertex_conflicts_conss)
+            for (const auto& [nt, vertex_conflict] : vertex_conflicts_conss)
+            {
+                const auto& [row] = vertex_conflict;
                 if (nt.n == goal)
                 {
                     const auto dual = is_farkas ?
@@ -1040,6 +1043,7 @@ SCIP_RETCODE run_trufflehog_pricer(
                         }
                     }
                 }
+            }
 
             // Modify edge costs for wait-edge conflicts at the goal. Incur a penalty for staying at the goal.
 #ifdef USE_WAITEDGE_CONFLICTS
