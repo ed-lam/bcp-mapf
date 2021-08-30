@@ -42,11 +42,6 @@ SCIP_RETCODE SCIPincludeConshdlrEdgeConflicts(
 );
 
 // Create a constraint for edge conflicts and include it
-SCIP_RETCODE SCIPcreateConsBasicEdgeConflicts(
-    SCIP* scip,          // SCIP
-    SCIP_CONS** cons,    // Pointer to hold the created constraint
-    const char* name     // Name of constraint
-);
 SCIP_RETCODE SCIPcreateConsEdgeConflicts(
     SCIP* scip,                 // SCIP
     SCIP_CONS** cons,           // Pointer to hold the created constraint

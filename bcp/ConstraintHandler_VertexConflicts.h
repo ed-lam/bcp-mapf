@@ -37,11 +37,6 @@ SCIP_RETCODE SCIPincludeConshdlrVertexConflicts(
 );
 
 // Create a constraint for vertex conflicts and include it
-SCIP_RETCODE SCIPcreateConsBasicVertexConflicts(
-    SCIP* scip,          // SCIP
-    SCIP_CONS** cons,    // Pointer to hold the created constraint
-    const char* name     // Name of constraint
-);
 SCIP_RETCODE SCIPcreateConsVertexConflicts(
     SCIP* scip,                 // SCIP
     SCIP_CONS** cons,           // Pointer to hold the created constraint

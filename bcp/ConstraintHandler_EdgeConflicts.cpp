@@ -41,28 +41,6 @@ struct EdgeConflictsConsData
 };
 
 // Create a constraint for edge conflicts and include it
-SCIP_RETCODE SCIPcreateConsBasicEdgeConflicts(
-    SCIP* scip,          // SCIP
-    SCIP_CONS** cons,    // Pointer to hold the created constraint
-    const char* name     // Name of constraint
-)
-{
-    SCIP_CALL(SCIPcreateConsEdgeConflicts(scip,
-                                          cons,
-                                          name,
-                                          TRUE,
-                                          TRUE,
-                                          TRUE,
-                                          TRUE,
-                                          TRUE,
-                                          FALSE,
-                                          FALSE,
-                                          FALSE,
-                                          FALSE,
-                                          FALSE));
-    return SCIP_OKAY;
-}
-
 SCIP_RETCODE SCIPcreateConsEdgeConflicts(
     SCIP* scip,                 // SCIP
     SCIP_CONS** cons,           // Pointer to hold the created constraint
