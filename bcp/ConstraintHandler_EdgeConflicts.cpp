@@ -90,51 +90,6 @@ SCIP_RETCODE SCIPcreateConsEdgeConflicts(
     return SCIP_OKAY;
 }
 
-// Get undirected edge in north or east direction
-Edge get_undirected_edge(
-    const Edge e,     // Edge
-    const Map& map    // Map
-)
-{
-    if (e.d == Direction::WEST)
-    {
-        return Edge(map.get_west(e.n), Direction::EAST);
-    }
-    else if (e.d == Direction::SOUTH)
-    {
-        return Edge(map.get_south(e.n), Direction::NORTH);
-    }
-    else
-    {
-        // Wait edge will be itself
-        return e;
-    }
-}
-
-// Get undirected edge in south or west direction
-Edge get_reversed_undirected_edge(
-    const Edge e,     // Edge
-    const Map& map    // Map
-)
-{
-    if (e.d == Direction::SOUTH || e.d == Direction::WEST)
-    {
-        return e;
-    }
-    else if (e.d == Direction::EAST)
-    {
-        return Edge(map.get_east(e.n), Direction::WEST);
-    }
-    else if (e.d == Direction::NORTH)
-    {
-        return Edge(map.get_north(e.n), Direction::SOUTH);
-    }
-    else
-    {
-        unreachable();
-    }
-}
-
 SCIP_RETCODE edge_conflicts_create_cut(
     SCIP* scip,                         // SCIP
     SCIP_CONS* cons,                    // Constraint
@@ -274,7 +229,7 @@ SCIP_RETCODE edge_conflicts_check(
             for (Time t = 0; t < path_length - 1; ++t)
                 if (path[t].d != Direction::WAIT)
                 {
-                    const auto e = get_undirected_edge(path[t], map);
+                    const auto e = map.get_undirected_edge(path[t]);
                     const EdgeTime et(e, t);
                     edge_times_used[et] += var_val;
                 }
@@ -378,7 +333,7 @@ SCIP_RETCODE edge_conflicts_separate(
             {
                 if (path[t].d != Direction::WAIT)
                 {
-                    const auto e = get_undirected_edge(path[t], map);
+                    const auto e = map.get_undirected_edge(path[t]);
                     const EdgeTime et{e, t};
                     move_edges_used[et] += var_val;
                 }

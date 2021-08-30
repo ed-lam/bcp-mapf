@@ -1745,7 +1745,7 @@ void print_used_paths(
                 {
                     for (Time t = 0; t < path_length - 1; ++t)
                     {
-                        const auto e = get_undirected_edge(path[t], map);
+                        const auto e = map.get_undirected_edge(path[t]);
                         const EdgeTime et(e, t);
                         edge_times_used[et][a] += var_val;
                     }
@@ -1864,7 +1864,7 @@ void print_used_paths(
                             colour = fmt::terminal_color::blue;
                         }
                     }
-                    if (auto it = edge_times_used.find(EdgeTime(get_undirected_edge(path[t], map), t)); it != edge_times_used.end())
+                    if (auto it = edge_times_used.find(EdgeTime(map.get_undirected_edge(path[t]), t)); it != edge_times_used.end())
                     {
                         const auto n = it->second.size();
                         if (n > 1)

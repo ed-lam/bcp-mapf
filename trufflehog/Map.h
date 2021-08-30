@@ -156,6 +156,24 @@ class Map
     {
         return get_xy(get_destination(e));
     }
+    inline Edge get_undirected_edge(const Edge e) const
+    {
+        switch (e.d)
+        {
+            case (Direction::WEST):
+            {
+                return Edge{get_west(e.n), Direction::EAST};
+            }
+            case (Direction::SOUTH):
+            {
+                return Edge{get_south(e.n), Direction::NORTH};
+            }
+            default:
+            {
+                return e;
+            }
+        }
+    }
     inline Edge get_opposite_edge(const Edge e) const
     {
         switch (e.d)

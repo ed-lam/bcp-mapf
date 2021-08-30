@@ -71,16 +71,4 @@ const Vector<EdgeConflict>& edge_conflicts_get_constraints(
     SCIP_ProbData* probdata    // Problem data
 );
 
-// Get undirected edge in north or east direction
-Edge get_undirected_edge(
-    const Edge e,     // Edge
-    const Map& map    // Map
-);
-
-// Get undirected edge in south or west direction
-Edge get_reversed_undirected_edge(
-    const Edge e,     // Edge
-    const Map& map    // Map
-);
-
 #endif
