@@ -165,7 +165,7 @@ SCIP_RETCODE fix_variables(
 )
 {
     // Print.
-    debugln("   Checking variables {} to {}:", consdata->npropagatedvars, nvars);
+    debugln("   Checking variables {} to {}:", consdata->npropagatedvars, vars.size());
 
     // Check.
     const auto nvars = static_cast<Int>(vars.size());

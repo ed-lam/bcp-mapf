@@ -1675,6 +1675,8 @@ void print_used_paths(
     SCIP_SOL* sol    // Solution
 )
 {
+    constexpr auto print_all_paths = false;
+
     // Get variables.
     auto probdata = SCIPgetProbData(scip);
     const auto& map = SCIPprobdataGetMap(probdata);
@@ -1705,8 +1707,7 @@ void print_used_paths(
     HashTable<EdgeTime, HashTable<Agent, SCIP_Real>> edge_times_used;
     if (!sol &&
         SCIPgetStage(scip) == SCIP_STAGE_SOLVING &&
-        SCIPgetLPSolstat(scip) == SCIP_LPSOLSTAT_OPTIMAL &&
-        SCIPgetNLPBranchCands(scip) >= 1)
+        SCIPgetLPSolstat(scip) == SCIP_LPSOLSTAT_OPTIMAL)
     {
         // Calculate the number of times a vertex or edge is used by summing the columns.
         for (auto var : vars)
@@ -1722,7 +1723,7 @@ void print_used_paths(
             const auto var_val = SCIPgetSolVal(scip, sol, var);
 
             // Sum vertex and edge values.
-            if (!SCIPisIntegral(scip, var_val))
+            if (SCIPisPositive(scip, var_val))
             {
                 // Vertices.
                 {
@@ -1789,7 +1790,7 @@ void print_used_paths(
         }
 
     // Print time horizon.
-    fmt::print("                                    ");
+    fmt::print("                                      ");
     for (Time t = 0; t < makespan; ++t)
     {
         fmt::print("{:10d}", t);
@@ -1825,8 +1826,9 @@ void print_used_paths(
             const auto var_val = SCIPgetSolVal(scip, sol, var);
 
             // Print.
-            if (is_using_dummy_path ||
-                (is_fractional && SCIPisPositive(scip, var_val) && !SCIPisIntegral(scip, var_val)) ||
+            if (print_all_paths ||
+                is_using_dummy_path ||
+                (is_fractional && !SCIPisIntegral(scip, var_val)) ||
                 (!is_fractional && SCIPisPositive(scip, var_val))
                )
             {
@@ -1842,7 +1844,7 @@ void print_used_paths(
                 {
                     fmt::print("   ---");
                 }
-                fmt::print("Agent: {:2d}, Val: {:6.4f}, Path: ", a, std::abs(var_val));
+                fmt::print("Agent: {:3d}, Val: {:7.4f}, Path: ", a, std::abs(var_val));
 
                 for (Time t = 0; t < path_length; ++t)
                 {
@@ -2030,5 +2032,22 @@ void print_goal_conflicts_dual(
             println("   Dual of {} = {:.4f}", SCIProwGetName(row), row_dual);
         }
     }
+}
+#endif
+
+#ifdef DEBUG
+SCIP_Real get_coeff(SCIP_ROW* row, SCIP_VAR* var)
+{
+    const auto col = SCIPvarGetCol(var);
+
+    const auto n = SCIProwGetNNonz(row);
+    const auto cols = SCIProwGetCols(row);
+    const auto coeffs = SCIProwGetVals(row);
+    for (int i = 0; i < n; ++i)
+        if (col == cols[i])
+        {
+            return coeffs[i];
+        }
+    return 0.0;
 }
 #endif

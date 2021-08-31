@@ -1281,7 +1281,7 @@ void AStar::set_verbose(const bool on)
     verbose = on;
 }
 
-void AStar::print_crossings()
+void AStar::print_crossings() const
 {
 #ifdef USE_GOAL_CONFLICTS
     if (!goal_crossings_.empty())
@@ -1339,6 +1339,82 @@ void AStar::print_crossings()
         }
     }
 #endif
+}
+
+void AStar::print_edge_penalties() const
+{
+    HashTable<NodeTime, EdgeCosts> incoming_penalties;
+    for (const auto [outgoing_nt, penalties] : edge_penalties_)
+    {
+        if (penalties.north != 0)
+        {
+            const auto incoming_n = map_.get_north(outgoing_nt.n);
+            const auto incoming_t = outgoing_nt.t + 1;
+            const NodeTime incoming_nt{incoming_n, incoming_t};
+            incoming_penalties[incoming_nt].south += penalties.north;
+        }
+        if (penalties.south != 0)
+        {
+            const auto incoming_n = map_.get_south(outgoing_nt.n);
+            const auto incoming_t = outgoing_nt.t + 1;
+            const NodeTime incoming_nt{incoming_n, incoming_t};
+            incoming_penalties[incoming_nt].north += penalties.south;
+        }
+        if (penalties.east != 0)
+        {
+            const auto incoming_n = map_.get_east(outgoing_nt.n);
+            const auto incoming_t = outgoing_nt.t + 1;
+            const NodeTime incoming_nt{incoming_n, incoming_t};
+            incoming_penalties[incoming_nt].west += penalties.east;
+        }
+        if (penalties.west != 0)
+        {
+            const auto incoming_n = map_.get_west(outgoing_nt.n);
+            const auto incoming_t = outgoing_nt.t + 1;
+            const NodeTime incoming_nt{incoming_n, incoming_t};
+            incoming_penalties[incoming_nt].east += penalties.west;
+        }
+        if (penalties.wait != 0)
+        {
+            const auto incoming_n = map_.get_wait(outgoing_nt.n);
+            const auto incoming_t = outgoing_nt.t + 1;
+            const NodeTime incoming_nt{incoming_n, incoming_t};
+            incoming_penalties[incoming_nt].wait += penalties.wait;
+        }
+    }
+
+    println("Edge penalties:");
+    for (const auto [nt, penalties] : incoming_penalties)
+    {
+        println("({},{}) {}: from north {}, from south {}, from east {}, from west {}, from wait {}",
+                map_.get_x(nt.n), map_.get_y(nt.n), nt.t,
+                penalties.north, penalties.south, penalties.east, penalties.west, penalties.wait);
+    }
+    println("");
+}
+
+void AStar::print_used_edge_penalties() const
+{
+    Vector<Pair<NodeTime, EdgeCosts>> all_penalties;
+    println("Used edge penalties:");
+    for (const auto [nt, penalties] : edge_penalties_)
+        if (penalties.used)
+        {
+            all_penalties.emplace_back(nt, penalties);
+        }
+    std::sort(all_penalties.begin(),
+              all_penalties.end(),
+              [](const Pair<NodeTime, EdgeCosts>& a, const Pair<NodeTime, EdgeCosts>& b)
+              {
+                  return a.first.t < b.first.t;
+              });
+    for (const auto& [nt, penalties]: all_penalties)
+    {
+        println("({},{}) {}: to north {}, to south {}, to east {}, to west {}, to wait {}",
+                map_.get_x(nt.n), map_.get_y(nt.n), nt.t,
+                penalties.north, penalties.south, penalties.east, penalties.west, penalties.wait);
+    }
+    println("");
 }
 #endif
 

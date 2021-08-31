@@ -244,4 +244,9 @@ void print_goal_conflicts_dual(
 );
 #endif
 
+// Get coefficient of a variable in a constraint
+#ifdef DEBUG
+SCIP_Real get_coeff(SCIP_ROW* row, SCIP_VAR* var);
+#endif
+
 #endif
