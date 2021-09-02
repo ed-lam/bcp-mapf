@@ -27,7 +27,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "VariableData.h"
 #include <algorithm>
 
-#define SEPA_NAME                 "rectangle_knapsack_conflicts"
+#define SEPA_NAME                           "rectangle_knapsack"
 #define SEPA_DESC   "Separator for rectangle knapsack conflicts"
 #define SEPA_PRIORITY                                    +500000 // priority of the constraint handler for separation
 #define SEPA_FREQ                                              1 // frequency for separating cuts; zero means to separate only in the root node

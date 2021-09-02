@@ -23,7 +23,11 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "ProblemData.h"
 #include "VariableData.h"
 
-#define CONSHDLR_NAME                                 "edge_conflicts"
+#ifdef USE_WAITEDGE_CONFLICTS
+#define CONSHDLR_NAME                                           "edge"
+#else
+#define CONSHDLR_NAME                                      "wait_edge"
+#endif
 #define CONSHDLR_DESC          "Constraint handler for edge conflicts"
 #define CONSHDLR_SEPAPRIORITY                                  +400000 // priority of the constraint handler for separation
 #define CONSHDLR_ENFOPRIORITY                                 -1000000 // priority of the constraint handler for constraint enforcing

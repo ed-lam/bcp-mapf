@@ -25,8 +25,8 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "ProblemData.h"
 #include "VariableData.h"
 
-#define SEPA_NAME                          "fiveedge_conflicts"
-#define SEPA_DESC           "Separator for five-edge conflicts"
+#define SEPA_NAME                                   "five_edge"
+#define SEPA_DESC           "Separator for five edge conflicts"
 #define SEPA_PRIORITY                                   +550000 // priority of the constraint handler for separation
 #define SEPA_FREQ                                             1 // frequency for separating cuts; zero means to separate only in the root node
 #define SEPA_MAXBOUNDDIST                                   1.0

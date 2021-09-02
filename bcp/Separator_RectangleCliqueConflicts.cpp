@@ -26,7 +26,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "VariableData.h"
 #include <algorithm>
 
-#define SEPA_NAME                   "rectangle_clique_conflicts"
+#define SEPA_NAME                             "rectangle_clique"
 #define SEPA_DESC     "Separator for rectangle clique conflicts"
 #define SEPA_PRIORITY                                         +1 // priority of the constraint handler for separation
 #define SEPA_FREQ                                              1 // frequency for separating cuts; zero means to separate only in the root node

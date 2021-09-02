@@ -103,50 +103,50 @@ SCIP_RETCODE start_solver(
 #ifdef USE_RECTANGLE_KNAPSACK_CONFLICTS
     println("Using rectangle knapsack conflict constraints");
 #endif
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+    println("Using rectangle clique conflict constraints");
+#endif
 #if !defined(USE_WAITCORRIDOR_CONFLICTS) && defined(USE_CORRIDOR_CONFLICTS)
     println("Using corridor conflict constraints");
 #endif
 #ifdef USE_WAITCORRIDOR_CONFLICTS
-    println("Using lifted corridor conflict constraints");
+    println("Using wait corridor conflict constraints");
 #endif
 #ifdef USE_STEPASIDE_CONFLICTS
-    println("Using step-aside conflict constraints");
+    println("Using step aside conflict constraints");
 #endif
 #ifdef USE_WAITDELAY_CONFLICTS
-    println("Using wait-delay conflict constraints");
+    println("Using wait delay conflict constraints");
 #endif
 #ifdef USE_EXITENTRY_CONFLICTS
-    println("Using exit-entry conflict constraints");
+    println("Using exit entry conflict constraints");
 #endif
-#ifdef USE_TWOEDGE_CONFLICTS
-    println("Using two-edge conflict constraints");
+#if !defined(USE_WAITTWOEDGE_CONFLICTS) && defined(USE_TWOEDGE_CONFLICTS)
+    println("Using two edge conflict constraints");
 #endif
 #ifdef USE_WAITTWOEDGE_CONFLICTS
-    println("Using wait-two-edge conflict constraints");
-#endif
-#ifdef USE_THREEVERTEX_CONFLICTS
-    println("Using three-vertex conflict constraints");
-#endif
-#ifdef USE_FOUREDGE_CONFLICTS
-    println("Using four-edge conflict constraints");
-#endif
-#ifdef USE_FIVEEDGE_CONFLICTS
-    println("Using five-edge conflict constraints");
-#endif
-#ifdef USE_SIXEDGE_CONFLICTS
-    println("Using six-edge conflict constraints");
+    println("Using wait two edge conflict constraints");
 #endif
 #ifdef USE_AGENTWAITEDGE_CONFLICTS
-    println("Using agent wait-edge conflict constraints");
+    println("Using agent wait edge conflict constraints");
+#endif
+#ifdef USE_THREEVERTEX_CONFLICTS
+    println("Using three vertex conflict constraints");
+#endif
+#ifdef USE_FOUREDGE_CONFLICTS
+    println("Using four edge conflict constraints");
+#endif
+#ifdef USE_FIVEEDGE_CONFLICTS
+    println("Using five edge conflict constraints");
+#endif
+#ifdef USE_SIXEDGE_CONFLICTS
+    println("Using six edge conflict constraints");
 #endif
 #ifdef USE_VERTEX_FOUREDGE_CONFLICTS
-    println("Using vertex four-edge conflict constraints");
+    println("Using vertex four edge conflict constraints");
 #endif
 #ifdef USE_GOAL_CONFLICTS
     println("Using goal conflict constraints");
-#endif
-#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-    println("Using rectangle clique conflict constraints");
 #endif
 #endif
     println("");

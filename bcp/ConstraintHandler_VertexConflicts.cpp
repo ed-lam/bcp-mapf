@@ -23,7 +23,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "ProblemData.h"
 #include "VariableData.h"
 
-#define CONSHDLR_NAME                                 "vertex_conflicts"
+#define CONSHDLR_NAME                                           "vertex"
 #define CONSHDLR_DESC          "Constraint handler for vertex conflicts"
 #define CONSHDLR_SEPAPRIORITY                                    +500000 // priority of the constraint handler for separation
 #define CONSHDLR_ENFOPRIORITY                                    -900000 // priority of the constraint handler for constraint enforcing

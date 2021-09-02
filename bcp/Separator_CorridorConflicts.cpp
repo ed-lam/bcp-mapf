@@ -26,9 +26,9 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "VariableData.h"
 
 #ifdef USE_WAITCORRIDOR_CONFLICTS
-#define SEPA_NAME                     "wait_corridor_conflicts"
+#define SEPA_NAME                               "wait_corridor"
 #else
-#define SEPA_NAME                          "corridor_conflicts"
+#define SEPA_NAME                                    "corridor"
 #endif
 #define SEPA_DESC            "Separator for corridor conflicts"
 #define SEPA_PRIORITY                                   +550000 // priority of the constraint handler for separation
