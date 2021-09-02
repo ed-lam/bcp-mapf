@@ -546,8 +546,9 @@ SCIP_RETCODE run_trufflehog_pricer(
     }
 
     // Input dual values for edge conflicts.
-    for (const auto& [row, edges, t] : edge_conflicts_conss)
+    for (const auto& [et, edge_conflict] : edge_conflicts_conss)
     {
+        const auto& [row, edges, t] = edge_conflict;
         const auto dual = is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row);
         debug_assert(SCIPisFeasLE(scip, dual, 0.0));
         if (SCIPisFeasLT(scip, dual, 0.0))
@@ -1047,8 +1048,9 @@ SCIP_RETCODE run_trufflehog_pricer(
 
             // Modify edge costs for wait-edge conflicts at the goal. Incur a penalty for staying at the goal.
 #ifdef USE_WAITEDGE_CONFLICTS
-            for (const auto [row, edges, conflict_time] : edge_conflicts_conss)
+            for (const auto& [et, edge_conflict] : edge_conflicts_conss)
             {
+                const auto& [row, edges, conflict_time] = edge_conflict;
                 const auto e = edges[2];
                 debug_assert(e.d == Direction::WAIT);
                 if (e.n == goal)

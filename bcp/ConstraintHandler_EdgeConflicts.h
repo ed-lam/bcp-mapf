@@ -67,7 +67,7 @@ SCIP_RETCODE edge_conflicts_add_var(
     const Edge* const path     // Path
 );
 
-const Vector<EdgeConflict>& edge_conflicts_get_constraints(
+const HashTable<EdgeTime, EdgeConflict>& edge_conflicts_get_constraints(
     SCIP_ProbData* probdata    // Problem data
 );
 

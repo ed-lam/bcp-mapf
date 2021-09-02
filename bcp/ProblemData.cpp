@@ -1958,12 +1958,12 @@ void print_edge_conflicts_dual(
 {
     auto probdata = SCIPgetProbData(scip);
     const auto& conflicts = edge_conflicts_get_constraints(probdata);
-    for (auto& [row, edges, t] : conflicts)
+    for (const auto& [et, edge_conflict] : conflicts)
     {
-        const auto row_dual =
-            SCIProwIsInLP(row) ?
-            (is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row)) :
-            0.0;
+        const auto& [row, edges, t] = edge_conflict;
+        const auto row_dual = SCIProwIsInLP(row) ?
+                              (is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row)) :
+                              0.0;
         if (!SCIPisZero(scip, row_dual))
         {
             println("   Dual of {} = {:.4f}", SCIProwGetName(row), row_dual);

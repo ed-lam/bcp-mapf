@@ -41,7 +41,7 @@ Author: Edward Lam <ed@ed-lam.com>
 // Data for edge conflicts
 struct EdgeConflictsConsData
 {
-    Vector<EdgeConflict> conflicts;
+    HashTable<EdgeTime, EdgeConflict> conflicts;
 };
 
 // Create a constraint for edge conflicts and include it
@@ -100,11 +100,11 @@ SCIP_RETCODE edge_conflicts_create_cut(
     EdgeConflictsConsData* consdata,    // Constraint data
     const Time t,                       // Time
 #ifdef USE_WAITEDGE_CONFLICTS
-    Array<Edge, 3> edges,               // Edges in the conflict
+    const Array<Edge, 3> edges,         // Edges in the conflict
 #else
-    Array<Edge, 2> edges,               // Edges in the conflict
+    const Array<Edge, 2> edges,         // Edges in the conflict
 #endif
-    const Vector<SCIP_VAR*>& vars,      // Array of variables
+    const Vector<SCIP_VAR*>& vars,      // Variables
     SCIP_Result* result                 // Output result
 )
 {
@@ -175,7 +175,7 @@ SCIP_RETCODE edge_conflicts_create_cut(
 
     // Add the row to the LP.
     SCIP_Bool infeasible;
-    SCIP_CALL(SCIPaddRow(scip, row, TRUE, &infeasible));
+    SCIP_CALL(SCIPaddRow(scip, row, true, &infeasible));
 
     // Set status.
     if (infeasible)
@@ -188,7 +188,11 @@ SCIP_RETCODE edge_conflicts_create_cut(
     }
 
     // Store the constraint.
-    consdata->conflicts.push_back({row, edges, t});
+    {
+        const auto et = EdgeTime{edges[0], t};
+        debug_assert(consdata->conflicts.find(et) == consdata->conflicts.end());
+        consdata->conflicts[et] = {row, edges, t};
+    }
 
     // Done.
     return SCIP_OKAY;
@@ -314,10 +318,7 @@ SCIP_RETCODE edge_conflicts_separate(
     }
 
     // Calculate the number of times an edge is used by summing the columns.
-    HashTable<EdgeTime, SCIP_Real> move_edges_used;
-#ifdef USE_WAITEDGE_CONFLICTS
-    HashTable<EdgeTime, SCIP_Real> wait_edges_used;
-#endif
+    HashTable<EdgeTime, SCIP_Real> edge_used;
     for (auto var : vars)
     {
         // Get the path.
@@ -335,108 +336,123 @@ SCIP_RETCODE edge_conflicts_separate(
             Time t = 0;
             for (; t < path_length - 1; ++t)
             {
+#ifndef USE_WAITEDGE_CONFLICTS
                 if (path[t].d != Direction::WAIT)
-                {
-                    const auto e = map.get_undirected_edge(path[t]);
-                    const EdgeTime et{e, t};
-                    move_edges_used[et] += var_val;
-                }
-#ifdef USE_WAITEDGE_CONFLICTS
-                else
-                {
-                    const auto e = path[t];
-                    debug_assert(e.d == Direction::WAIT);
-                    const EdgeTime et{e, t};
-                    wait_edges_used[et] += var_val;
-                }
 #endif
+                {
+                    const EdgeTime et{path[t], t};
+                    edge_used[et] += var_val;
+                }
             }
-
 #ifdef USE_WAITEDGE_CONFLICTS
-            const auto n = path[path_length - 1].n;
+            const Edge e{path[path_length - 1].n, Direction::WAIT};
             for (; t < makespan - 1; ++t)
             {
-                const EdgeTime et{n, Direction::WAIT, t};
-                wait_edges_used[et] += var_val;
+                const EdgeTime et{e, t};
+                edge_used[et] += var_val;
             }
 #endif
         }
     }
 
     // Create cuts.
-    for (const auto [et, move_val] : move_edges_used)
-    {
-        // Get the time.
-        const auto t = et.t;
-
-        // Get the other direction of the edge.
-#ifdef USE_WAITEDGE_CONFLICTS
-        Array<Edge, 3> edges;
-#else
-        Array<Edge, 2> edges;
-#endif
-        edges[0] = et.et.e;
-        edges[1] = map.get_opposite_edge(et.et.e);
-        debug_assert(et.et.e.d != Direction::WAIT);
-
-        // Get the wait edge.
-#ifdef USE_WAITEDGE_CONFLICTS
-        SCIP_Real wait_val;
+    for (const auto [et1, val1] : edge_used)
+        if (et1.d == Direction::NORTH || et1.d == EAST)
         {
-            // Get the edge weight of the wait edge.
-            SCIP_Real wait0_val = 0.0;
-            SCIP_Real wait1_val = 0.0;
-            if (auto it = wait_edges_used.find(EdgeTime{edges[0].n, Direction::WAIT, t}); it != wait_edges_used.end())
+            // Get the opposite edge.
+            const EdgeTime et2{map.get_opposite_edge(et1.et.e), et1.t};
+            const auto it2 = edge_used.find(et2);
+            if (it2 == edge_used.end())
             {
-                wait0_val = it->second;
+                continue;
             }
-            if (auto it = wait_edges_used.find(EdgeTime{edges[1].n, Direction::WAIT, t}); it != wait_edges_used.end())
-            {
-                wait1_val = it->second;
-            }
+            const auto val2 = it2->second;
 
-            // Choose the wait with higher value.
-            if (wait0_val >= wait1_val)
+            // Check.
+            debug_assert(SCIPisPositive(scip, val1));
+            debug_assert(SCIPisPositive(scip, val2));
+
+            // Get the wait edge and compute the LHS.
+#ifdef USE_WAITEDGE_CONFLICTS
+            const EdgeTime et3a{et1.n, Direction::WAIT, et1.t};
+            const EdgeTime et3b{et2.n, Direction::WAIT, et2.t};
+            const auto it3a = edge_used.find(et3a);
+            const auto it3b = edge_used.find(et3b);
+            const auto val3a = it3a != edge_used.end() ? it3a->second : 0.0;
+            const auto val3b = it3b != edge_used.end() ? it3b->second : 0.0;
+#endif
+
+            // Combine the edges.
+#ifdef USE_WAITEDGE_CONFLICTS
+            Array<Edge, 3> edges;
+            SCIP_Real lhs;
+            if (val3a >= val3b)
             {
-                edges[2] = Edge(edges[0].n, Direction::WAIT);
-                wait_val = wait0_val;
+                edges = {et1.et.e, et2.et.e, et3a.et.e};
+                lhs = val1 + val2 + val3a;
             }
             else
             {
-                edges[2] = Edge(edges[1].n, Direction::WAIT);
-                wait_val = wait1_val;
+                edges = {et2.et.e, et1.et.e, et3b.et.e};
+                lhs = val1 + val2 + val3b;
             }
-        }
 #else
-        constexpr SCIP_Real wait_val = 0.0;
+            Array<Edge, 2> edges{et1.et.e, et2.et.e};
+            const auto lhs = val1 + val2;
 #endif
 
-        // Determine if there is a conflict.
-        const auto lhs = move_val + wait_val;
-        if (SCIPisGT(scip, lhs, 1.0))
-        {
-            // Print.
-#ifdef PRINT_DEBUG
+            // Create the cut if violated.
+            if (SCIPisGT(scip, lhs, 1.0))
             {
-                const auto [e1_x1, e1_y1] = map.get_xy(edges[0].n);
-                const auto [e1_x2, e1_y2] = map.get_destination_xy(edges[0]);
+                // Print.
+#ifdef PRINT_DEBUG
+                {
 
-                const auto [e2_x1, e2_y1] = map.get_xy(edges[1].n);
-                const auto [e2_x2, e2_y2] = map.get_destination_xy(edges[1]);
+                        const auto [e1_x1, e1_y1] = map.get_xy(edges[0].n);
+                        const auto [e1_x2, e1_y2] = map.get_destination_xy(edges[0]);
 
-                debugln("   Creating edge conflict cut on (({},{}),({},{}),{}) and (({},{}),({},{}),{}) with value {} "
-                        "in branch-and-bound node {}",
-                        e1_x1, e1_y1, e1_x2, e1_y2, t,
-                        e2_x1, e2_y1, e2_x2, e2_y2, t,
-                        lhs,
-                        SCIPnodeGetNumber(SCIPgetCurrentNode(scip)));
-            }
+                        const auto [e2_x1, e2_y1] = map.get_xy(edges[1].n);
+                        const auto [e2_x2, e2_y2] = map.get_destination_xy(edges[1]);
+
+#ifdef USE_WAITEDGE_CONFLICTS
+                        const auto [e3_x1, e3_y1] = map.get_xy(edges[2].n);
+                        const auto [e3_x2, e3_y2] = map.get_destination_xy(edges[2]);
 #endif
 
-            // Create cut.
-            SCIP_CALL(edge_conflicts_create_cut(scip, cons, consdata, t, edges, vars, result));
+                        debugln("   Creating edge conflict cut on (({},{}),({},{}),{})"
+#ifdef USE_WAITEDGE_CONFLICTS
+                                ", (({},{}),({},{}),{})"
+#endif
+                                " and (({},{}),({},{}),{}) with value {} in branch-and-bound node {}",
+                                e1_x1, e1_y1, e1_x2, e1_y2, et1.t,
+                                e2_x1, e2_y1, e2_x2, e2_y2, et1.t,
+#ifdef USE_WAITEDGE_CONFLICTS
+                                e3_x1, e3_y1, e3_x2, e3_y2, et1.t,
+#endif
+                                lhs,
+                                SCIPnodeGetNumber(SCIPgetCurrentNode(scip)));
+                    }
+#endif
+
+                // Reactive the cut if it already exists. Otherwise create the cut.
+                const auto t = et1.t;
+                if (auto it = consdata->conflicts.find(EdgeTime{edges[0], t}); it != consdata->conflicts.end())
+                {
+                    // Reactivate the row if it is not in the LP.
+                    const auto& [row, _, __] = it->second;
+                    release_assert(!SCIProwIsInLP(row), "Edge conflict constraint is violated but is already active");
+                    SCIP_Bool infeasible;
+                    SCIP_CALL(SCIPaddRow(scip, row, true, &infeasible));
+                    *result = SCIP_SEPARATED;
+                }
+                else
+                {
+
+                    // Create cut.
+                    SCIP_CALL(edge_conflicts_create_cut(scip, cons, consdata, t, edges, vars, result));
+                }
+            }
         }
-    }
 
     // Done.
     return SCIP_OKAY;
@@ -513,8 +529,9 @@ SCIP_DECL_CONSEXITSOL(consExitsolEdgeConflicts)
         debug_assert(consdata);
 
         // Free row for each edge conflict.
-        for (auto& [row, edges, t] : consdata->conflicts)
+        for (auto& [et, edge_conflict] : consdata->conflicts)
         {
+            auto& [row, edges, t] = edge_conflict;
             SCIP_CALL(SCIPreleaseRow(scip, &row));
         }
         consdata->conflicts.clear();
@@ -845,7 +862,6 @@ SCIP_RETCODE edge_conflicts_add_var(
     debug_assert(cons);
     auto consdata = reinterpret_cast<EdgeConflictsConsData*>(SCIPconsGetData(cons));
     debug_assert(consdata);
-    auto& conflicts = consdata->conflicts;
 
     // Check.
     debug_assert(var);
@@ -856,8 +872,9 @@ SCIP_RETCODE edge_conflicts_add_var(
     SCIP_CALL(SCIPlockVarCons(scip, var, cons, FALSE, TRUE));
 
     // Add variable to constraints.
-    for (auto [row, edges, t] : conflicts)
+    for (const auto& [et, edge_conflict] : consdata->conflicts)
     {
+        const auto& [row, edges, t] = edge_conflict;
 #ifdef USE_WAITEDGE_CONFLICTS
         if ((t < path_length - 1 && (path[t] == edges[0] || path[t] == edges[1] || path[t] == edges[2])) ||
             (t >= path_length - 1 && path[path_length - 1].n == edges[2].n))
@@ -873,7 +890,7 @@ SCIP_RETCODE edge_conflicts_add_var(
     return SCIP_OKAY;
 }
 
-const Vector<EdgeConflict>& edge_conflicts_get_constraints(
+const HashTable<EdgeTime, EdgeConflict>& edge_conflicts_get_constraints(
     SCIP_ProbData* probdata    // Problem data
 )
 {
