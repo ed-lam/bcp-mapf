@@ -133,9 +133,16 @@ if (NOT GUROBI_INCLUDE_DIR OR NOT GUROBI_LIBRARY)
     endif ()
 endif ()
 
-# Check for LP solver.
-if (NOT LPS)
-    message(FATAL_ERROR "Gurobi or CPLEX is required")
+# Include SoPlex.
+if ((NOT GUROBI_INCLUDE_DIR OR NOT GUROBI_LIBRARY) AND (NOT CPLEX_INCLUDE_DIR OR NOT CPLEX_LIBRARY))
+    set(LPS spx CACHE STRING "options for LP solver")
+    set(CONF_INCLUDE_DIRS ../soplex/src/)
+    configure_file(scipoptsuite-7.0.2/soplex/soplex-config.cmake.in
+                   "${CMAKE_BINARY_DIR}/soplex/soplex-config.cmake"
+                   @ONLY)
+    set(SOPLEX_DIR ${CMAKE_BINARY_DIR}/soplex)
+    add_subdirectory(scipoptsuite-7.0.2/soplex/ EXCLUDE_FROM_ALL)
+    message("Using SoPlex as LP solver ${SOPLEX_INCLUDE_DIRS}")
 endif ()
 
 # Include SCIP.
@@ -144,7 +151,7 @@ set(TPI none)
 set(tpisources tpi/tpi_none.c)
 set(THREAD_LIBRARIES "")
 set(TPI_NONE on)
-configure_file(scipoptsuite-7.0.2/scip/src/scip/config.h.in ${CMAKE_BINARY_DIR}/scip/config.h @ONLY)
+configure_file(scipoptsuite-7.0.2/scip/src/scip/config.h.in "${CMAKE_BINARY_DIR}/scip/config.h" @ONLY)
 target_include_directories(bcp-mapf PUBLIC ${CMAKE_BINARY_DIR})
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ldl")
@@ -206,7 +213,11 @@ target_compile_options(bcp-mapf PRIVATE -DUSE_BEST_FIRST_NODE_SELECTION)
 target_compile_options(bcp-mapf PRIVATE -Wall -Wextra -Wignored-qualifiers -Werror=return-type)
 
 # Set flags.
-target_compile_options(bcp-mapf PRIVATE -march=native -m64 -mfma)
+check_cxx_compiler_flag("-march=native" MARCH_NATIVE)
+if (MARCH_NATIVE)
+    target_compile_options(bcp-mapf PRIVATE -march=native)
+endif ()
+target_compile_options(bcp-mapf PRIVATE -m64 -mfma)
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_options(bcp-mapf PRIVATE -DDEBUG -D_GLIBCXX_DEBUG)
     message("Compiled in debug mode")
