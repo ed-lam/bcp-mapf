@@ -63,7 +63,7 @@ inline bool operator!=(const AgentNodeTime a, const AgentNodeTime b)
 template<class T>
 inline void hash_combine(std::size_t& s, const T& v)
 {
-    std::hash<T> h;
+    robin_hood::hash<T> h;
     s ^= h(v) + 0x9e3779b9 + (s << 6) + (s >> 2);
 }
 
