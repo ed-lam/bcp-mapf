@@ -130,6 +130,9 @@ SCIP_RETCODE start_solver(
 #ifdef USE_AGENTWAITEDGE_CONFLICTS
     println("Using agent wait edge conflict constraints");
 #endif
+#ifdef USE_TWOVERTEX_CONFLICTS
+    println("Using two vertex conflict constraints");
+#endif
 #ifdef USE_THREEVERTEX_CONFLICTS
     println("Using three vertex conflict constraints");
 #endif

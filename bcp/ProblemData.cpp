@@ -55,6 +55,9 @@ Author: Edward Lam <ed@ed-lam.com>
 #if defined(USE_TWOEDGE_CONFLICTS) || defined(USE_WAITTWOEDGE_CONFLICTS)
 #include "Separator_TwoEdgeConflicts.h"
 #endif
+#ifdef USE_TWOVERTEX_CONFLICTS
+#include "Separator_TwoVertexConflicts.h"
+#endif
 #ifdef USE_THREEVERTEX_CONFLICTS
 #include "Separator_ThreeVertexConflicts.h"
 #endif
@@ -1113,6 +1116,11 @@ SCIP_RETCODE SCIPprobdataCreate(
     // Include separator for two-edge conflicts.
 #if defined(USE_TWOEDGE_CONFLICTS) || defined(USE_WAITTWOEDGE_CONFLICTS)
     SCIP_CALL(SCIPincludeSepaTwoEdgeConflicts(scip));
+#endif
+
+    // Include separator for two-vertex conflicts.
+#ifdef USE_TWOVERTEX_CONFLICTS
+    SCIP_CALL(SCIPincludeSepaTwoVertexConflicts(scip));
 #endif
 
     // Include separator for three-vertex conflicts.
