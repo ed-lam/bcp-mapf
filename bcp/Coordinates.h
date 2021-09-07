@@ -60,6 +60,23 @@ inline bool operator!=(const AgentNodeTime a, const AgentNodeTime b)
     return !(a == b);
 }
 
+struct AgentEdgeTime
+{
+    Agent a{-1};
+    Edge e;
+    Time t{0};
+};
+static_assert(sizeof(AgentEdgeTime) == 12);
+static_assert(std::is_trivially_copyable<AgentEdgeTime>::value);
+inline bool operator==(const AgentEdgeTime a, const AgentEdgeTime b)
+{
+    return a.a == b.a && a.e == b.e && a.t == b.t;
+}
+inline bool operator!=(const AgentEdgeTime a, const AgentEdgeTime b)
+{
+    return !(a == b);
+}
+
 template<class T>
 inline void hash_combine(std::size_t& s, const T& v)
 {
@@ -86,6 +103,18 @@ struct hash<AgentNodeTime>
     {
         auto x = robin_hood::hash<Agent>{}(ant.a);
         hash_combine(x, ant.n);
+        hash_combine(x, ant.t);
+        return x;
+    }
+};
+
+template<>
+struct hash<AgentEdgeTime>
+{
+    inline std::size_t operator()(const AgentEdgeTime ant) const noexcept
+    {
+        auto x = robin_hood::hash<Agent>{}(ant.a);
+        hash_combine(x, ant.e);
         hash_combine(x, ant.t);
         return x;
     }

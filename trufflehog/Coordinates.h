@@ -37,10 +37,14 @@ enum Direction: uint8_t
     INVALID = 5
 };
 
-struct Edge
+union Edge
 {
-    Node n : 29;
-    Direction d : 3;
+    struct
+    {
+        Node n: 29;
+        Direction d: 3;
+    };
+    uint32_t id;
 
     Edge() noexcept = default;
     explicit Edge(const Node n, const Direction d) noexcept : n(n), d(d) {}
@@ -117,6 +121,15 @@ inline bool operator!=(const EdgeTime a, const EdgeTime b)
 
 namespace robin_hood
 {
+
+template<>
+struct hash<TruffleHog::Edge>
+{
+    inline std::size_t operator()(const TruffleHog::Edge e) const noexcept
+    {
+        return robin_hood::hash<uint32_t>{}(e.id);
+    }
+};
 
 template<>
 struct hash<TruffleHog::NodeTime>

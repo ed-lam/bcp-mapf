@@ -76,6 +76,9 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifdef USE_VERTEX_FOUREDGE_CONFLICTS
 #include "Separator_VertexFourEdgeConflicts.h"
 #endif
+#ifdef USE_CLIQUE_CONFLICTS
+#include "Separator_CliqueConflicts.h"
+#endif
 #ifdef USE_GOAL_CONFLICTS
 #include "Separator_GoalConflicts.h"
 #endif
@@ -1151,6 +1154,11 @@ SCIP_RETCODE SCIPprobdataCreate(
     // Include separator for vertex four-edge conflicts.
 #ifdef USE_VERTEX_FOUREDGE_CONFLICTS
     SCIP_CALL(SCIPincludeSepaVertexFourEdgeConflicts(scip));
+#endif
+
+    // Include separator for clique conflicts.
+#ifdef USE_CLIQUE_CONFLICTS
+    SCIP_CALL(SCIPincludeSepaCliqueConflicts(scip));
 #endif
 
     // Include separator for goal conflicts.

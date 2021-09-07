@@ -148,6 +148,9 @@ SCIP_RETCODE start_solver(
 #ifdef USE_VERTEX_FOUREDGE_CONFLICTS
     println("Using vertex four edge conflict constraints");
 #endif
+#ifdef USE_CLIQUE_CONFLICTS
+    println("Using clique conflict constraints");
+#endif
 #ifdef USE_GOAL_CONFLICTS
     println("Using goal conflict constraints");
 #endif

@@ -87,6 +87,8 @@ set(BCP_MAPF_SOURCE_FILES
     bcp/Separator_AgentWaitEdgeConflicts.cpp
     bcp/Separator_VertexFourEdgeConflicts.h
     bcp/Separator_VertexFourEdgeConflicts.cpp
+    bcp/Separator_CliqueConflicts.h
+    bcp/Separator_CliqueConflicts.cpp
     bcp/Separator_GoalConflicts.h
     bcp/Separator_GoalConflicts.cpp
     bcp/BranchingRule.h
@@ -103,7 +105,7 @@ set(BCP_MAPF_SOURCE_FILES
 
 # Create target.
 add_executable(trufflehog ${TRUFFLEHOG_SOURCE_FILES} trufflehog/Main.cpp)
-add_executable(bcp-mapf ${BCP_MAPF_SOURCE_FILES} ${TRUFFLEHOG_SOURCE_FILES})
+add_executable(bcp-mapf ${BCP_MAPF_SOURCE_FILES} ${TRUFFLEHOG_SOURCE_FILES} ${CLIQUER_SOURCE_FILES})
 target_include_directories(trufflehog PUBLIC ./ bcp/)
 target_include_directories(bcp-mapf PUBLIC ./ bcp/)
 
@@ -172,6 +174,20 @@ target_include_directories(bcp-mapf PUBLIC cxxopts/include/)
 # Include robin-hood-hashing.
 target_include_directories(bcp-mapf PUBLIC robin-hood-hashing/src/include/)
 
+# Include cliquer.
+set(CLIQUER_SOURCE_FILES
+    cliquer-1.21/cliquer.c
+    cliquer-1.21/cliquer.h
+    cliquer-1.21/cliquerconf.h
+    cliquer-1.21/graph.c
+    cliquer-1.21/graph.h
+    cliquer-1.21/misc.h
+    cliquer-1.21/reorder.c
+    cliquer-1.21/reorder.h
+    cliquer-1.21/set.h
+    )
+add_library(cliquer STATIC ${CLIQUER_SOURCE_FILES})
+
 # Link to math library.
 find_library(LIBM m)
 if (NOT LIBM)
@@ -180,7 +196,7 @@ endif ()
 
 # Link to libraries.
 target_link_libraries(trufflehog fmt::fmt-header-only)
-target_link_libraries(bcp-mapf fmt::fmt-header-only libscip ${LIBM})
+target_link_libraries(bcp-mapf fmt::fmt-header-only cliquer libscip ${LIBM})
 
 # Set options.
 target_compile_options(bcp-mapf PRIVATE -DUSE_ASTAR_SOLUTION_CACHING)
@@ -203,6 +219,7 @@ target_compile_options(bcp-mapf PRIVATE -DUSE_TWOVERTEX_CONFLICTS)
 #target_compile_options(bcp-mapf PRIVATE -DUSE_FIVEEDGE_CONFLICTS)
 #target_compile_options(bcp-mapf PRIVATE -DUSE_SIXEDGE_CONFLICTS)
 #target_compile_options(bcp-mapf PRIVATE -DUSE_VERTEX_FOUREDGE_CONFLICTS)
+#target_compile_options(bcp-mapf PRIVATE -DUSE_CLIQUE_CONFLICTS)
 target_compile_options(bcp-mapf PRIVATE -DUSE_GOAL_CONFLICTS)
 
 # Set node selection options.
