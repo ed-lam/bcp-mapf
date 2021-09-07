@@ -1,0 +1,17 @@
+Version 1.21:
+	Fixed minor bug in Makefile
+
+Version 1.2:
+	Fixed a fatal bug in the reordering function
+	reorder_graph. Using this function on a weighted
+	graph has corrupted the graph in earlier versions.
+
+	New default for the numbering of vertices in output from cl:
+	1 to n instead of 0 to n-1. New parameter -0 --from-0
+        instead of -1 --1-to-n.
+	
+Version 1.1:
+	Fixed a few bugs in resizing sets and graphs.
+	
+Version 1.0:
+	First public "official" release.
