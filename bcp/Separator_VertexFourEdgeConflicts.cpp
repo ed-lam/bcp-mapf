@@ -52,7 +52,6 @@ SCIP_RETCODE vertexfouredge_conflicts_create_cut(
 
     // Create constraint name.
 #ifdef DEBUG
-
     const auto [a1_et1_x1, a1_et1_y1] = map.get_xy(a1_et1.n);
     const auto [a1_et1_x2, a1_et1_y2] = map.get_xy(map.get_destination(a1_et1.et.e));
 

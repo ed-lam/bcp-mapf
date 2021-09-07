@@ -447,7 +447,6 @@ SCIP_RETCODE edge_conflicts_separate(
                 }
                 else
                 {
-
                     // Create cut.
                     SCIP_CALL(edge_conflicts_create_cut(scip, cons, consdata, t, edges, vars, result));
                 }
