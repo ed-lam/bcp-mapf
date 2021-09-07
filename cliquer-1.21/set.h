@@ -149,7 +149,7 @@ static set_t set_new(int size) {
 	ASSERT(size>0);
 
 	n=(size/ELEMENTSIZE+1)+1;
-	s=calloc(n,sizeof(setelement));
+	s=(set_t)calloc(n,sizeof(setelement));
 	s[0]=size;
 
 	return &(s[1]);
@@ -216,11 +216,11 @@ static int set_size(set_t s) {
  */
 UNUSED_FUNCTION INLINE
 static set_t set_duplicate(set_t s) {
-	set_t new;
+	set_t new_set;
 
-	new=set_new(SET_MAX_SIZE(s));
-	memcpy(new,s,SET_ARRAY_LENGTH(s)*sizeof(setelement));
-	return new;
+	new_set=set_new(SET_MAX_SIZE(s));
+	memcpy(new_set,s,SET_ARRAY_LENGTH(s)*sizeof(setelement));
+	return new_set;
 }
 
 /*
