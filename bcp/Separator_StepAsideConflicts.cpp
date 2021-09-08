@@ -212,7 +212,7 @@ SCIP_RETCODE stepaside_conflicts_separate(
         Pair<Direction, Direction>{Direction::SOUTH, Direction::NORTH},
     };
     Array<EdgeTime, 8> ets;
-    for (const auto [d1, d2] : directions)
+    for (const auto& [d1, d2] : directions)
     {
         for (Agent a1 = 0; a1 < N; ++a1)
         {
