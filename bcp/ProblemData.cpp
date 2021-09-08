@@ -106,6 +106,7 @@ struct SCIP_ProbData
     Vector<HashTable<NodeTime, SCIP_Real>> fractional_vertices;          // Fractional vertices
     Vector<HashTable<EdgeTime, SCIP_Real>> fractional_edges;             // Fractional edges
     Vector<HashTable<EdgeTime, SCIP_Real>> fractional_edges_no_waits;    // Fractional edges without waits
+    HashTable<EdgeTime, Vector<SCIP_Real>> fractional_edges_vec;         // Fractional edges by edge-time
 
     // Constraints
     Vector<SCIP_CONS*> agent_part;                                       // Agent partition constraints
@@ -1339,6 +1340,14 @@ const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetAgentFractionalEdge
     return probdata->fractional_edges_no_waits;
 }
 
+// Get the edges fractionally used by each agent grouped by edge-time
+const HashTable<EdgeTime, Vector<SCIP_Real>>& SCIPprobdataGetAgentFractionalEdgesVec(
+    SCIP_ProbData* probdata    // Problem data
+)
+{
+    debug_assert(probdata);
+    return probdata->fractional_edges_vec;
+}
 // Update the database of fractionally used vertices and edges
 void update_fractional_vertices_and_edges(
     SCIP* scip    // SCIP
@@ -1378,6 +1387,8 @@ void update_fractional_vertices_and_edges(
     auto& fractional_vertices = probdata->fractional_vertices;
     auto& fractional_edges = probdata->fractional_edges;
     auto& fractional_edges_no_waits = probdata->fractional_edges_no_waits;
+    auto& fractional_edges_vec = probdata->fractional_edges_vec;
+    fractional_edges_vec.clear();
     for (Agent a = 0; a < N; ++a)
     {
         // Clear data from previous iteration.
@@ -1424,6 +1435,11 @@ void update_fractional_vertices_and_edges(
                     {
                         const EdgeTime et{path[t], t};
                         agent_edges[et] += var_val;
+
+                        auto [it, _] = fractional_edges_vec.emplace(std::piecewise_construct,
+                                                                    std::forward_as_tuple(et),
+                                                                    std::forward_as_tuple(N));
+                        it->second[a] += var_val;
                     }
 
                     // Store the edge if not a wait edge.
@@ -1448,6 +1464,11 @@ void update_fractional_vertices_and_edges(
                     {
                         const EdgeTime et{n, Direction::WAIT, t};
                         agent_edges[et] += var_val;
+
+                        auto [it, _] = fractional_edges_vec.emplace(std::piecewise_construct,
+                                                                    std::forward_as_tuple(et),
+                                                                    std::forward_as_tuple(N));
+                        it->second[a] += var_val;
                     }
                 }
 

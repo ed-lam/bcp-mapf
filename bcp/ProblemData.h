@@ -147,6 +147,11 @@ const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetAgentFractionalEdge
     SCIP_ProbData* probdata    // Problem data
 );
 
+// Get the edges fractionally used by each agent grouped by edge-time
+const HashTable<EdgeTime, Vector<SCIP_Real>>& SCIPprobdataGetAgentFractionalEdgesVec(
+    SCIP_ProbData* probdata    // Problem data
+);
+
 // Update the database of fractional vertices and edges
 void update_fractional_vertices_and_edges(
     SCIP* scip    // SCIP
