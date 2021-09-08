@@ -57,6 +57,8 @@ set(BCP_MAPF_SOURCE_FILES
     bcp/ConstraintHandler_EdgeConflicts.h
     bcp/ConstraintHandler_EdgeConflicts.cpp
     bcp/Separator.h
+    bcp/Separator_Preprocessing.h
+    bcp/Separator_Preprocessing.cpp
     bcp/Separator_RectangleConflicts.h
     bcp/Separator_RectangleConflicts.cpp
     bcp/Separator_RectangleKnapsackConflicts.h

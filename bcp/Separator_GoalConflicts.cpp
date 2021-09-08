@@ -27,7 +27,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #define SEPA_NAME                                    "goal"
 #define SEPA_DESC            "Separator for goal conflicts"
-#define SEPA_PRIORITY                               +600000 // priority of the constraint handler for separation
+#define SEPA_PRIORITY                                 10000 // priority of the constraint handler for separation
 #define SEPA_FREQ                                         1  // frequency for separating cuts; zero means to separate only in the root node
 #define SEPA_MAXBOUNDDIST                               1.0
 #define SEPA_USESSUBSCIP                              FALSE // does the separator use a secondary SCIP instance? */
@@ -154,9 +154,6 @@ SCIP_RETCODE goal_conflicts_separate(
     SCIP_RESULT* result    // Pointer to store the result of the separation call
 )
 {
-    // Update database of fractional vertices and edges before separators start.
-    update_fractional_vertices_and_edges(scip);
-
     // Print.
     debugln("Starting separator for goal conflicts on solution with obj {:.6f}:",
             SCIPgetSolOrigObj(scip, nullptr));

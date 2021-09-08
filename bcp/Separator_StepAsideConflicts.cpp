@@ -27,8 +27,8 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #define SEPA_NAME                                  "step_aside"
 #define SEPA_DESC          "Separator for step aside conflicts"
-#define SEPA_PRIORITY                                   +350000 // priority of the constraint handler for separation
-#define SEPA_FREQ                                             1  // frequency for separating cuts; zero means to separate only in the root node
+#define SEPA_PRIORITY                                      1000 // priority of the constraint handler for separation
+#define SEPA_FREQ                                             1 // frequency for separating cuts; zero means to separate only in the root node
 #define SEPA_MAXBOUNDDIST                                   1.0
 #define SEPA_USESSUBSCIP                                  FALSE // does the separator use a secondary SCIP instance? */
 #define SEPA_DELAY                                        FALSE // should separation method be delayed, if other separators found cuts? */

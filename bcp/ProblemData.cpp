@@ -34,6 +34,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "scip/cons_knapsack.h"
 #include "ConstraintHandler_VertexConflicts.h"
 #include "ConstraintHandler_EdgeConflicts.h"
+#include "Separator_Preprocessing.h"
 #ifdef USE_RECTANGLE_KNAPSACK_CONFLICTS
 #include "Separator_RectangleKnapsackConflicts.h"
 #endif
@@ -1085,6 +1086,9 @@ SCIP_RETCODE SCIPprobdataCreate(
                                           FALSE,
                                           FALSE));
     SCIP_CALL(SCIPaddCons(scip, probdata->edge_conflicts));
+
+    // Include separator for preprocessing dummy constraint.
+    SCIP_CALL(SCIPincludeSepaPreprocessing(scip));
 
     // Include separator for rectangle knapsack conflicts.
 #ifdef USE_RECTANGLE_KNAPSACK_CONFLICTS

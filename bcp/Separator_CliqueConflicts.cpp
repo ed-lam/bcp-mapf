@@ -34,7 +34,7 @@ extern "C" {
 
 #define SEPA_NAME                                     "vertex_edge_clique"
 #define SEPA_DESC                         "Separator for clique conflicts"
-#define SEPA_PRIORITY                                                    1 // priority of the constraint handler for separation
+#define SEPA_PRIORITY                                                   10 // priority of the constraint handler for separation
 #define SEPA_FREQ                                                        0 // frequency for separating cuts; zero means to separate only in the root node
 #define SEPA_MAXBOUNDDIST                                              1.0
 #define SEPA_USESSUBSCIP                                             FALSE // does the separator use a secondary SCIP instance? */
