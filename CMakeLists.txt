@@ -106,65 +106,85 @@ set(BCP_MAPF_SOURCE_FILES
     )
 
 # Create target.
-add_executable(trufflehog ${TRUFFLEHOG_SOURCE_FILES} trufflehog/Main.cpp)
+add_executable(trufflehog EXCLUDE_FROM_ALL ${TRUFFLEHOG_SOURCE_FILES} trufflehog/Main.cpp)
 add_executable(bcp-mapf ${BCP_MAPF_SOURCE_FILES} ${TRUFFLEHOG_SOURCE_FILES} ${CLIQUER_SOURCE_FILES})
 target_include_directories(trufflehog PUBLIC ./ bcp/)
 target_include_directories(bcp-mapf PUBLIC ./ bcp/)
 
-# Include Gurobi.
-find_path(GUROBI_INCLUDE_DIR
-    NAMES gurobi_c.h
-    HINTS "${GUROBI_DIR}/include" "${GUROBI_DIR}/*/include" "$ENV{GUROBI_DIR}/include" "$ENV{GUROBI_DIR}/*/include")
-find_library(GUROBI_LIBRARY
-    NAMES gurobi91 gurobi90 gurobi80 gurobi81 gurobi75 gurobi70
-    HINTS "${GUROBI_DIR}/lib" "${GUROBI_DIR}/*/lib" "$ENV{GUROBI_DIR}/lib" "$ENV{GUROBI_DIR}/*/lib")
-if (GUROBI_INCLUDE_DIR AND GUROBI_LIBRARY)
-    set(LPS grb CACHE STRING "options for LP solver")
-    target_include_directories(bcp-mapf PUBLIC ${GUROBI_INCLUDE_DIR})
-    message("Using Gurobi as LP solver")
-endif ()
+# Include SCIP binaries.
+find_path(SCIP_INCLUDE_DIR
+          NAMES scip/scip.h
+          HINTS "${SCIP_DIR}/scip/src" "$ENV{SCIP_DIR}/scip/src")
+find_path(SCIP_CONFIG_DIR
+          NAMES scip/config.h
+          HINTS "${SCIP_DIR}/build/scip" "$ENV{SCIP_DIR}/build/scip")
+find_library(SCIP_LIBRARY
+             NAMES scip
+             HINTS "${SCIP_DIR}/build/lib" "$ENV{SCIP_DIR}/build/lib")
+if (SCIP_INCLUDE_DIR AND SCIP_CONFIG_DIR AND SCIP_LIBRARY)
 
-# Include CPLEX.
-if (NOT GUROBI_INCLUDE_DIR OR NOT GUROBI_LIBRARY)
-    find_path(CPLEX_INCLUDE_DIR
-        NAMES cplex.h
-        HINTS "${CPLEX_DIR}/include/ilcplex" "$ENV{CPLEX_DIR}/include/ilcplex")
-    find_library(CPLEX_LIBRARY
-        NAMES cplex
-        HINTS "${CPLEX_DIR}/lib/*/static_pic" "$ENV{CPLEX_DIR}/lib/*/static_pic")
-    if (CPLEX_INCLUDE_DIR AND CPLEX_LIBRARY)
-        set(LPS cpx CACHE STRING "options for LP solver")
-        target_include_directories(bcp-mapf PUBLIC ${CPLEX_INCLUDE_DIR})
-        message("Using CPLEX as LP solver")
+    target_include_directories(bcp-mapf PUBLIC ${SCIP_INCLUDE_DIR} ${SCIP_CONFIG_DIR})
+    message("Using SCIP binary at ${SCIP_LIBRARY}")
+
+else ()
+
+    # Include Gurobi.
+    find_path(GUROBI_INCLUDE_DIR
+        NAMES gurobi_c.h
+        HINTS "${GUROBI_DIR}/include" "${GUROBI_DIR}/*/include" "$ENV{GUROBI_DIR}/include" "$ENV{GUROBI_DIR}/*/include")
+    find_library(GUROBI_LIBRARY
+        NAMES gurobi91 gurobi90 gurobi80 gurobi81 gurobi75 gurobi70
+        HINTS "${GUROBI_DIR}/lib" "${GUROBI_DIR}/*/lib" "$ENV{GUROBI_DIR}/lib" "$ENV{GUROBI_DIR}/*/lib")
+    if (GUROBI_INCLUDE_DIR AND GUROBI_LIBRARY)
+        set(LPS grb CACHE STRING "options for LP solver")
+        target_include_directories(bcp-mapf PUBLIC ${GUROBI_INCLUDE_DIR})
+        message("Using Gurobi at ${GUROBI_LIBRARY} as LP solver")
     endif ()
-endif ()
 
-# Include SoPlex.
-if ((NOT GUROBI_INCLUDE_DIR OR NOT GUROBI_LIBRARY) AND (NOT CPLEX_INCLUDE_DIR OR NOT CPLEX_LIBRARY))
-    set(LPS spx CACHE STRING "options for LP solver")
-    set(CONF_INCLUDE_DIRS ../soplex/src/)
-    configure_file(scipoptsuite-7.0.2/soplex/soplex-config.cmake.in
-                   "${CMAKE_BINARY_DIR}/soplex/soplex-config.cmake"
-                   @ONLY)
-    set(SOPLEX_DIR ${CMAKE_BINARY_DIR}/soplex)
-    add_subdirectory(scipoptsuite-7.0.2/soplex/ EXCLUDE_FROM_ALL)
-    message("Using SoPlex as LP solver ${SOPLEX_INCLUDE_DIRS}")
-endif ()
+    # Include CPLEX.
+    if (NOT GUROBI_INCLUDE_DIR OR NOT GUROBI_LIBRARY)
+        find_path(CPLEX_INCLUDE_DIR
+            NAMES cplex.h
+            HINTS "${CPLEX_DIR}/include/ilcplex" "$ENV{CPLEX_DIR}/include/ilcplex")
+        find_library(CPLEX_LIBRARY
+            NAMES cplex
+            HINTS "${CPLEX_DIR}/lib/*/static_pic" "$ENV{CPLEX_DIR}/lib/*/static_pic")
+        if (CPLEX_INCLUDE_DIR AND CPLEX_LIBRARY)
+            set(LPS cpx CACHE STRING "options for LP solver")
+            target_include_directories(bcp-mapf PUBLIC ${CPLEX_INCLUDE_DIR})
+            message("Using CPLEX at ${CPLEX_LIBRARY} as LP solver")
+        endif ()
+    endif ()
 
-# Include SCIP.
-set(WITH_SCIPDEF on)
-set(TPI none)
-set(tpisources tpi/tpi_none.c)
-set(THREAD_LIBRARIES "")
-set(TPI_NONE on)
-configure_file(scipoptsuite-7.0.2/scip/src/scip/config.h.in "${CMAKE_BINARY_DIR}/scip/config.h" @ONLY)
-target_include_directories(bcp-mapf PUBLIC ${CMAKE_BINARY_DIR})
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ldl")
+    # Include SoPlex.
+    if ((NOT GUROBI_INCLUDE_DIR OR NOT GUROBI_LIBRARY) AND (NOT CPLEX_INCLUDE_DIR OR NOT CPLEX_LIBRARY))
+        set(LPS spx CACHE STRING "options for LP solver")
+        set(CONF_INCLUDE_DIRS ../soplex/src/)
+        configure_file(scipoptsuite-7.0.2/soplex/soplex-config.cmake.in
+                       "${CMAKE_BINARY_DIR}/soplex/soplex-config.cmake"
+                       @ONLY)
+        set(SOPLEX_DIR ${CMAKE_BINARY_DIR}/soplex)
+        add_subdirectory(scipoptsuite-7.0.2/soplex/ EXCLUDE_FROM_ALL)
+        message("Using SoPlex as LP solver ${SOPLEX_INCLUDE_DIRS}")
+    endif ()
+
+    # Include SCIP.
+    set(WITH_SCIPDEF on)
+    set(TPI none)
+    set(tpisources tpi/tpi_none.c)
+    set(THREAD_LIBRARIES "")
+    set(TPI_NONE on)
+    configure_file(scipoptsuite-7.0.2/scip/src/scip/config.h.in "${CMAKE_BINARY_DIR}/scip/config.h" @ONLY)
+    target_include_directories(bcp-mapf PUBLIC ${CMAKE_BINARY_DIR})
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ldl")
+    endif ()
+    add_subdirectory(scipoptsuite-7.0.2/scip/ EXCLUDE_FROM_ALL)
+    target_include_directories(bcp-mapf PRIVATE          scipoptsuite-7.0.2/scip/src/
+                                        SYSTEM INTERFACE scipoptsuite-7.0.2/scip/src/)
+    set(SCIP_LIBRARY libscip)
+
 endif ()
-add_subdirectory(scipoptsuite-7.0.2/scip/ EXCLUDE_FROM_ALL)
-target_include_directories(bcp-mapf PRIVATE          scipoptsuite-7.0.2/scip/src/
-                                    SYSTEM INTERFACE scipoptsuite-7.0.2/scip/src/)
 
 # Include fmt.
 add_subdirectory(fmt EXCLUDE_FROM_ALL)
@@ -198,7 +218,7 @@ endif ()
 
 # Link to libraries.
 target_link_libraries(trufflehog fmt::fmt-header-only)
-target_link_libraries(bcp-mapf fmt::fmt-header-only cliquer libscip ${LIBM})
+target_link_libraries(bcp-mapf fmt::fmt-header-only cliquer ${SCIP_LIBRARY} ${LIBM})
 
 # Set options.
 target_compile_options(bcp-mapf PRIVATE -DUSE_ASTAR_SOLUTION_CACHING)
