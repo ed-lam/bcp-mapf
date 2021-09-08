@@ -26,7 +26,6 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "Coordinates.h"
 #include "ProblemData.h"
 #include "Separator_RectangleConflicts.h"
-#include "scip/scip.h"
 
 // Create separator for rectangle clique conflicts and include it
 SCIP_RETCODE SCIPincludeSepaRectangleCliqueConflicts(

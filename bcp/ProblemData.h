@@ -23,7 +23,6 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "Includes.h"
 #include "Coordinates.h"
 #include "Separator.h"
-#include "scip/scip.h"
 
 #include "trufflehog/Instance.h"
 #include "trufflehog/AStar.h"

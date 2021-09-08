@@ -25,7 +25,6 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "Includes.h"
 #include "Coordinates.h"
 #include "ProblemData.h"
-#include "scip/scip.h"
 
 // Create separator for goal conflicts and include it
 SCIP_RETCODE SCIPincludeSepaGoalConflicts(

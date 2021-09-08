@@ -34,7 +34,11 @@ Author: Edward Lam <ed@ed-lam.com>
 #include <string>
 #include <memory>
 #include <array>
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include "scip/scip.h"
+#pragma GCC diagnostic pop
 
 // ---------------------------------------------------------------------------------------
 

@@ -20,7 +20,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "Includes.h"
 #include "Reader.h"
 #include "Output.h"
-#include "scip/scip.h"
+
 #include "scip/scipshell.h"
 #include "scip/scipdefplugins.h"
 #include "cxxopts.hpp"

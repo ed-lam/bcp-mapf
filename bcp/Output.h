@@ -20,7 +20,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifndef MAPF_OUTPUT_H
 #define MAPF_OUTPUT_H
 
-#include "scip/scip.h"
+#include "Includes.h"
 
 // Write best solution to file
 SCIP_RETCODE write_best_solution(

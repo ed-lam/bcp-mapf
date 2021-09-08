@@ -21,7 +21,6 @@ Author: Edward Lam <ed@ed-lam.com>
 #define MAPF_READER_H
 
 #include "Includes.h"
-#include "scip/scip.h"
 
 // Read instance from file
 SCIP_RETCODE read_instance(

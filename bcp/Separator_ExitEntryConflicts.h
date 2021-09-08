@@ -23,7 +23,6 @@ Author: Edward Lam <ed@ed-lam.com>
 #define MAPF_SEPARATOR_EXITENTRYCONFLICTS_H
 
 #include "Includes.h"
-#include "scip/scip.h"
 
 // Create separator for exit-entry conflicts and include it
 SCIP_RETCODE SCIPincludeSepaExitEntryConflicts(

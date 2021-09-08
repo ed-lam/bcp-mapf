@@ -21,7 +21,6 @@ Author: Edward Lam <ed@ed-lam.com>
 #define MAPF_VARIABLEDATA_H
 
 #include "Coordinates.h"
-#include "scip/scip.h"
 
 // Create variable data
 SCIP_RETCODE SCIPvardataCreate(

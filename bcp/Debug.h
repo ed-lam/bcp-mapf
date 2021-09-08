@@ -21,7 +21,11 @@ Author: Edward Lam <ed@ed-lam.com>
 #define MAPF_DEBUG_H
 
 #include "trufflehog/Debug.h"
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include "scip/scip.h"
+#pragma GCC diagnostic pop
 
 #define scip_assert(statement, ...) do { \
     const auto error = statement; \

@@ -22,7 +22,6 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #include "Includes.h"
 #include "ProblemData.h"
-#include "scip/scip.h"
 
 // Include Truffle Hog pricer
 SCIP_RETCODE SCIPincludePricerTruffleHog(

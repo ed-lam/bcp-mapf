@@ -21,7 +21,6 @@ Author: Edward Lam <ed@ed-lam.com>
 #define MAPF_SEPARATOR_PREPROCESSING_H
 
 #include "Includes.h"
-#include "scip/scip.h"
 
 // Create separator for preprocessing dummy constraint and include it
 SCIP_RETCODE SCIPincludeSepaPreprocessing(

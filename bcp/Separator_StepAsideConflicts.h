@@ -23,7 +23,6 @@ Author: Edward Lam <ed@ed-lam.com>
 #define MAPF_SEPARATOR_STEPASIDECONFLICTS_H
 
 #include "Includes.h"
-#include "scip/scip.h"
 
 // Create separator for step-aside conflicts and include it
 SCIP_RETCODE SCIPincludeSepaStepAsideConflicts(
