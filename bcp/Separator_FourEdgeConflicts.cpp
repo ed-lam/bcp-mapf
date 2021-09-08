@@ -173,7 +173,7 @@ SCIP_RETCODE fouredge_conflicts_separate(
                                         {
                                             // Create the cut if violated.
                                             const auto lhs = a1_et1_val + a1_et2_val + a2_et1_val + a2_et2_val;
-                                            if (SCIPisGT(scip, lhs, 1.0))
+                                            if (SCIPisSumGT(scip, lhs, 1.0 + CUT_VIOLATION))
                                             {
                                                 // Print.
 #ifdef PRINT_DEBUG

@@ -170,7 +170,7 @@ SCIP_RETCODE edge_conflicts_create_cut(
     }
     SCIP_CALL(SCIPflushRowExtensions(scip, row));
 #ifdef DEBUG
-    debug_assert(SCIPisGT(scip, lhs, 1.0));
+    debug_assert(SCIPisSumGT(scip, lhs, 1.0 + CUT_VIOLATION));
 #endif
 
     // Add the row to the LP.
@@ -246,7 +246,7 @@ SCIP_RETCODE edge_conflicts_check(
 
     // Check for conflicts.
     for (const auto [et, val] : edge_times_used)
-        if (SCIPisGT(scip, val, 1.0))
+        if (SCIPisSumGT(scip, val, 1.0))
         {
             // Print.
 #ifdef PRINT_DEBUG
@@ -402,7 +402,7 @@ SCIP_RETCODE edge_conflicts_separate(
 #endif
 
             // Create the cut if violated.
-            if (SCIPisGT(scip, lhs, 1.0))
+            if (SCIPisSumGT(scip, lhs, 1.0 + CUT_VIOLATION))
             {
                 // Print.
 #ifdef PRINT_DEBUG

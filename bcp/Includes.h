@@ -25,6 +25,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #define OUTPUTS_DIR "outputs"
 #define ARTIFICIAL_VAR_COST                                 1e6
 #define PRICE_PRIORITY_DECAY_FACTOR                         1.3
+#define CUT_VIOLATION                                       0.1
 
 // ---------------------------------------------------------------------------------------
 

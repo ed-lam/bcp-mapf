@@ -213,7 +213,8 @@ SCIP_RETCODE threevertex_conflicts_separate(
                                         // Store the third edge if the cut is violated.
                                         const auto lhs = a1_et1_val + a1_et2_val + 
                                                          a2_v1_val + a2_v2_val + a2_v3_val;
-                                        if (distance1 > time1 && distance2 > time2 && SCIPisGT(scip, lhs, 2))
+                                        if (distance1 > time1 && distance2 > time2 &&
+                                            SCIPisSumGT(scip, lhs, 2 + CUT_VIOLATION))
                                         {
                                             final_a2_v3 = a2_v3;
 #ifdef PRINT_DEBUG

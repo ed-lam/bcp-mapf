@@ -181,7 +181,7 @@ SCIP_RETCODE sixedge_conflicts_separate(
                                     if (a1_et3.n != a1_et2.n && a1_et3.t == a1_et2.t)
                                     {
                                         const auto lhs = a1_et1_val + a1_et2_val + a1_et3_val + a2_et1_val + a2_et2_val + a2_et3_val;
-                                        if (SCIPisGT(scip, lhs, 2.0))
+                                        if (SCIPisSumGT(scip, lhs, 2.0 + CUT_VIOLATION))
                                         {
 //                                            println("{} {} {} {} {} {}", a1_et1_val, a1_et2_val, a1_et3_val, a2_et1_val, a2_et2_val, a2_et3_val);
 

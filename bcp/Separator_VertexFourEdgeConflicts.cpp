@@ -211,7 +211,7 @@ SCIP_RETCODE vertexfouredge_conflicts_separate(
 
                                         // Create the constraint if violated.
                                         const auto lhs = a1_et1_val + a1_et2_val + a2_et1_val + a2_et2_val + a1_nts_val;
-                                        if (a1_nts_val > 0 && SCIPisGT(scip, lhs, 2.0))
+                                        if (a1_nts_val > 0 && SCIPisSumGT(scip, lhs, 2.0 + CUT_VIOLATION))
                                         {
                                             // Print.
 #ifdef PRINT_DEBUG
@@ -303,7 +303,7 @@ SCIP_RETCODE vertexfouredge_conflicts_separate(
 
                                     // Create the constraint if violated.
                                     const auto lhs = a1_et1_val + a1_et2_val + a2_et1_val + a2_et2_val + a1_nts_val;
-                                    if (a1_nts_val > 0 && SCIPisGT(scip, lhs, 2.0))
+                                    if (a1_nts_val > 0 && SCIPisSumGT(scip, lhs, 2.0 + CUT_VIOLATION))
                                     {
                                         // Print.
 #ifdef PRINT_DEBUG

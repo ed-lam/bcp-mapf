@@ -162,7 +162,7 @@ SCIP_RETCODE exitentry_conflicts_separate(
                     }
 
                     // Create a cut if violated.
-                    if (SCIPisGT(scip, lhs, 1.0))
+                    if (SCIPisSumGT(scip, lhs, 1.0 + CUT_VIOLATION))
                     {
                         // Print.
                         debugln("   Creating exit-entry conflict cut on edge "

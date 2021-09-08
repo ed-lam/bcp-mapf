@@ -784,7 +784,7 @@ SCIP_RETCODE SCIPprobdataAddTwoAgentRobustCut(
         }
     SCIP_CALL(SCIPflushRowExtensions(scip, row));
 #ifdef DEBUG
-    debug_assert(SCIPisGT(scip, lhs, rhs));
+    debug_assert(SCIPisSumGT(scip, lhs, rhs));
 #endif
 
     // Check agent and edges.

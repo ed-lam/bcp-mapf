@@ -289,7 +289,7 @@ SCIP_RETCODE goal_conflicts_separate(
                     }
 
                     // Create a cut only if violated.
-                    if (SCIPisSumGT(scip, lhs1 + lhs2, 1.0) && lhs2 > 0)
+                    if (SCIPisSumGT(scip, lhs1 + lhs2, 1.0 + CUT_VIOLATION) && lhs2 > 0)
                     {
                         // Print.
 #ifdef PRINT_DEBUG

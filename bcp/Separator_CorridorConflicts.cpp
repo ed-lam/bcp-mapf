@@ -230,7 +230,8 @@ SCIP_RETCODE corridor_conflicts_separate(
                                                     0.0;
                             const auto lhs_lift_a2 = lhs + a2_et3_val + a2_et4_val;
 
-                            if (SCIPisGT(scip, lhs_lift_a1, 1.0) || SCIPisGT(scip, lhs_lift_a2, 1.0))
+                            if (SCIPisSumGT(scip, lhs_lift_a1, 1.0 + CUT_VIOLATION) ||
+                                SCIPisSumGT(scip, lhs_lift_a2, 1.0 + CUT_VIOLATION))
                             {
                                 if (lhs_lift_a1 >= lhs_lift_a2)
                                 {
@@ -348,7 +349,7 @@ SCIP_RETCODE corridor_conflicts_separate(
                                 }
                             }
 #else
-                            if (SCIPisGT(scip, lhs, 1.0))
+                            if (SCIPisSumGT(scip, lhs, 1.0 + CUT_VIOLATION))
                             {
                                 // Print.
 #ifdef PRINT_DEBUG

@@ -348,7 +348,7 @@ Pair<AgentNodeTime, bool> find_decision_early_goal(
                 const auto var_val = SCIPgetSolVal(scip, nullptr, var);
                 lhs += var_val * coeffs[v];
             }
-            debug_assert(SCIPisEQ(scip, lhs, tmp));
+            debug_assert(SCIPisSumEQ(scip, lhs, tmp));
 
             // Skip if the constraint is not binding.
             if (SCIPisSumLT(scip, lhs, best_lhs))
@@ -449,7 +449,7 @@ Pair<AgentNodeTime, bool> find_decision_early_goal(
                 const auto var_val = SCIPgetSolVal(scip, nullptr, var);
                 lhs += var_val * coeffs[v];
             }
-            debug_assert(SCIPisEQ(scip, lhs, tmp));
+            debug_assert(SCIPisSumEQ(scip, lhs, tmp));
 
             // Skip if the constraint is not binding.
             if (SCIPisSumLT(scip, lhs, best_lhs))
@@ -608,7 +608,7 @@ Pair<AgentNodeTime, bool> find_decision_early_goal(
 //            const auto var_val = SCIPgetSolVal(scip, nullptr, var);
 //            lhs += var_val * coeffs[v];
 //        }
-//        debug_assert(SCIPisEQ(scip, lhs, tmp));
+//        debug_assert(SCIPisSumEQ(scip, lhs, tmp));
 //
 //        // Skip if the constraint is not binding.
 //        if (SCIPisSumLT(scip, lhs, best_lhs))
@@ -785,7 +785,7 @@ Pair<AgentNodeTime, bool> find_decision_vertex(
                 const auto var_val = SCIPgetSolVal(scip, nullptr, var);
                 lhs += var_val * coeffs[v];
             }
-            debug_assert(SCIPisEQ(scip, lhs, tmp));
+            debug_assert(SCIPisSumEQ(scip, lhs, tmp));
 
             // Skip if the constraint is not binding.
             if (SCIPisSumLT(scip, lhs, best_lhs))
@@ -925,7 +925,7 @@ Pair<AgentNodeTime, bool> find_decision_vertex(
                 const auto var_val = SCIPgetSolVal(scip, nullptr, var);
                 lhs += var_val * coeffs[v];
             }
-            debug_assert(SCIPisEQ(scip, lhs, tmp));
+            debug_assert(SCIPisSumEQ(scip, lhs, tmp));
 
             // Skip if the constraint is not binding.
             if (SCIPisSumLT(scip, lhs, best_lhs))

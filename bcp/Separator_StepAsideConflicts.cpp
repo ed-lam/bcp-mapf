@@ -330,7 +330,7 @@ SCIP_RETCODE stepaside_conflicts_separate(
                                                 x1, y1, x2, y2, et.t);
                                     }
 
-                                    if (SCIPisGT(scip, lhs, 3.0))
+                                    if (SCIPisSumGT(scip, lhs, 3.0 + CUT_VIOLATION))
                                     {
                                         stepaside_conflicts_create_cut(scip,
                                                                        probdata,

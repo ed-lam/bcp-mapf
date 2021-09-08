@@ -212,7 +212,7 @@ SCIP_RETCODE twoedge_conflicts_separate(
                                          + a1_et3_val + a2_et3_val
 #endif
                         ;
-                        if (SCIPisGT(scip, lhs, 1.0))
+                        if (SCIPisSumGT(scip, lhs, 1.0 + CUT_VIOLATION))
                         {
                             // Print.
 #ifdef PRINT_DEBUG

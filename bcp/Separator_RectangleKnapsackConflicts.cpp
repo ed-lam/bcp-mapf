@@ -280,7 +280,7 @@ RectangleConflict find_rectangle(
                 lhs += it2->second;
         }
         debug_assert(SCIPisSumLE(scip, lhs, 4.0));
-        if (SCIPisSumLE(scip, lhs, 3.0))
+        if (!SCIPisSumGT(scip, lhs, 3.0 + CUT_VIOLATION))
         {
             conflict.edges.clear();
         }

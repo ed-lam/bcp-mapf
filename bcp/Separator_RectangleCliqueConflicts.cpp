@@ -434,7 +434,7 @@ RectangleConflict find_rectangle(
                 lhs += SCIPgetVarSol(scip, var);
             }
         }
-        if (SCIPisSumLE(scip, lhs, 1.0))
+        if (!SCIPisSumGT(scip, lhs, 1.0 + CUT_VIOLATION))
         {
             conflict.edges.clear();
         }
