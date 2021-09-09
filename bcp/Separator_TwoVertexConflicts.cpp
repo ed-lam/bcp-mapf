@@ -33,13 +33,25 @@ Author: Edward Lam <ed@ed-lam.com>
 #define SEPA_USESSUBSCIP                                  FALSE // does the separator use a secondary SCIP instance? */
 #define SEPA_DELAY                                        FALSE // should separation method be delayed, if other separators found cuts? */
 
+struct TwoVertexConflictData
+{
+    SCIP_Real lhs;
+    Agent a1;
+    Agent a2;
+    EdgeTime a1_et;
+    EdgeTime a2_et1;
+    EdgeTime a2_et2;
+};
+
+#define MATRIX(i,j) (i * N + j)
+
 SCIP_RETCODE twovertex_conflicts_create_cut(
     SCIP* scip,                 // SCIP
     SCIP_ProbData* probdata,    // Problem data
     SCIP_SEPA* sepa,            // Separator
     const Agent a1,             // Agent 1
     const Agent a2,             // Agent 2
-    const EdgeTime a1_et1,      // Edge 1 of agent 1
+    const EdgeTime a1_et,       // Edge of agent 1
     const EdgeTime a2_et1,      // Edge 1 of agent 2
     const EdgeTime a2_et2,      // Edge 2 of agent 2
     SCIP_Result* result         // Output result
@@ -49,8 +61,8 @@ SCIP_RETCODE twovertex_conflicts_create_cut(
 #ifdef DEBUG
     const auto& map = SCIPprobdataGetMap(probdata);
 
-    const auto [a1_et1_x1, a1_et1_y1] = map.get_xy(a1_et1.n);
-    const auto [a1_et1_x2, a1_et1_y2] = map.get_destination_xy(a1_et1.et.e);
+    const auto [a1_et_x1, a1_et_y1] = map.get_xy(a1_et.n);
+    const auto [a1_et_x2, a1_et_y2] = map.get_destination_xy(a1_et.et.e);
 
     const auto [a2_et1_x1, a2_et1_y1] = map.get_xy(a2_et1.n);
     const auto [a2_et1_x2, a2_et1_y2] = map.get_destination_xy(a2_et1.et.e);
@@ -65,7 +77,7 @@ SCIP_RETCODE twovertex_conflicts_create_cut(
                             "(({},{}),({},{}),{}),"
                             ")",
                             a1, a2,
-                            a1_et1_x1, a1_et1_y1, a1_et1_x2, a1_et1_y2, a1_et1.t,
+                            a1_et_x1, a1_et_y1, a1_et_x2, a1_et_y2, a1_et.t,
                             a2_et1_x1, a2_et1_y1, a2_et1_x2, a2_et1_y2, a2_et1.t,
                             a2_et2_x1, a2_et2_y1, a2_et2_x2, a2_et2_y2, a2_et2.t);
 #endif
@@ -76,7 +88,7 @@ SCIP_RETCODE twovertex_conflicts_create_cut(
         , std::move(name)
 #endif
     );
-    cut.edge_times_a1(0) = a1_et1;
+    cut.edge_times_a1(0) = a1_et;
     cut.edge_times_a2(0) = a2_et1;
     cut.edge_times_a2(1) = a2_et2;
 
@@ -110,103 +122,206 @@ SCIP_RETCODE twovertex_conflicts_separate(
     const auto& map = SCIPprobdataGetMap(probdata);
 
     // Get the edges fractionally used by each agent.
-    const auto& agent_edges = SCIPprobdataGetAgentFractionalEdges(probdata);
     const auto& agent_edges_no_waits = SCIPprobdataGetAgentFractionalEdgesNoWaits(probdata);
+    const auto& agent_edges_vec = SCIPprobdataGetAgentFractionalEdgesVec(probdata);
 
     // Find conflicts.
+    Vector<TwoVertexConflictData> cuts;
     for (Agent a1 = 0; a1 < N; ++a1)
     {
         // Get the edges of agent 1.
         const auto& agent_edges_a1 = agent_edges_no_waits[a1];
 
         // Loop through the edge of agent 1.
-        for (const auto [a1_et1, a1_et1_val] : agent_edges_a1)
+        for (const auto [a1_et, a1_et_val] : agent_edges_a1)
         {
+            // Get all potential first edge of agent 2.
+            Array<EdgeTime, 5> a2_et1s;
+            Array<const Vector<SCIP_Real>*, 5> a2_et1_vals;
+            Int a2_et1_size = 0;
+            {
+                const EdgeTime et{a1_et.n, Direction::NORTH, a1_et.t};
+                if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
+                {
+                    a2_et1s[a2_et1_size] = et;
+                    a2_et1_vals[a2_et1_size] = &it->second;
+                    ++a2_et1_size;
+                }
+            }
+            {
+                const EdgeTime et{a1_et.n, Direction::SOUTH, a1_et.t};
+                if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
+                {
+                    a2_et1s[a2_et1_size] = et;
+                    a2_et1_vals[a2_et1_size] = &it->second;
+                    ++a2_et1_size;
+                }
+            }
+            {
+                const EdgeTime et{a1_et.n, Direction::EAST, a1_et.t};
+                if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
+                {
+                    a2_et1s[a2_et1_size] = et;
+                    a2_et1_vals[a2_et1_size] = &it->second;
+                    ++a2_et1_size;
+                }
+            }
+            {
+                const EdgeTime et{a1_et.n, Direction::WEST, a1_et.t};
+                if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
+                {
+                    a2_et1s[a2_et1_size] = et;
+                    a2_et1_vals[a2_et1_size] = &it->second;
+                    ++a2_et1_size;
+                }
+            }
+            {
+                const EdgeTime et{a1_et.n, Direction::WAIT, a1_et.t};
+                if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
+                {
+                    a2_et1s[a2_et1_size] = et;
+                    a2_et1_vals[a2_et1_size] = &it->second;
+                    ++a2_et1_size;
+                }
+            }
+
+            // Get all potential second edge of agent 2.
+            Array<EdgeTime, 5> a2_et2s;
+            Array<const Vector<SCIP_Real>*, 5> a2_et2_vals;
+            Int a2_et2_size = 0;
+            {
+                const auto a2_et2_dest = map.get_destination(a1_et.et.e);
+                const auto a2_et1s_end = a2_et1s.begin() + a2_et1_size;
+                {
+                    const EdgeTime et{map.get_south(a2_et2_dest), Direction::NORTH, a1_et.t};
+                    if (std::find(a2_et1s.begin(), a2_et1s_end, et) == a2_et1s_end)
+                        if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
+                        {
+                            a2_et2s[a2_et2_size] = et;
+                            a2_et2_vals[a2_et2_size] = &it->second;
+                            ++a2_et2_size;
+                        }
+                }
+                {
+                    const EdgeTime et{map.get_north(a2_et2_dest), Direction::SOUTH, a1_et.t};
+                    if (std::find(a2_et1s.begin(), a2_et1s_end, et) == a2_et1s_end)
+                        if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
+                        {
+                            a2_et2s[a2_et2_size] = et;
+                            a2_et2_vals[a2_et2_size] = &it->second;
+                            ++a2_et2_size;
+                        }
+                }
+                {
+                    const EdgeTime et{map.get_west(a2_et2_dest), Direction::EAST, a1_et.t};
+                    if (std::find(a2_et1s.begin(), a2_et1s_end, et) == a2_et1s_end)
+                        if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
+                        {
+                            a2_et2s[a2_et2_size] = et;
+                            a2_et2_vals[a2_et2_size] = &it->second;
+                            ++a2_et2_size;
+                        }
+                }
+                {
+                    const EdgeTime et{map.get_east(a2_et2_dest), Direction::WEST, a1_et.t};
+                    if (std::find(a2_et1s.begin(), a2_et1s_end, et) == a2_et1s_end)
+                        if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
+                        {
+                            a2_et2s[a2_et2_size] = et;
+                            a2_et2_vals[a2_et2_size] = &it->second;
+                            ++a2_et2_size;
+                        }
+                }
+                {
+                    const EdgeTime et{map.get_wait(a2_et2_dest), Direction::WAIT, a1_et.t};
+                    if (std::find(a2_et1s.begin(), a2_et1s_end, et) == a2_et1s_end)
+                        if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
+                        {
+                            a2_et2s[a2_et2_size] = et;
+                            a2_et2_vals[a2_et2_size] = &it->second;
+                            ++a2_et2_size;
+                        }
+                }
+            }
+
+            // Check.
+            for (Int a2_et1_idx = 0; a2_et1_idx < a2_et1_size; ++a2_et1_idx)
+                for (Int a2_et2_idx = 0; a2_et2_idx < a2_et2_size; ++a2_et2_idx)
+                    debug_assert(a2_et1s[a2_et1_idx] != a2_et2s[a2_et2_idx]);
+
             // Loop through the second agent.
             for (Agent a2 = 0; a2 < N; ++a2)
-            {
                 if (a2 != a1)
                 {
-                    // Get the edges of agent 2.
-                    const auto& agent_edges_a2 = agent_edges[a2];
-
-                    // Loop through the first edge of agent 2.
-                    Array<EdgeTime, 5> a2_et1s{EdgeTime{a1_et1.n, Direction::NORTH, a1_et1.t},
-                                               EdgeTime{a1_et1.n, Direction::SOUTH, a1_et1.t},
-                                               EdgeTime{a1_et1.n, Direction::EAST, a1_et1.t},
-                                               EdgeTime{a1_et1.n, Direction::WEST, a1_et1.t},
-                                               EdgeTime{a1_et1.n, Direction::WAIT, a1_et1.t}};
-                    for (const auto a2_et1 : a2_et1s)
-                    {
-                        // Get the first edge of agent 2.
-                        const auto a2_et1_it = agent_edges_a2.find(a2_et1);
-                        if (a2_et1_it == agent_edges_a2.end())
-                            continue;
-                        const auto a2_et1_val = a2_et1_it->second;
-
-                        // Loop through the second edge of agent 2.
-                        const auto a2_et2_dest = map.get_destination(a1_et1.et.e);
-                        Array<EdgeTime, 5> a2_et2s{EdgeTime{map.get_south(a2_et2_dest), Direction::NORTH, a1_et1.t},
-                                                   EdgeTime{map.get_north(a2_et2_dest), Direction::SOUTH, a1_et1.t},
-                                                   EdgeTime{map.get_west(a2_et2_dest), Direction::EAST, a1_et1.t},
-                                                   EdgeTime{map.get_east(a2_et2_dest), Direction::WEST, a1_et1.t},
-                                                   EdgeTime{map.get_wait(a2_et2_dest), Direction::WAIT, a1_et1.t}};
-                        for (const auto a2_et2: a2_et2s)
+                    // Loop through the two edges of agent 2.
+                    for (Int a2_et1_idx = 0; a2_et1_idx < a2_et1_size; ++a2_et1_idx)
+                        for (Int a2_et2_idx = 0; a2_et2_idx < a2_et2_size; ++a2_et2_idx)
                         {
-                            // Get the second edge of agent 2.
-                            const auto a2_et2_it = agent_edges_a2.find(a2_et2);
-                            if (a2_et2_it == agent_edges_a2.end() || a2_et2 == a2_et1)
-                                continue;
-                            const auto a2_et2_val = a2_et2_it->second;
+                            // Get the edges of agent 2.
+                            const auto a2_et1 = a2_et1s[a2_et1_idx];
+                            const auto a2_et1_val = (*(a2_et1_vals[a2_et1_idx]))[a2];
+                            const auto a2_et2 = a2_et2s[a2_et2_idx];
+                            const auto a2_et2_val = (*(a2_et2_vals[a2_et2_idx]))[a2];
 
-                            // Create the cut if violated.
-                            const auto lhs = a1_et1_val + a2_et1_val + a2_et2_val;
+                            // Check.
+                            debug_assert(a1_et.n == a2_et1.n);
+                            debug_assert(map.get_destination(a1_et.et.e) == map.get_destination(a2_et2.et.e));
+                            debug_assert(a2_et1 != a2_et2);
+
+                            // Compute the LHS.
+                            const auto lhs = a1_et_val + a2_et1_val + a2_et2_val;
+
+                            // Store a cut if violated.
                             if (SCIPisSumGT(scip, lhs, 1.0 + CUT_VIOLATION))
                             {
-                                // Print.
-#ifdef PRINT_DEBUG
-                                {
-                                    const auto [a1_et1_x1, a1_et1_y1] = map.get_xy(a1_et1.n);
-                                    const auto [a1_et1_x2, a1_et1_y2] = map.get_destination_xy(a1_et1.et.e);
-
-                                    const auto [a2_et1_x1, a2_et1_y1] = map.get_xy(a2_et1.n);
-                                    const auto [a2_et1_x2, a2_et1_y2] = map.get_destination_xy(a2_et1.et.e);
-
-                                    const auto [a2_et2_x1, a2_et2_y1] = map.get_xy(a2_et2.n);
-                                    const auto [a2_et2_x2, a2_et2_y2] = map.get_destination_xy(a2_et2.et.e);
-
-                                    debugln("   Creating two-vertex conflict cut on edges "
-                                            "(({},{}),({},{}),{}) for agent {} and "
-                                            "(({},{}),({},{}),{}) and (({},{}),({},{}),{}) for agent {} "
-                                            "with value {} in "
-                                            "branch-and-bound node {}",
-                                            a1_et1_x1, a1_et1_y1, a1_et1_x2, a1_et1_y2, a1_et1.t,
-                                            a1,
-                                            a2_et1_x1, a2_et1_y1, a2_et1_x2, a2_et1_y2, a2_et1.t,
-                                            a2_et2_x1, a2_et2_y1, a2_et2_x2, a2_et2_y2, a2_et2.t,
-                                            a2,
-                                            lhs,
-                                            SCIPnodeGetNumber(SCIPgetCurrentNode(scip)));
-                                }
-#endif
-
-                                // Create cut.
-                                SCIP_CALL(twovertex_conflicts_create_cut(scip,
-                                                                         probdata,
-                                                                         sepa,
-                                                                         a1,
-                                                                         a2,
-                                                                         a1_et1,
-                                                                         a2_et1,
-                                                                         a2_et2,
-                                                                         result));
-//                                goto NEXT_AGENT;
+                                cuts.emplace_back(TwoVertexConflictData{lhs, a1, a2, a1_et, a2_et1, a2_et2});
                             }
                         }
-                    }
                 }
-//                NEXT_AGENT:;
+        }
+    }
+
+    // Create the most violated cuts.
+    Vector<Int> agent_nb_cuts(N * N);
+    std::sort(cuts.begin(),
+              cuts.end(),
+              [](const TwoVertexConflictData& a, const TwoVertexConflictData& b) { return a.lhs > b.lhs; });
+    for (const auto& cut : cuts)
+    {
+        const auto& [lhs, a1, a2, a1_et, a2_et1, a2_et2] = cut;
+        auto& nb_cuts = agent_nb_cuts[MATRIX(std::min(a1, a2), std::max(a1, a2))];
+        if (nb_cuts < 1)
+        {
+            // Print.
+#ifdef PRINT_DEBUG
+            {
+                const auto [a1_et_x1, a1_et_y1] = map.get_xy(a1_et.n);
+                const auto [a1_et_x2, a1_et_y2] = map.get_destination_xy(a1_et.et.e);
+
+                const auto [a2_et1_x1, a2_et1_y1] = map.get_xy(a2_et1.n);
+                const auto [a2_et1_x2, a2_et1_y2] = map.get_destination_xy(a2_et1.et.e);
+
+                const auto [a2_et2_x1, a2_et2_y1] = map.get_xy(a2_et2.n);
+                const auto [a2_et2_x2, a2_et2_y2] = map.get_destination_xy(a2_et2.et.e);
+
+                debugln("   Creating two-vertex conflict cut on edges "
+                        "(({},{}),({},{}),{}) for agent {} and "
+                        "(({},{}),({},{}),{}) and (({},{}),({},{}),{}) for agent {} "
+                        "with value {} in "
+                        "branch-and-bound node {}",
+                        a1_et_x1, a1_et_y1, a1_et_x2, a1_et_y2, a1_et.t,
+                        a1,
+                        a2_et1_x1, a2_et1_y1, a2_et1_x2, a2_et1_y2, a2_et1.t,
+                        a2_et2_x1, a2_et2_y1, a2_et2_x2, a2_et2_y2, a2_et2.t,
+                        a2,
+                        lhs,
+                        SCIPnodeGetNumber(SCIPgetCurrentNode(scip)));
             }
+#endif
+
+            // Create the cut.
+            SCIP_CALL(twovertex_conflicts_create_cut(scip, probdata, sepa, a1, a2, a1_et, a2_et1, a2_et2, result));
+            ++nb_cuts;
         }
     }
 
