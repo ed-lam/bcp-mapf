@@ -72,6 +72,8 @@ struct SCIP_PricerData
 
 #ifdef USE_ASTAR_SOLUTION_CACHING
     Vector<Vector<NodeTime>> previous_segments;                                    // End-points of segments in previous failed iteration
+    Vector<Time> previous_earliest_finish;                                         // Earliest time to reach the goal in the previous failed iteration
+    Vector<Time> previous_latest_finish;                                           // Latest time to reach the goal in the previous failed iteration
     Vector<Float> previous_agent_part_dual;                                        // Dual variable values of agent set partition constraints in previous failed iteration
     Vector<HashTable<NodeTime, TruffleHog::EdgeCosts>> previous_edge_penalties;    // Edge penalties used in previous failed iteration
     Vector<Vector<Cost>> previous_time_finish_penalties;                           // Time to finish penalties in previous failed iteration
@@ -131,6 +133,8 @@ SCIP_DECL_PRICERINIT(pricerTruffleHogInit)
     // Create space to store the penalties from the previous failed iteration.
 #ifdef USE_ASTAR_SOLUTION_CACHING
     pricerdata->previous_segments.resize(pricerdata->N);
+    pricerdata->previous_earliest_finish.resize(pricerdata->N);
+    pricerdata->previous_latest_finish.resize(pricerdata->N);
     pricerdata->previous_agent_part_dual.resize(pricerdata->N, -std::numeric_limits<Float>::infinity());
     pricerdata->previous_edge_penalties.resize(pricerdata->N);
     pricerdata->previous_time_finish_penalties.resize(pricerdata->N);
@@ -1214,6 +1218,16 @@ SCIP_RETCODE run_trufflehog_pricer(
                     goto SOLVE;
                 }
 
+                if (earliest_finish != pricerdata->previous_earliest_finish[a])
+                {
+                    goto SOLVE;
+                }
+
+                if (latest_finish != pricerdata->previous_latest_finish[a])
+                {
+                    goto SOLVE;
+                }
+
                 if (agent_part_dual[a] > pricerdata->previous_agent_part_dual[a])
                 {
                     goto SOLVE;
@@ -1324,6 +1338,8 @@ SCIP_RETCODE run_trufflehog_pricer(
         AGENT_FAILED:
 #ifdef USE_ASTAR_SOLUTION_CACHING
         pricerdata->previous_segments[a] = segments;
+        pricerdata->previous_earliest_finish[a] = earliest_finish;
+        pricerdata->previous_latest_finish[a] = latest_finish;
         pricerdata->previous_agent_part_dual[a] = agent_part_dual[a];
         pricerdata->previous_edge_penalties[a].clear();
         for (const auto& [nt, edge_costs] : astar.edge_penalties())
