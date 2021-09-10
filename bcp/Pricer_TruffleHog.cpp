@@ -280,9 +280,10 @@ SCIP_RETCODE run_trufflehog_pricer(
     // Print.
     if constexpr (!is_farkas)
     {
-        debugln("Starting pricer for feasible master problem at node {}, depth {}, obj {}:",
+        debugln("Starting pricer for feasible master problem at node {}, depth {}, node LB {}, LP obj {}:",
                 SCIPnodeGetNumber(SCIPgetCurrentNode(scip)),
                 SCIPgetDepth(scip),
+                SCIPgetNodeLowerbound(scip, SCIPgetCurrentNode(scip)),
                 SCIPgetLPObjval(scip));
     }
     else
@@ -403,60 +404,126 @@ SCIP_RETCODE run_trufflehog_pricer(
 //        ++iter;
 //        if (iter == 1)
 //        {
-//            Vector<Vector<Pair<Position,Position>>> init_paths{
-//                { {224,134},{224,133},{224,132},{224,131},{224,130},{224,129},{224,128} },
-//                { {188,172},{188,171},{189,171},{190,171},{191,171},{191,170},{192,170} },
-//            };
-//            // Vector<Agent> path_agents{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 13, 14, 15, 16, 17, 17, 18, 19 };
-//            Vector<Agent> path_agents(N);
-//            std::iota(path_agents.begin(), path_agents.end(), 0);
+//            // Get dual variable values of agent partition constraints.
+//            auto agent_part_dual = pricerdata->agent_part_dual;
+//            for (Agent a = 0; a < N; ++a)
+//            {
+//                // Get the constraint.
+//                auto cons = agent_part[a];
+//                debug_assert(cons);
 //
-//            static bool done = false;
-//            if (!done)
+//                // Check that the constraint is not (locally) disabled/redundant.
+//                debug_assert(SCIPconsIsEnabled(cons));
+//
+//                // Check that no variable is fixed to one.
+//                debug_assert(SCIPgetNFixedonesSetppc(scip, cons) == 0);
+//
+//                // Store dual value.
+//                agent_part_dual[a] = is_farkas ? SCIPgetDualfarkasSetppc(scip, cons) : SCIPgetDualsolSetppc(scip, cons);
+//                debug_assert(SCIPisGE(scip, agent_part_dual[a], 0.0));
+//            }
+//
+//            // Get input paths.
+//            Vector<Vector<Pair<Position,Position>>> input_paths_xy{
+//            };
+//            Vector<Agent> input_paths_agent(N);
+//            std::iota(input_paths_agent.begin(), input_paths_agent.end(), 0);
+//
+//            // Convert input paths to node IDs.
+//            Vector<Vector<Edge>> input_paths;
+//            for (size_t idx = 0; idx < input_paths_xy.size(); ++idx)
 //            {
 //                constexpr Position padding = 1;
 //
-//                for (Int idx = 0; idx < static_cast<Int>(init_paths.size()); ++idx)
+//                const auto& input_path_xy = input_paths_xy[idx];
+//                const auto a = input_paths_agent[idx];
+//
+//                auto& path = input_paths.emplace_back();
+//                for (Int idx = 0; idx < static_cast<Int>(input_path_xy.size() - 1); ++idx)
 //                {
-//                    const auto& init_path = init_paths.at(idx);
-//                    const auto a = path_agents.at(idx);
-//                    // const auto tmp = astar.calculate_cost<true>(init_path);
-//
-//                    Vector<Edge> path;
-//                    for (Int idx = 0; idx < static_cast<Int>(init_path.size() - 1); ++idx)
-//                    {
-//                        const auto [x1, y1] = init_path[idx];
-//                        const auto [x2, y2] = init_path[idx+1];
-//                        const auto i = map.get_id(x1 + padding, y1 + padding);
-//                        const auto j = map.get_id(x2 + padding, y2 + padding);
-//                        const auto d = map.get_direction(i, j);
-//                        path.push_back(Edge{i,d});
-//                    }
-//                    {
-//                        Int idx = init_path.size() - 1;
-//                        const auto [x1, y1] = init_path[idx];
-//                        const auto i = map.get_id(x1 + padding, y1 + padding);
-//                        const auto d = Direction::INVALID;
-//                        path.push_back(Edge{i,d});
-//                    }
-//                    debug_assert(path.front().n == agents[a].start);
-//                    debug_assert(path.back().n == agents[a].goal);
-//
-//                    // Add column.
-//                    SCIP_VAR* var = nullptr;
-//                    SCIP_CALL(SCIPprobdataAddPricedVar(scip, probdata, a, path.size(), path.data(), &var));
-//                    debug_assert(var);
+//                    const auto [x1, y1] = input_path_xy[idx];
+//                    const auto [x2, y2] = input_path_xy[idx+1];
+//                    const auto i = map.get_id(x1 + padding, y1 + padding);
+//                    const auto j = map.get_id(x2 + padding, y2 + padding);
+//                    const auto d = map.get_direction(i, j);
+//                    path.push_back(Edge{i,d});
 //                }
-//                done = true;
+//                {
+//                    Int idx = input_path_xy.size() - 1;
+//                    const auto [x1, y1] = input_path_xy[idx];
+//                    const auto i = map.get_id(x1 + padding, y1 + padding);
+//                    const auto d = Direction::INVALID;
+//                    path.push_back(Edge{i,d});
+//                }
+//                release_assert(path.front().n == agents[a].start,
+//                               "({},{}) != ({},{})",
+//                               map.get_x(path.front().n),
+//                               map.get_y(path.front().n),
+//                               map.get_x(agents[a].start),
+//                               map.get_y(agents[a].start));
+//                release_assert(path.back().n == agents[a].goal,
+//                               "({},{}) != ({},{})",
+//                               map.get_x(path.back().n),
+//                               map.get_y(path.back().n),
+//                               map.get_x(agents[a].goal),
+//                               map.get_y(agents[a].goal));
 //            }
+//
+//            // Search.
+////            for (const auto a : Vector<Agent>{38})
+//            for (const auto a : input_paths_agent)
+//            {
+//                const auto input_path = input_paths[a];
+//
+//                astar.edge_penalties().reset();
+//                astar.goal_crossings().clear();
+//                astar.set_verbose();
+//                const auto [path, path_cost] = astar.calculate_cost<true>(input_path);
+//
+//                release_assert(path.size() == input_path.size());
+//                for (size_t idx = 0; idx < path.size(); ++idx)
+//                {
+//                    release_assert(path[idx].n == input_path[idx].n);
+//                }
+//
+//                if (path_cost >= agent_part_dual[a])
+//                {
+//                    continue;
+//                }
+//
+//                const auto agent_vars = SCIPprobdataGetAgentVars(probdata);
+//                bool found = false;
+//                for (const auto var : agent_vars[a])
+//                {
+//                    const auto vardata = SCIPvarGetData(var);
+//                    const auto path2 = SCIPvardataGetPath(vardata);
+//                    const auto path2_length = SCIPvardataGetPathLength(vardata);
+//                    if (Vector<Edge>(path2, path2 + path2_length) == input_path)
+//                    {
+//                        found = true;
+//                    }
+//                }
+//                if (found)
+//                {
+//                    continue;
+//                }
+//
+//                // Add column.
+//                SCIP_VAR* var = nullptr;
+//                SCIP_CALL(SCIPprobdataAddPricedVar(scip, probdata, a, input_path.size(), input_path.data(), &var));
+//                debug_assert(var);
+//                println("Adding debug column {} {} {} {}",
+//                        a, path_cost, agent_part_dual[a], format_path(probdata, input_path.size(), input_path.data()));
+//            }
+//            astar.set_verbose(false);
 //            *result = SCIP_SUCCESS;
 //            return SCIP_OKAY;
 //        }
-////        else
-////        {
-////            *result = SCIP_DIDNOTRUN;
-////            return SCIP_OKAY;
-////        }
+//        else
+//        {
+//            *result = SCIP_DIDNOTRUN;
+//            return SCIP_OKAY;
+//        }
 //    }
 
     // Find the makespan.

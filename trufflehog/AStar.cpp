@@ -255,6 +255,7 @@ void AStar::generate_start(const NodeTime start)
     auto new_label = reinterpret_cast<Label*>(label_pool_.get_label_buffer());
     memset(new_label, 0, label_pool_.label_size());
     const auto h_to_goal = (*h_)[start.n];
+    debug_assert(h_to_goal >= 0);
     const auto h_to_finish = start.t + h_to_goal < static_cast<Int>(time_finish_h_.size()) ?
                              time_finish_h_[start.t + h_to_goal] :
                              0.0;
@@ -405,6 +406,7 @@ void AStar::generate(Label* const current,
 
     // Check if time-infeasible.
     const auto h_to_goal = (*h_)[nt.n];
+    debug_assert(h_to_goal >= 0);
     if (new_t + h_to_goal > goal_latest)
     {
         // Print.
@@ -1015,265 +1017,280 @@ template Pair<Vector<NodeTime>, Cost> AStar::solve_internal<false, true>(const N
 
 #ifdef DEBUG
 template<bool without_resources>
-Cost AStar::calculate_cost(const Vector<Pair<Position, Position>>&)
+Pair<Vector<NodeTime>, Cost> AStar::calculate_cost(const Vector<Edge>& input_path)
 {
-    err("not yet implemented"); // TODO
+    static Int iter = 0;
+#ifdef DEBUG
+    if (verbose)
+    {
+        println("=========================================================");
+        println("START DEBUG ITER {}", iter);
+    }
+#endif
+    iter++;
 
-//    static Int iter = 0;
-//#ifdef DEBUG
-//    if (verbose)
-//    {
-//        println("=========================================================");
-//        println("START DEBUG ITER {}", iter);
-//    }
-//#endif
-//    iter++;
-//
-//    const auto [x1, y1] = path.front();
-//    const auto [x2, y2] = path.back();
-//    const auto start = map_.get_id(x1, y1);
-//    const auto goal = map_.get_id(x2, y2);
-//    const Int goal_earliest = path.size() - 1;
-//    const Int goal_latest = path.size() - 1;
-//    const bool is_farkas = false;
-//
-//    // Get h values to the goal node. Compute them if necessary.
-//    h_ = &heuristic_.compute_h(goal);
-//
-//    // Get number of resources.
-//#ifdef USE_GOAL_CONFLICTS
-//    const auto nb_goal_crossings = static_cast<Int>(goal_crossings_.size());
-//#else
-//    constexpr Int nb_goal_crossings = 0;
-//#endif
-//#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-//    const auto nb_rect_crossings = static_cast<Int>(rectangle_crossings_.size());
-//#else
-//    constexpr Int nb_rect_crossings = 0;
-//#endif
-//
-//    // Reset.
-//    label_pool_.reset(sizeof(Label) +
-//        sizeof(Int) * (nb_goal_crossings + nb_rect_crossings));
-//    open_.clear();
-//#ifndef USE_RECTANGLE_CLIQUE_CONFLICTS
-//    static_assert(without_resources);
-//#endif
-//    if constexpr (without_resources)
-//    {
-//        frontier_without_resources_.clear();
-//    }
-//#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-//    else
-//    {
-//        frontier_with_resources_.clear();
-//    }
-//#endif
-//
-//    // Compute h-value to reach the end dummy node.
-//    time_finish_h_.resize(time_finish_penalties_.size());
-//    std::copy(time_finish_penalties_.begin(), time_finish_penalties_.end(), time_finish_h_.begin());
-//    for (Time t = 0; t < static_cast<Int>(time_finish_h_.size()); ++t)
-//    {
-//        time_finish_h_[t] = time_finish_penalties_.size() - t;
-//        for (Time i = t; i < static_cast<Time>(time_finish_penalties_.size()); ++i)
-//            if (i - t + time_finish_penalties_[i] < time_finish_h_[t])
-//            {
-//                time_finish_h_[t] = i - t + time_finish_penalties_[i];
-//            }
-//    }
-//
-//    // Create label at the start node-time.
-//    generate_start<without_resources>(NodeTime{start, 0});
-//
-//    // Main loop.
-//    Int idx = 0;
-//    while (!open_.empty())
-//    {
-//        // Get a label from priority queue.
-//        const auto current = open_.top();
-//        open_.pop();
-//
-//        // Get the outgoing edge costs.
-//        const auto current_nt = current->nt;
-//        const auto edge_costs = edge_penalties_.get_edge_costs<!is_farkas>(current_nt);
-//
-//        // Exit if found the target.
-//        if (current->n == goal && goal_earliest <= current->t)
-//        {
-//            // Check.
-//            debug_assert(current->t <= goal_latest);
-//
-//            // Print.
-//#ifdef DEBUG
-//            if (verbose)
-//            {
-//                println("Reached goal at label {} {} (n {}, t {}, nt {}, position ({},{}), g {}, h {}, f {}{}{})",
-//                        current->label_id,
-//                        fmt::ptr(current),
-//                        current->n,
-//                        current->t,
-//                        current->nt,
-//                        map_.get_x(current->n),
-//                        map_.get_y(current->n),
-//                        current->g,
-//                        current->f - current->g,
-//                        current->f,
-//                        make_goal_state_string(&current->state_[0], nb_goal_crossings),
-//                        make_rectangle_state_string(&current->state_[nb_goal_crossings], nb_rect_crossings));
-//            }
-//#endif
-//
-//            // Store the end label if cheaper than the previously found paths.
-//            if (current->g < path_end->g)
-//            {
-//                path_end = current;
-//            }
-//
-//            // Finish if not negative edge costs at the goal.
-//            if (edge_costs.north >= 0 &&
-//                edge_costs.south >= 0 &&
-//                edge_costs.east >= 0 &&
-//                edge_costs.west >= 0 &&
-//                edge_costs.wait >= 0)
-//            {
-//                break;
-//            }
-//        }
-//
-//        // Print.
-//#ifdef DEBUG
-//        if (verbose)
-//        {
-//            println("Expanding label {} {} (n {}, t {}, nt {}, position ({},{}), g {}, h {}, f {}{}{})",
-//                    current->label_id,
-//                    fmt::ptr(current),
-//                    current->n,
-//                    current->t,
-//                    current->nt,
-//                    map_.get_x(current->n),
-//                    map_.get_y(current->n),
-//                    current->g,
-//                    current->f - current->g,
-//                    current->f,
-//                    make_goal_state_string(&current->state_[0], nb_goal_crossings),
-//                    make_rectangle_state_string(&current->state_[nb_goal_crossings], nb_rect_crossings));
-//        }
-//#endif
-//
-//        // Generate neighbours.
-//        if (idx < static_cast<Int>(path.size()) - 1)
-//        {
-//            const auto [x1, y1] = path[idx];
-//            ++idx;
-//            const auto [x2, y2] = path[idx];
-//            const auto i = map_.get_id(x1, y1);
-//            const auto j = map_.get_id(x2, y2);
-//
-//            Direction d;
-//            if (j == map_.get_north(i))
-//            {
-//                d = Direction::NORTH;
-//            }
-//            else if (j == map_.get_south(i))
-//            {
-//                d = Direction::SOUTH;
-//            }
-//            else if (j == map_.get_east(i))
-//            {
-//                d = Direction::EAST;
-//            }
-//            else if (j == map_.get_west(i))
-//            {
-//                d = Direction::WEST;
-//            }
-//            else if (j == map_.get_wait(i))
-//            {
-//                d = Direction::WAIT;
-//            }
-//            else
-//            {
-//                err();
-//            }
-//
-//            // Expand in five directions.
-//            const auto current_n = current->n;
-//            if (const auto new_n = map_.get_north(current_n);
-//                d == Direction::NORTH && map_[new_n] && !std::isnan(edge_costs.north))
-//            {
-//                generate<without_resources>(current,
-//                                            new_n,
-//#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-//                                            Direction::NORTH,
-//#endif
-//                                            edge_costs.north,
-//                                            goal_latest,
-//                                            std::numeric_limits<Cost>::infinity());
-//            }
-//            if (const auto new_n = map_.get_south(current_n);
-//                d == Direction::SOUTH && map_[new_n] && !std::isnan(edge_costs.south))
-//            {
-//                generate<without_resources>(current,
-//                                            new_n,
-//#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-//                                            Direction::SOUTH,
-//#endif
-//                                            edge_costs.south,
-//                                            goal_latest,
-//                                            std::numeric_limits<Cost>::infinity());
-//            }
-//            if (const auto new_n = map_.get_east(current_n);
-//                d == Direction::EAST && map_[new_n] && !std::isnan(edge_costs.east))
-//            {
-//                generate<without_resources>(current,
-//                                            new_n,
-//#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-//                                            Direction::EAST,
-//#endif
-//                                            edge_costs.east,
-//                                            goal_latest,
-//                                            std::numeric_limits<Cost>::infinity());
-//            }
-//            if (const auto new_n = map_.get_west(current_n);
-//                d == Direction::WEST && map_[new_n] && !std::isnan(edge_costs.west))
-//            {
-//                generate<without_resources>(current,
-//                                            new_n,
-//#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-//                                            Direction::WEST,
-//#endif
-//                                            edge_costs.west,
-//                                            goal_latest,
-//                                            std::numeric_limits<Cost>::infinity());
-//            }
-//            if (const auto new_n = map_.get_wait(current_n);
-//                d == Direction::WAIT && map_[new_n] && !std::isnan(edge_costs.wait))
-//            {
-//                generate<without_resources>(current,
-//                                            new_n,
-//#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-//                                            Direction::WAIT,
-//#endif
-//                                            edge_costs.wait,
-//                                            goal_latest,
-//                                            std::numeric_limits<Cost>::infinity());
-//            }
-//        }
-//    }
-//#ifdef DEBUG
-//    if (verbose)
-//    {
-//        println("END DEBUG");
-//        println("=========================================================");
-//    }
-//#endif
-//
-//    // Done.
-//    return path_end->g;
-}
-template Cost AStar::calculate_cost<true>(const Vector<Pair<Position, Position>>& path);
+    const NodeTime start{input_path.front().n, 0};
+    const auto goal = input_path.back().n;
+    const Int goal_earliest = input_path.size() - 1;
+    const Int goal_latest = input_path.size() - 1;
+    const bool is_farkas = false;
+
+    const auto max_cost = std::numeric_limits<Cost>::max();
+
+//    ------------------------------------
+
+    // Create output.
+    Pair<Vector<NodeTime>, Cost> output;
+    auto& path = output.first;
+    auto& path_cost = output.second;
+
+    // Get h values to the goal node. Compute them if necessary.
+    debug_assert(heuristic_.max_path_length() >= 1);
+    h_ = &heuristic_.compute_h(goal);
+
+    // Calculate the default edge cost.
+    constexpr IntCost default_cost = is_farkas ? 0 : 1;
+
+    // Remove vertices with default outgoing costs.
+    //    edge_duals_.clean_up(default_cost);
+
+    // Get number of resources.
+#ifdef USE_GOAL_CONFLICTS
+    const auto nb_goal_crossings = static_cast<Int>(goal_crossings_.size());
+#else
+    constexpr Int nb_goal_crossings = 0;
+#endif
 #ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-template Cost AStar::calculate_cost<false>(const Vector<Pair<Position, Position>>& path);
+    const auto nb_rect_crossings = static_cast<Int>(rectangle_crossings_.size());
+#else
+    constexpr Int nb_rect_crossings = 0;
+#endif
+
+    // Print.
+    if constexpr (without_resources)
+    {
+        debugln("Solving from ({},{}) at time {} to ({},{}) between times {} and {} "
+                "without resources",
+                map_.get_x(start.n),
+                map_.get_y(start.n),
+                start.t,
+                map_.get_x(goal),
+                map_.get_y(goal),
+                goal_earliest,
+                goal_latest);
+    }
+    else
+    {
+        debugln("Solving from ({},{}) at time {} to ({},{}) between times {} and {} with "
+                "{} rectangle resources",
+                map_.get_x(start.n),
+                map_.get_y(start.n),
+                start.t,
+                map_.get_x(goal),
+                map_.get_y(goal),
+                goal_earliest,
+                goal_latest,
+                nb_rect_crossings);
+    }
+
+    // Reset.
+    const auto nb_states = nb_goal_crossings + 2 * nb_rect_crossings;
+    label_pool_.reset(sizeof(Label) + (nb_states / CHAR_BIT) + (nb_states % CHAR_BIT != 0));
+    open_.clear();
+#ifndef USE_RECTANGLE_CLIQUE_CONFLICTS
+    static_assert(without_resources);
+#endif
+    if constexpr (without_resources)
+    {
+        frontier_without_resources_.clear();
+    }
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+    else
+    {
+        frontier_with_resources_.clear();
+    }
+#endif
+
+    // Compute h-value to reach the end dummy node.
+    time_finish_h_.resize(time_finish_penalties_.size());
+    std::copy(time_finish_penalties_.begin(), time_finish_penalties_.end(), time_finish_h_.begin());
+    for (Time t = 0; t < static_cast<Time>(time_finish_h_.size()); ++t)
+    {
+        time_finish_h_[t] = time_finish_penalties_.size() - t;
+        for (Time i = t; i < static_cast<Time>(time_finish_penalties_.size()); ++i)
+            if (i - t + time_finish_penalties_[i] < time_finish_h_[t])
+            {
+                time_finish_h_[t] = i - t + time_finish_penalties_[i];
+            }
+    }
+
+    // Create label at the start node-time.
+    generate_start<without_resources>(start);
+
+    // Main loop.
+    Int idx = 1;
+    while (!open_.empty())
+    {
+        // Get a label from priority queue.
+        const auto current = open_.top();
+        open_.pop();
+
+        // Expand the neighbours of the current label or exit if the goal is reached.
+        if (current->n != -1)
+        {
+            // Generate neighbours.
+            {
+                // Get edge costs.
+                const auto edge_costs = edge_penalties_.get_edge_costs<default_cost>(current->nt);
+
+                // Expand in five directions.
+                const auto current_n = current->n;
+                debug_assert(edge_costs.north >= 0 && !std::isnan(edge_costs.north));
+                debug_assert(edge_costs.south >= 0 && !std::isnan(edge_costs.south));
+                debug_assert(edge_costs.east >= 0 && !std::isnan(edge_costs.east));
+                debug_assert(edge_costs.west >= 0 && !std::isnan(edge_costs.west));
+                debug_assert(edge_costs.wait >= 0 && !std::isnan(edge_costs.wait));
+                if (const auto next_n = map_.get_north(current_n);
+                    idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx].n &&
+                    map_[next_n] && edge_costs.north < std::numeric_limits<Cost>::infinity())
+                {
+                    generate<without_resources>(current,
+                                                next_n,
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+                                                Direction::NORTH,
+#endif
+                                                edge_costs.north,
+                                                goal_latest,
+                                                max_cost);
+                }
+                if (const auto next_n = map_.get_south(current_n);
+                    idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx].n &&
+                    map_[next_n] && edge_costs.south < std::numeric_limits<Cost>::infinity())
+                {
+                    generate<without_resources>(current,
+                                                next_n,
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+                                                Direction::SOUTH,
+#endif
+                                                edge_costs.south,
+                                                goal_latest,
+                                                max_cost);
+                }
+                if (const auto next_n = map_.get_east(current_n);
+                    idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx].n &&
+                    map_[next_n] && edge_costs.east < std::numeric_limits<Cost>::infinity())
+                {
+                    generate<without_resources>(current,
+                                                next_n,
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+                                                Direction::EAST,
+#endif
+                                                edge_costs.east,
+                                                goal_latest,
+                                                max_cost);
+                }
+                if (const auto next_n = map_.get_west(current_n);
+                    idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx].n &&
+                    map_[next_n] && edge_costs.west < std::numeric_limits<Cost>::infinity())
+                {
+                    generate<without_resources>(current,
+                                                next_n,
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+                                                Direction::WEST,
+#endif
+                                                edge_costs.west,
+                                                goal_latest,
+                                                max_cost);
+                }
+                if (const auto next_n = map_.get_wait(current_n);
+                    idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx].n &&
+                    map_[next_n] && edge_costs.wait < std::numeric_limits<Cost>::infinity())
+                {
+                    generate<without_resources>(current,
+                                                next_n,
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+                                                Direction::WAIT,
+#endif
+                                                edge_costs.wait,
+                                                goal_latest,
+                                                max_cost);
+                }
+
+                // Expand to the end dummy node.
+                if (current_n == goal && current->t >= goal_earliest)
+                {
+                    generate_end(current, max_cost);
+                }
+            }
+        }
+        else
+        {
+            // Get the label of the actual goal cell.
+            auto parent = current->parent;
+
+            // Store the path cost.
+            path_cost = current->g;
+
+            // Store the path.
+            for (auto l = parent; l; l = l->parent)
+            {
+                path.push_back(l->nt);
+            }
+            std::reverse(path.begin(), path.end());
+
+            // Print.
+#ifdef DEBUG
+            if (verbose)
+            {
+                println("Reached goal at label {} {} (n {}, t {}, nt {}, position ({},{}), g {}, h {}, f {}{}{})",
+                        current->label_id,
+                        fmt::ptr(current),
+                        decltype(parent->n){parent->n},
+                        decltype(parent->t){parent->t},
+                        decltype(parent->nt){parent->nt},
+                        map_.get_x(parent->n),
+                        map_.get_y(parent->n),
+                        current->g,
+                        current->f - current->g,
+                        current->f,
+                        make_goal_state_string(&current->state_[0], nb_goal_crossings),
+                        make_rectangle_state_string(&current->state_[nb_goal_crossings], nb_rect_crossings));
+
+                fmt::print("Found path with cost {}: ", path_cost);
+                for (const auto nt : path)
+                {
+                    fmt::print("({},{}) ", map_.get_x(nt.n), map_.get_y(nt.n));
+                }
+                println("");
+            }
+#endif
+
+            // Check.
+            debug_assert(path_cost <= max_cost);
+            debug_assert(goal_earliest <= current->t && current->t <= goal_latest);
+
+            // Finish.
+            break;
+        }
+
+        // Advance to the next node.
+        ++idx;
+    }
+
+#ifdef DEBUG
+    if (verbose)
+    {
+        println("END DEBUG");
+        println("=========================================================");
+    }
+#endif
+
+    // Return.
+    return output;
+}
+template Pair<Vector<NodeTime>, Cost> AStar::calculate_cost<true>(const Vector<Edge>& input_path);
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+template Pair<Vector<NodeTime>, Cost> AStar::calculate_cost<false>(const Vector<Edge>& input_path);
 #endif
 
 void AStar::set_verbose(const bool on)

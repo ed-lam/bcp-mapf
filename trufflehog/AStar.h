@@ -150,7 +150,7 @@ class AStar
     // Debug
 #ifdef DEBUG
     template<bool without_resources>
-    Cost calculate_cost(const Vector<Pair<Position, Position>>& path);
+    Pair<Vector<NodeTime>, Cost> calculate_cost(const Vector<Edge>& input_path);
     void set_verbose(const bool on = true);
     void print_crossings() const;
     void print_edge_penalties() const;
