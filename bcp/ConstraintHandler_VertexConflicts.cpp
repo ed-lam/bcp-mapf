@@ -25,13 +25,13 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #define CONSHDLR_NAME                                           "vertex"
 #define CONSHDLR_DESC          "Constraint handler for vertex conflicts"
-#define CONSHDLR_SEPAPRIORITY                                    +500000 // priority of the constraint handler for separation
+#define CONSHDLR_SEPAPRIORITY                                        101 // priority of the constraint handler for separation
 #define CONSHDLR_ENFOPRIORITY                                    -900000 // priority of the constraint handler for constraint enforcing
 #define CONSHDLR_CHECKPRIORITY                                   -900000 // priority of the constraint handler for checking feasibility
 #define CONSHDLR_SEPAFREQ                                              1 // frequency for separating cuts; zero means to separate only in the root node
 #define CONSHDLR_EAGERFREQ                                             1 // frequency for using all instead of only the useful constraints in separation,
                                                                          // propagation and enforcement, -1 for no eager evaluations, 0 for first only
-#define CONSHDLR_DELAYSEPA                                         FALSE // should separation method be delayed, if other separators found cuts?
+#define CONSHDLR_DELAYSEPA                                          TRUE // should separation method be delayed, if other separators found cuts?
 #define CONSHDLR_NEEDSCONS                                          TRUE // should the constraint handler be skipped, if no constraints are available?
 
 // Data for vertex conflicts
@@ -156,7 +156,7 @@ SCIP_RETCODE vertex_conflicts_create_cut(
     }
     SCIP_CALL(SCIPflushRowExtensions(scip, row));
 #ifdef DEBUG
-    debug_assert(SCIPisSumGT(scip, lhs, 1.0 + CUT_VIOLATION));
+    debug_assert(SCIPisSumGT(scip, lhs, 1.0));
 #endif
 
     // Add the row to the LP.
@@ -352,7 +352,7 @@ SCIP_RETCODE vertex_conflicts_separate(
 
     // Create cuts.
     for (const auto [nt, val] : vertex_used)
-        if (SCIPisSumGT(scip, val, 1.0 + CUT_VIOLATION))
+        if (SCIPisSumGT(scip, val, 1.0))
         {
             // Print.
 #ifdef PRINT_DEBUG
