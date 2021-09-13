@@ -26,12 +26,6 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "scip/cons_setppc.h"
 #include "ConstraintHandler_VertexConflicts.h"
 #include "ConstraintHandler_EdgeConflicts.h"
-#ifdef USE_GOAL_CONFLICTS
-#include "Separator_GoalConflicts.h"
-#endif
-#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-#include "Separator_RectangleCliqueConflicts.h"
-#endif
 #include "Constraint_VertexBranching.h"
 //#include "Constraint_WaitBranching.h"
 #include "Constraint_LengthBranching.h"
@@ -1198,17 +1192,14 @@ SCIP_RETCODE run_trufflehog_pricer(
                     }
                 }
 
-            // Modify edge costs for goal conflicts. If a1 finishes at or before time t, incur the
-            // penalty.
+            // Modify edge costs for goal conflicts. If a1 finishes at or before time t, incur the penalty.
 #ifdef USE_GOAL_CONFLICTS
             for (const auto& [row, a1, a2, nt] : goal_conflicts)
                 if (a == a1)
                 {
                     debug_assert(nt.n == goal);
 
-                    const auto dual = is_farkas ?
-                                      SCIProwGetDualfarkas(row) :
-                                      SCIProwGetDualsol(row);
+                    const auto dual = is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row);
                     debug_assert(SCIPisFeasLE(scip, dual, 0.0));
                     if (SCIPisFeasLT(scip, dual, 0.0))
                     {
