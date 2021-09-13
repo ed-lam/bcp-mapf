@@ -37,6 +37,14 @@ struct GoalConflict
 };
 #endif
 
+#ifdef USE_PATH_LENGTH_NOGOODS
+struct PathLengthNogood
+{
+    SCIP_ROW* row;                                    // LP row
+    Vector<Pair<Agent, Time>> latest_finish_times;    // Latest time for an agent to reach its target
+};
+#endif
+
 // Create problem data
 SCIP_RETCODE SCIPprobdataCreate(
     SCIP* scip,                       // SCIP
@@ -128,6 +136,13 @@ SCIP_SEPA* SCIPprobdataGetRectangleCliqueConflictsSepa(
 // Get goal conflicts
 #ifdef USE_GOAL_CONFLICTS
 Vector<GoalConflict>& SCIPprobdataGetGoalConflicts(
+SCIP_ProbData* probdata    // Problem data
+);
+#endif
+
+// Get path length nogoods
+#ifdef USE_PATH_LENGTH_NOGOODS
+Vector<PathLengthNogood>& SCIPprobdataGetPathLengthNogoods(
     SCIP_ProbData* probdata    // Problem data
 );
 #endif

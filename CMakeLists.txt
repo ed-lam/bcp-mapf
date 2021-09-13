@@ -93,6 +93,8 @@ set(BCP_MAPF_SOURCE_FILES
     bcp/Separator_CliqueConflicts.cpp
     bcp/Separator_GoalConflicts.h
     bcp/Separator_GoalConflicts.cpp
+    bcp/Separator_PathLengthNogoods.h
+    bcp/Separator_PathLengthNogoods.cpp
     bcp/BranchingRule.h
     bcp/BranchingRule.cpp
     bcp/BranchingRule_Fractional.cpp
@@ -225,6 +227,7 @@ target_link_libraries(bcp-mapf fmt::fmt-header-only cliquer ${SCIP_LIBRARY} ${LI
 
 # Set options.
 target_compile_options(bcp-mapf PRIVATE -DUSE_ASTAR_SOLUTION_CACHING)
+#target_compile_options(bcp-mapf PRIVATE -DUSE_PATH_LENGTH_NOGOODS)
 
 # Set separator options.
 target_compile_options(bcp-mapf PRIVATE -DUSE_WAITEDGE_CONFLICTS)

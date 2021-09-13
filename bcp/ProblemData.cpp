@@ -83,6 +83,9 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifdef USE_GOAL_CONFLICTS
 #include "Separator_GoalConflicts.h"
 #endif
+#ifdef USE_PATH_LENGTH_NOGOODS
+#include "Separator_PathLengthNogoods.h"
+#endif
 #include "BranchingRule.h"
 #include "Constraint_VertexBranching.h"
 #include "Constraint_WaitBranching.h"
@@ -121,6 +124,9 @@ struct SCIP_ProbData
 #endif
 #ifdef USE_GOAL_CONFLICTS
     Vector<GoalConflict> goal_conflicts;                                 // Goal conflicts
+#endif
+#ifdef USE_PATH_LENGTH_NOGOODS
+    Vector<PathLengthNogood> path_length_nogoods;                        // Path length nogoods
 #endif
 };
 
@@ -346,6 +352,15 @@ SCIP_DECL_PROBEXITSOL(probexitsol)
     }
 #endif
 
+    // Free rows of path length nogoods.
+#ifdef USE_PATH_LENGTH_NOGOODS
+    for (auto& path_length_nogood : probdata->path_length_nogoods)
+    {
+        auto row = path_length_nogood.row;
+        SCIP_CALL(SCIPreleaseRow(scip, &row));
+    }
+#endif
+
     // Done.
     return SCIP_OKAY;
 }
@@ -531,6 +546,15 @@ SCIP_RETCODE SCIPprobdataAddInitialVar(
                                      path));
 #endif
 
+    // Add coefficient to path length nogoods.
+#ifdef USE_PATH_LENGTH_NOGOODS
+    SCIP_CALL(path_length_nogoods_add_var(scip,
+                                          probdata->path_length_nogoods,
+                                          *var,
+                                          a,
+                                          path_length));
+#endif
+
     // Store variable in array of all variables.
     probdata->vars.push_back(*var);
 
@@ -685,6 +709,15 @@ SCIP_RETCODE SCIPprobdataAddPricedVar(
                                      a,
                                      path_length,
                                      path));
+#endif
+
+    // Add coefficient to path length nogoods.
+#ifdef USE_PATH_LENGTH_NOGOODS
+    SCIP_CALL(path_length_nogoods_add_var(scip,
+                                          probdata->path_length_nogoods,
+                                          *var,
+                                          a,
+                                          path_length));
 #endif
 
     // Store variable in array of all variables.
@@ -1171,6 +1204,11 @@ SCIP_RETCODE SCIPprobdataCreate(
     SCIP_CALL(SCIPincludeSepaGoalConflicts(scip));
 #endif
 
+    // Include separator for path length nogoods.
+#ifdef USE_PATH_LENGTH_NOGOODS
+    SCIP_CALL(SCIPincludeSepaPathLengthNogoods(scip));
+#endif
+
     // Create dummy paths.
     probdata->dummy_vars.resize(N);
     for (Agent a = 0; a < N; ++a)
@@ -1310,6 +1348,17 @@ Vector<GoalConflict>& SCIPprobdataGetGoalConflicts(
 {
     debug_assert(probdata);
     return probdata->goal_conflicts;
+}
+#endif
+
+// Get path length nogoods
+#ifdef USE_PATH_LENGTH_NOGOODS
+Vector<PathLengthNogood>& SCIPprobdataGetPathLengthNogoods(
+    SCIP_ProbData* probdata    // Problem data
+)
+{
+    debug_assert(probdata);
+    return probdata->path_length_nogoods;
 }
 #endif
 

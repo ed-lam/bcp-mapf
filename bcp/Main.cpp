@@ -154,6 +154,9 @@ SCIP_RETCODE start_solver(
 #ifdef USE_GOAL_CONFLICTS
     println("Using goal conflict constraints");
 #endif
+#ifdef USE_PATH_LENGTH_NOGOODS
+    println("Using path length nogoods");
+#endif
 #endif
     println("");
 
