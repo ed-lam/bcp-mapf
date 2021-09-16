@@ -1408,7 +1408,7 @@ void update_fractional_vertices_and_edges(
             const auto var_val = SCIPgetSolVal(scip, nullptr, var);
 
             // Store the vertices and edges of the path.
-            if (SCIPisPositive(scip, var_val) && !SCIPisIntegral(scip, var_val))
+            if (!SCIPisIntegral(scip, var_val))
             {
                 // Store everything except the last vertex.
                 Time t = 0;
