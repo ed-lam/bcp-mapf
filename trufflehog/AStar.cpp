@@ -102,6 +102,13 @@ bool AStar::Data::can_be_better(const Data& previous_data)
             }
         }
 
+    debug_assert(latest_visit_time.size() == previous_data.latest_visit_time.size());
+    for (Node n = 0; n < static_cast<Node>(latest_visit_time.size()); ++n)
+        if (latest_visit_time[n] > previous_data.latest_visit_time[n])
+        {
+            return true;
+        }
+
     if (finish_time_penalties.size() != previous_data.finish_time_penalties.size())
     {
         return true;
@@ -215,6 +222,7 @@ void AStar::generate_start()
                  earliest_goal_time, 
                  latest_goal_time, 
                  cost_offset, 
+                 latest_visit_time,
                  edge_penalties, 
                  finish_time_penalties
 #ifdef USE_GOAL_CONFLICTS
@@ -280,6 +288,7 @@ void AStar::generate_end(Label* const current)
                  earliest_goal_time, 
                  latest_goal_time, 
                  cost_offset, 
+                 latest_visit_time,
                  edge_penalties, 
                  finish_time_penalties
 #ifdef USE_GOAL_CONFLICTS
@@ -360,6 +369,7 @@ void AStar::generate(Label* const current,
                  earliest_goal_time, 
                  latest_goal_time, 
                  cost_offset, 
+                 latest_visit_time,
                  edge_penalties, 
                  finish_time_penalties
 #ifdef USE_GOAL_CONFLICTS
@@ -525,6 +535,7 @@ void AStar::generate_last_segment(Label* const current,
                  earliest_goal_time, 
                  latest_goal_time, 
                  cost_offset, 
+                 latest_visit_time,
                  edge_penalties, 
                  finish_time_penalties
 #ifdef USE_GOAL_CONFLICTS
@@ -687,6 +698,7 @@ void AStar::generate_neighbours(Label* const current, const Waypoint w, const Ti
            earliest_goal_time, 
            latest_goal_time, 
            cost_offset, 
+           latest_visit_time,
            edge_penalties, 
            finish_time_penalties
 #ifdef USE_GOAL_CONFLICTS
@@ -722,27 +734,27 @@ void AStar::generate_neighbours(Label* const current, const Waypoint w, const Ti
     const auto edge_costs = edge_penalties.get_edge_costs<default_cost>(current->nt);
     const auto current_n = current->n;
     if (const auto next_n = map_.get_north(current_n);
-        map_[next_n] && edge_costs.north < std::numeric_limits<Cost>::infinity())
+        latest_visit_time[next_n] >= current->t + 1 && edge_costs.north < std::numeric_limits<Cost>::infinity())
     {
         generate(current, w, next_n, edge_costs.north, waypoint_time);
     }
     if (const auto next_n = map_.get_south(current_n);
-        map_[next_n] && edge_costs.south < std::numeric_limits<Cost>::infinity())
+        latest_visit_time[next_n] >= current->t + 1 && edge_costs.south < std::numeric_limits<Cost>::infinity())
     {
         generate(current, w, next_n, edge_costs.south, waypoint_time);
     }
     if (const auto next_n = map_.get_east(current_n);
-        map_[next_n] && edge_costs.east < std::numeric_limits<Cost>::infinity())
+        latest_visit_time[next_n] >= current->t + 1 && edge_costs.east < std::numeric_limits<Cost>::infinity())
     {
         generate(current, w, next_n, edge_costs.east, waypoint_time);
     }
     if (const auto next_n = map_.get_west(current_n);
-        map_[next_n] && edge_costs.west < std::numeric_limits<Cost>::infinity())
+        latest_visit_time[next_n] >= current->t + 1 && edge_costs.west < std::numeric_limits<Cost>::infinity())
     {
         generate(current, w, next_n, edge_costs.west, waypoint_time);
     }
     if (const auto next_n = map_.get_wait(current_n);
-        map_[next_n] && edge_costs.wait < std::numeric_limits<Cost>::infinity())
+        latest_visit_time[next_n] >= current->t + 1 && edge_costs.wait < std::numeric_limits<Cost>::infinity())
     {
         generate(current, w, next_n, edge_costs.wait, waypoint_time);
     }
@@ -766,6 +778,7 @@ void AStar::generate_neighbours_last_segment(Label* const current)
            earliest_goal_time, 
            latest_goal_time, 
            cost_offset, 
+           latest_visit_time,
            edge_penalties, 
            finish_time_penalties
 #ifdef USE_GOAL_CONFLICTS
@@ -801,27 +814,27 @@ void AStar::generate_neighbours_last_segment(Label* const current)
     const auto edge_costs = edge_penalties.get_edge_costs<default_cost>(current->nt);
     const auto current_n = current->n;
     if (const auto next_n = map_.get_north(current_n);
-        map_[next_n] && edge_costs.north < std::numeric_limits<Cost>::infinity())
+        latest_visit_time[next_n] >= current->t + 1 && edge_costs.north < std::numeric_limits<Cost>::infinity())
     {
         generate_last_segment(current, next_n, edge_costs.north);
     }
     if (const auto next_n = map_.get_south(current_n);
-        map_[next_n] && edge_costs.south < std::numeric_limits<Cost>::infinity())
+        latest_visit_time[next_n] >= current->t + 1 && edge_costs.south < std::numeric_limits<Cost>::infinity())
     {
         generate_last_segment(current, next_n, edge_costs.south);
     }
     if (const auto next_n = map_.get_east(current_n);
-        map_[next_n] && edge_costs.east < std::numeric_limits<Cost>::infinity())
+        latest_visit_time[next_n] >= current->t + 1 && edge_costs.east < std::numeric_limits<Cost>::infinity())
     {
         generate_last_segment(current, next_n, edge_costs.east);
     }
     if (const auto next_n = map_.get_west(current_n);
-        map_[next_n] && edge_costs.west < std::numeric_limits<Cost>::infinity())
+        latest_visit_time[next_n] >= current->t + 1 && edge_costs.west < std::numeric_limits<Cost>::infinity())
     {
         generate_last_segment(current, next_n, edge_costs.west);
     }
     if (const auto next_n = map_.get_wait(current_n);
-        map_[next_n] && edge_costs.wait < std::numeric_limits<Cost>::infinity())
+        latest_visit_time[next_n] >= current->t + 1 && edge_costs.wait < std::numeric_limits<Cost>::infinity())
     {
         generate_last_segment(current, next_n, edge_costs.wait);
     }
@@ -840,6 +853,7 @@ void AStar::preprocess_input()
            earliest_goal_time, 
            latest_goal_time, 
            cost_offset, 
+           latest_visit_time,
            edge_penalties, 
            finish_time_penalties
 #ifdef USE_GOAL_CONFLICTS
@@ -862,6 +876,7 @@ Pair<Vector<NodeTime>, Cost> AStar::solve()
                  earliest_goal_time, 
                  latest_goal_time, 
                  cost_offset, 
+                 latest_visit_time,
                  edge_penalties, 
                  finish_time_penalties
 #ifdef USE_GOAL_CONFLICTS

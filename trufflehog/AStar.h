@@ -150,6 +150,7 @@ class AStar
 
         // Costs
         Cost cost_offset;
+        Vector<Time> latest_visit_time;
         EdgePenalties edge_penalties;
         FinishTimePenalties finish_time_penalties;
 #ifdef USE_GOAL_CONFLICTS

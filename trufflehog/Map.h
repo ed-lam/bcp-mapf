@@ -29,6 +29,7 @@ namespace TruffleHog
 class Map
 {
     Vector<bool> passable_;  // Row-major matrix
+    Vector<Time> latest_visit_time_;
     Position width_ = 0;
     Position height_ = 0;
 
@@ -63,6 +64,7 @@ class Map
         debug_assert(n < size());
         return passable_[n];
     }
+    inline const Vector<Time>& latest_visit_time() const { return latest_visit_time_; }
     inline Node get_id(const Position x, const Position y) const
     {
         return y * width_ + x;
@@ -163,7 +165,8 @@ class Map
     void resize(const Position width, const Position height)
     {
         debug_assert(empty());
-        passable_.resize(width * height);
+        passable_.resize(width * height, false);
+        latest_visit_time_.resize(width * height, -1);
         width_ = width;
         height_ = height;
     }
@@ -171,11 +174,13 @@ class Map
     {
         debug_assert(n < size());
         passable_[n] = true;
+        latest_visit_time_[n] = std::numeric_limits<Time>::max();
     }
     void set_obstacle(const Node n)
     {
         debug_assert(n < size());
         passable_[n] = false;
+        latest_visit_time_[n] = -1;
     }
 
     // Debug

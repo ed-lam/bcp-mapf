@@ -380,6 +380,7 @@ SCIP_RETCODE run_trufflehog_pricer(
            earliest_goal_time, 
            latest_goal_time, 
            cost_offset, 
+           latest_visit_time,
            edge_penalties, 
            finish_time_penalties
 #ifdef USE_GOAL_CONFLICTS
@@ -927,6 +928,7 @@ SCIP_RETCODE run_trufflehog_pricer(
         debug_assert(astar.max_path_length() >= 1);
         earliest_goal_time = 0;
         latest_goal_time = astar.max_path_length() - 1;
+        latest_visit_time = map.latest_visit_time();
         for (Int c = 0; c < n_length_branching_conss; ++c)
         {
             // Get the constraint.
@@ -954,36 +956,8 @@ SCIP_RETCODE run_trufflehog_pricer(
             }
             else if (dir == LengthBranchDirection::LEq)
             {
-                // Don't use the vertex.
-                for (Time t = nt.t; t < astar.max_path_length(); ++t)
-                {
-                    const auto prev_time = t - 1;
-                    {
-                        const auto n = map.get_south(nt.n);
-                        auto& penalties = edge_penalties.get_edge_penalties(n, prev_time);
-                        penalties.north = std::numeric_limits<Cost>::infinity();
-                    }
-                    {
-                        const auto n = map.get_north(nt.n);
-                        auto& penalties = edge_penalties.get_edge_penalties(n, prev_time);
-                        penalties.south = std::numeric_limits<Cost>::infinity();
-                    }
-                    {
-                        const auto n = map.get_west(nt.n);
-                        auto& penalties = edge_penalties.get_edge_penalties(n, prev_time);
-                        penalties.east = std::numeric_limits<Cost>::infinity();
-                    }
-                    {
-                        const auto n = map.get_east(nt.n);
-                        auto& penalties = edge_penalties.get_edge_penalties(n, prev_time);
-                        penalties.west = std::numeric_limits<Cost>::infinity();
-                    }
-                    {
-                        const auto n = map.get_wait(nt.n);
-                        auto& penalties = edge_penalties.get_edge_penalties(n, prev_time);
-                        penalties.wait = std::numeric_limits<Cost>::infinity();
-                    }
-                }
+                // Block the vertex at time t and onwards.
+                latest_visit_time[nt.n] = nt.t - 1;
             }
         }
         debug_assert(waypoints.empty() || latest_goal_time >= waypoints.back().t);
