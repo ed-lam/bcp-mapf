@@ -53,22 +53,22 @@ SCIP_RETCODE sixedge_conflicts_create_cut(
     const auto& map = SCIPprobdataGetMap(probdata);
 
     const auto [a1_et1_x1, a1_et1_y1] = map.get_xy(a1_et1.n);
-    const auto [a1_et1_x2, a1_et1_y2] = map.get_destination_xy(a1_et1.et.e);
+    const auto [a1_et1_x2, a1_et1_y2] = map.get_destination_xy(a1_et1);
 
     const auto [a1_et2_x1, a1_et2_y1] = map.get_xy(a1_et2.n);
-    const auto [a1_et2_x2, a1_et2_y2] = map.get_destination_xy(a1_et2.et.e);
+    const auto [a1_et2_x2, a1_et2_y2] = map.get_destination_xy(a1_et2);
 
     const auto [a1_et3_x1, a1_et3_y1] = map.get_xy(a1_et3.n);
-    const auto [a1_et3_x2, a1_et3_y2] = map.get_destination_xy(a1_et3.et.e);
+    const auto [a1_et3_x2, a1_et3_y2] = map.get_destination_xy(a1_et3);
 
     const auto [a2_et1_x1, a2_et1_y1] = map.get_xy(a2_et1.n);
-    const auto [a2_et1_x2, a2_et1_y2] = map.get_destination_xy(a2_et1.et.e);
+    const auto [a2_et1_x2, a2_et1_y2] = map.get_destination_xy(a2_et1);
 
     const auto [a2_et2_x1, a2_et2_y1] = map.get_xy(a2_et2.n);
-    const auto [a2_et2_x2, a2_et2_y2] = map.get_destination_xy(a2_et2.et.e);
+    const auto [a2_et2_x2, a2_et2_y2] = map.get_destination_xy(a2_et2);
 
     const auto [a2_et3_x1, a2_et3_y1] = map.get_xy(a2_et3.n);
-    const auto [a2_et3_x2, a2_et3_y2] = map.get_destination_xy(a2_et3.et.e);
+    const auto [a2_et3_x2, a2_et3_y2] = map.get_destination_xy(a2_et3);
 
     auto name = fmt::format("sixedge_conflict("
                             "{},{},"
@@ -149,8 +149,8 @@ SCIP_RETCODE sixedge_conflicts_separate(
             // Loop through the second edge of agent 1.
             for (const auto [a1_et2, a1_et2_val] : agent_edges_a1)
             if (a1_et2.t == a1_et1.t + 1 &&
-                a1_et2.n == map.get_destination(a1_et1.et.e) &&
-                map.get_destination(a1_et2.et.e) != a1_et1.n)
+                a1_et2.n == map.get_destination(a1_et1) &&
+                map.get_destination(a1_et2) != a1_et1.n)
             {
                 // Get the edges of agent 2.
                 const EdgeTime a2_et1{map.get_opposite_edge(a1_et1.et.e), a1_et1.t};
@@ -189,22 +189,22 @@ SCIP_RETCODE sixedge_conflicts_separate(
 #ifdef PRINT_DEBUG
                                             {
                                                 const auto [a1_et1_x1, a1_et1_y1] = map.get_xy(a1_et1.n);
-                                                const auto [a1_et1_x2, a1_et1_y2] = map.get_destination_xy(a1_et1.et.e);
+                                                const auto [a1_et1_x2, a1_et1_y2] = map.get_destination_xy(a1_et1);
 
                                                 const auto [a1_et2_x1, a1_et2_y1] = map.get_xy(a1_et2.n);
-                                                const auto [a1_et2_x2, a1_et2_y2] = map.get_destination_xy(a1_et2.et.e);
+                                                const auto [a1_et2_x2, a1_et2_y2] = map.get_destination_xy(a1_et2);
 
                                                 const auto [a1_et3_x1, a1_et3_y1] = map.get_xy(a1_et3.n);
-                                                const auto [a1_et3_x2, a1_et3_y2] = map.get_destination_xy(a1_et3.et.e);
+                                                const auto [a1_et3_x2, a1_et3_y2] = map.get_destination_xy(a1_et3);
 
                                                 const auto [a2_et1_x1, a2_et1_y1] = map.get_xy(a2_et1.n);
-                                                const auto [a2_et1_x2, a2_et1_y2] = map.get_destination_xy(a2_et1.et.e);
+                                                const auto [a2_et1_x2, a2_et1_y2] = map.get_destination_xy(a2_et1);
 
                                                 const auto [a2_et2_x1, a2_et2_y1] = map.get_xy(a2_et2.n);
-                                                const auto [a2_et2_x2, a2_et2_y2] = map.get_destination_xy(a2_et2.et.e);
+                                                const auto [a2_et2_x2, a2_et2_y2] = map.get_destination_xy(a2_et2);
 
                                                 const auto [a2_et3_x1, a2_et3_y1] = map.get_xy(a2_et3.n);
-                                                const auto [a2_et3_x2, a2_et3_y2] = map.get_destination_xy(a2_et3.et.e);
+                                                const auto [a2_et3_x2, a2_et3_y2] = map.get_destination_xy(a2_et3);
 
                                                 debugln("   Creating six-edge conflict cut on edges "
                                                         "(({},{}),({},{}),{}), (({},{}),({},{}),{}) and (({},{}),({},{}),{}) for agent {} and "

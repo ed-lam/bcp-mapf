@@ -102,102 +102,60 @@ class Map
     inline Direction get_direction(const Node n1, const Node n2) const
     {
         // Check.
-        debug_assert(n2 == get_north(n1) || n2 == get_south(n1) || n2 == get_east(n1) || n2 == get_west(n1) || n2 == get_wait(n1));
+        debug_assert(n2 == get_north(n1) ||
+                     n2 == get_south(n1) ||
+                     n2 == get_east(n1) ||
+                     n2 == get_west(n1) ||
+                     n2 == get_wait(n1));
 
         // Return direction.
-        if (n2 == get_north(n1))
-        {
-            return Direction::NORTH;
-        }
-        else if (n2 == get_south(n1))
-        {
-            return Direction::SOUTH;
-        }
-        else if (n2 == get_east(n1))
-        {
-            return Direction::EAST;
-        }
-        else if (n2 == get_west(n1))
-        {
-            return Direction::WEST;
-        }
-        else
-        {
-            return Direction::WAIT;
-        }
+        if (n2 == get_north(n1)) { return Direction::NORTH; }
+        else if (n2 == get_south(n1)) { return Direction::SOUTH; }
+        else if (n2 == get_east(n1)) { return Direction::EAST; }
+        else if (n2 == get_west(n1)) { return Direction::WEST; }
+        else { return Direction::WAIT; }
     }
     inline Node get_destination(const Edge e) const
     {
         switch (e.d) 
         {
-            case (Direction::NORTH):
-            {
-                return get_north(e.n);
-            }
-            case (Direction::SOUTH):
-            {
-                return get_south(e.n);
-            }
-            case (Direction::EAST):
-            {
-                return get_east(e.n);
-            }
-            case (Direction::WEST):
-            {
-                return get_west(e.n);
-            }
-            default:
-            {
-                return get_wait(e.n);
-            }
+            case (Direction::NORTH): { return get_north(e.n); }
+            case (Direction::SOUTH): { return get_south(e.n); }
+            case (Direction::EAST): { return get_east(e.n); }
+            case (Direction::WEST): { return get_west(e.n); }
+            default: { return get_wait(e.n); }
         }
+    }
+    inline Node get_destination(const EdgeTime et) const
+    {
+        return get_destination(et.et.e);
     }
     inline Pair<Position, Position> get_destination_xy(const Edge e) const
     {
         return get_xy(get_destination(e));
     }
+    inline Pair<Position, Position> get_destination_xy(const EdgeTime et) const
+    {
+        return get_xy(get_destination(et));
+    }
     inline Edge get_undirected_edge(const Edge e) const
     {
         switch (e.d)
         {
-            case (Direction::WEST):
-            {
-                return Edge{get_west(e.n), Direction::EAST};
-            }
-            case (Direction::SOUTH):
-            {
-                return Edge{get_south(e.n), Direction::NORTH};
-            }
-            default:
-            {
-                return e;
-            }
+            case (Direction::WEST): { return Edge{get_west(e.n), Direction::EAST}; }
+            case (Direction::SOUTH): { return Edge{get_south(e.n), Direction::NORTH}; }
+            default: { return e; }
         }
     }
     inline Edge get_opposite_edge(const Edge e) const
     {
         switch (e.d)
         {
-            case (Direction::NORTH):
-            {
-                return Edge{get_north(e.n), Direction::SOUTH};
-            }
-            case (Direction::SOUTH):
-            {
-                return Edge{get_south(e.n), Direction::NORTH};
-            }
-            case (Direction::EAST):
-            {
-                return Edge{get_east(e.n), Direction::WEST};
-            }
-            case (Direction::WEST):
-            {
-                return Edge{get_west(e.n), Direction::EAST};
-            }
-            default:
-            {
-                return e;
-            }
+            case (Direction::NORTH): { return Edge{get_north(e.n), Direction::SOUTH}; }
+            case (Direction::SOUTH): { return Edge{get_south(e.n), Direction::NORTH}; }
+            case (Direction::EAST): { return Edge{get_east(e.n), Direction::WEST}; }
+            case (Direction::WEST): { return Edge{get_west(e.n), Direction::EAST}; }
+            default: { return e; }
         }
     }
 

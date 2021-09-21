@@ -544,7 +544,7 @@ SCIP_RETCODE clique_conflicts_separate(
                     item.a = a;
                     item.t = et.t;
                     std::tie(item.x1, item.y1) = map.get_xy(et.n);
-                    std::tie(item.x2, item.y2) = map.get_destination_xy(et.et.e);
+                    std::tie(item.x2, item.y2) = map.get_destination_xy(et);
                     item.et = et;
                     debug_assert(edge_val.find({a, et.et.e, et.t}) != edge_val.end());
                     item.val = edge_val.find({a, et.et.e, et.t})->second;

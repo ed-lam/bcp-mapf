@@ -32,12 +32,10 @@ set(TRUFFLEHOG_SOURCE_FILES
     trufflehog/LabelPool.cpp
     trufflehog/Heuristic.h
     trufflehog/Heuristic.cpp
-    trufflehog/EdgePenalties.h
-    trufflehog/Crossings.h
+    trufflehog/Penalties.h
     trufflehog/AStar.h
     trufflehog/AStar.cpp
     trufflehog/ReservationTable.h
-    trufflehog/ReservationTable.cpp
     )
 set(BCP_MAPF_SOURCE_FILES
     bcp/Main.cpp
@@ -108,10 +106,10 @@ set(BCP_MAPF_SOURCE_FILES
     )
 
 # Create target.
-add_executable(trufflehog EXCLUDE_FROM_ALL ${TRUFFLEHOG_SOURCE_FILES} trufflehog/Main.cpp)
 add_executable(bcp-mapf ${BCP_MAPF_SOURCE_FILES} ${TRUFFLEHOG_SOURCE_FILES} ${CLIQUER_SOURCE_FILES})
-target_include_directories(trufflehog PUBLIC ./ bcp/)
+add_executable(trufflehog EXCLUDE_FROM_ALL ${TRUFFLEHOG_SOURCE_FILES} trufflehog/Main.cpp)
 target_include_directories(bcp-mapf PUBLIC ./ bcp/)
+target_include_directories(trufflehog PUBLIC ./ bcp/)
 
 # Include SCIP binaries.
 find_path(SCIP_INCLUDE_DIR
@@ -222,8 +220,8 @@ if (NOT LIBM)
 endif ()
 
 # Link to libraries.
-target_link_libraries(trufflehog fmt::fmt-header-only)
 target_link_libraries(bcp-mapf fmt::fmt-header-only cliquer ${SCIP_LIBRARY} ${LIBM})
+target_link_libraries(trufflehog fmt::fmt-header-only)
 
 # Set options.
 target_compile_options(bcp-mapf PRIVATE -DUSE_ASTAR_SOLUTION_CACHING)
@@ -249,6 +247,7 @@ target_compile_options(bcp-mapf PRIVATE -DUSE_TWOVERTEX_CONFLICTS)
 #target_compile_options(bcp-mapf PRIVATE -DUSE_VERTEX_FOUREDGE_CONFLICTS)
 #target_compile_options(bcp-mapf PRIVATE -DUSE_CLIQUE_CONFLICTS)
 target_compile_options(bcp-mapf PRIVATE -DUSE_GOAL_CONFLICTS)
+target_compile_options(trufflehog PRIVATE -DUSE_GOAL_CONFLICTS)
 
 # Set node selection options.
 target_compile_options(bcp-mapf PRIVATE -DUSE_BEST_FIRST_NODE_SELECTION)
@@ -259,6 +258,7 @@ target_compile_options(bcp-mapf PRIVATE -DUSE_BEST_FIRST_NODE_SELECTION)
 
 # Set warnings.
 target_compile_options(bcp-mapf PRIVATE -Wall -Wextra -Wignored-qualifiers -Werror=return-type)
+target_compile_options(trufflehog PRIVATE -Wall -Wextra -Wignored-qualifiers -Werror=return-type)
 
 # Set flags.
 check_cxx_compiler_flag("-march=native" MARCH_NATIVE)
@@ -268,6 +268,7 @@ endif ()
 target_compile_options(bcp-mapf PRIVATE -m64 -mfma)
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_options(bcp-mapf PRIVATE -DDEBUG -D_GLIBCXX_DEBUG)
+    target_compile_options(trufflehog PRIVATE -DDEBUG -D_GLIBCXX_DEBUG)
     message("Compiled in debug mode")
 elseif (CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
     target_compile_options(bcp-mapf PRIVATE -Og -DNDEBUG -funroll-loops -fstrict-aliasing)

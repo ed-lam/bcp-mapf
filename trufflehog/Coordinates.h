@@ -158,16 +158,17 @@ template<>
 struct formatter<TruffleHog::Direction>: formatter<string_view>
 {
     template<typename FormatContext>
-    inline auto format(TruffleHog::Direction d, FormatContext& ctx)
+    inline auto format(const TruffleHog::Direction d, FormatContext& ctx)
     {
         string_view name = "INVALID";
-        switch (d) {
-            case TruffleHog::Direction::NORTH:   name = "NORTH";   break;
-            case TruffleHog::Direction::SOUTH:   name = "SOUTH";   break;
-            case TruffleHog::Direction::EAST:    name = "EAST";    break;
-            case TruffleHog::Direction::WEST:    name = "WEST";    break;
-            case TruffleHog::Direction::WAIT:    name = "WAIT";    break;
-            case TruffleHog::Direction::INVALID: name = "INVALID"; break;
+        switch (d)
+        {
+            case TruffleHog::Direction::NORTH: name = "NORTH"; break;
+            case TruffleHog::Direction::SOUTH: name = "SOUTH"; break;
+            case TruffleHog::Direction::EAST:  name = "EAST";  break;
+            case TruffleHog::Direction::WEST:  name = "WEST";  break;
+            case TruffleHog::Direction::WAIT:  name = "WAIT";  break;
+            default: break;
         }
         return formatter<string_view>::format(name, ctx);
     }
@@ -180,7 +181,7 @@ struct formatter<TruffleHog::Edge>
     constexpr auto parse(ParseContext& ctx) { return ctx.begin(); }
 
     template<typename FormatContext>
-    inline auto format(const TruffleHog::Edge& e, FormatContext& ctx)
+    inline auto format(const TruffleHog::Edge e, FormatContext& ctx)
     {
         return format_to(ctx.out(), "(n={},d={})", e.n, e.d);
     }
@@ -193,7 +194,7 @@ struct formatter<TruffleHog::NodeTime>
     constexpr auto parse(ParseContext& ctx) { return ctx.begin(); }
 
     template<typename FormatContext>
-    inline auto format(const TruffleHog::NodeTime& nt, FormatContext& ctx)
+    inline auto format(const TruffleHog::NodeTime nt, FormatContext& ctx)
     {
         return format_to(ctx.out(), "(n={},t={})", nt.n, nt.t);
     }
@@ -206,7 +207,7 @@ struct formatter<TruffleHog::EdgeTime>
     constexpr auto parse(ParseContext& ctx) { return ctx.begin(); }
 
     template<typename FormatContext>
-    inline auto format(const TruffleHog::EdgeTime& et, FormatContext& ctx)
+    inline auto format(const TruffleHog::EdgeTime et, FormatContext& ctx)
     {
         return format_to(ctx.out(), "(n={},d={},t={})", et.n, et.d, et.t);
     }
@@ -217,7 +218,7 @@ struct formatter<TruffleHog::EdgeTime>
 //template<class T>
 //inline void hash_combine(std::size_t& s, const T& v)
 //{
-//    s ^= std::hash<T>(v) + 0x9e3779b9 + (s << 6) + (s >> 2);
+//    s ^= robin_hood::hash<T>(v) + 0x9e3779b9 + (s << 6) + (s >> 2);
 //}
 
 #endif

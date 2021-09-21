@@ -51,16 +51,16 @@ SCIP_RETCODE fouredge_conflicts_create_cut(
     const auto& map = SCIPprobdataGetMap(probdata);
     
     const auto [a1_et1_x1, a1_et1_y1] = map.get_xy(a1_et1.n);
-    const auto [a1_et1_x2, a1_et1_y2] = map.get_destination_xy(a1_et1.et.e);
+    const auto [a1_et1_x2, a1_et1_y2] = map.get_destination_xy(a1_et1);
 
     const auto [a1_et2_x1, a1_et2_y1] = map.get_xy(a1_et2.n);
-    const auto [a1_et2_x2, a1_et2_y2] = map.get_destination_xy(a1_et2.et.e);
+    const auto [a1_et2_x2, a1_et2_y2] = map.get_destination_xy(a1_et2);
 
     const auto [a2_et1_x1, a2_et1_y1] = map.get_xy(a2_et1.n);
-    const auto [a2_et1_x2, a2_et1_y2] = map.get_destination_xy(a2_et1.et.e);
+    const auto [a2_et1_x2, a2_et1_y2] = map.get_destination_xy(a2_et1);
 
     const auto [a2_et2_x1, a2_et2_y1] = map.get_xy(a2_et2.n);
-    const auto [a2_et2_x2, a2_et2_y2] = map.get_destination_xy(a2_et2.et.e);
+    const auto [a2_et2_x2, a2_et2_y2] = map.get_destination_xy(a2_et2);
 
     auto name = fmt::format("fouredge_conflict("
                             "{},{},"
@@ -139,7 +139,7 @@ SCIP_RETCODE fouredge_conflicts_separate(
         for (const auto [a1_et1, a1_et1_val] : agent_edges_a1)
         {
             // Get the destination of the edge.
-            const auto a1_et1_dest = map.get_destination(a1_et1.et.e);
+            const auto a1_et1_dest = map.get_destination(a1_et1);
 
             // Loop through the second agent.
             for (Agent a2 = a1 + 1; a2 < N; ++a2)
@@ -152,21 +152,21 @@ SCIP_RETCODE fouredge_conflicts_separate(
                     if (a1_et1.t == a2_et1.t && a1_et1.n == a2_et1.n)
                     {
                         // Get the destination of the edge.
-                        const auto a2_et1_dest = map.get_destination(a2_et1.et.e);
+                        const auto a2_et1_dest = map.get_destination(a2_et1);
 
                         // Loop through the second edge of agent 1.
                         for (const auto [a1_et2, a1_et2_val] : agent_edges_a1)
                             if (a1_et2.t == a1_et1.t + 1 && a1_et2.n == a2_et1_dest && a1_et2.n != a1_et1_dest)
                             {
                                 // Get the destination of the edge.
-                                const auto a1_et2_dest = map.get_destination(a1_et2.et.e);
+                                const auto a1_et2_dest = map.get_destination(a1_et2);
 
                                 // Loop through the second edge of agent 2.
                                 for (const auto [a2_et2, a2_et2_val] : agent_edges_a2)
                                     if (a2_et2.t == a2_et1.t + 1 && a2_et2.n == a1_et1_dest)
                                     {
                                         // Get the destination of the edge.
-                                        const auto a2_et2_dest = map.get_destination(a2_et2.et.e);
+                                        const auto a2_et2_dest = map.get_destination(a2_et2);
 
                                         // Ensure the destinations are the same.
                                         if (a2_et2_dest == a1_et2_dest)
@@ -179,16 +179,16 @@ SCIP_RETCODE fouredge_conflicts_separate(
 #ifdef PRINT_DEBUG
                                                 {
                                                     const auto [a1_et1_x1, a1_et1_y1] = map.get_xy(a1_et1.n);
-                                                    const auto [a1_et1_x2, a1_et1_y2] = map.get_destination_xy(a1_et1.et.e);
+                                                    const auto [a1_et1_x2, a1_et1_y2] = map.get_destination_xy(a1_et1);
 
                                                     const auto [a1_et2_x1, a1_et2_y1] = map.get_xy(a1_et2.n);
-                                                    const auto [a1_et2_x2, a1_et2_y2] = map.get_destination_xy(a1_et2.et.e);
+                                                    const auto [a1_et2_x2, a1_et2_y2] = map.get_destination_xy(a1_et2);
 
                                                     const auto [a2_et1_x1, a2_et1_y1] = map.get_xy(a2_et1.n);
-                                                    const auto [a2_et1_x2, a2_et1_y2] = map.get_destination_xy(a2_et1.et.e);
+                                                    const auto [a2_et1_x2, a2_et1_y2] = map.get_destination_xy(a2_et1);
 
                                                     const auto [a2_et2_x1, a2_et2_y1] = map.get_xy(a2_et2.n);
-                                                    const auto [a2_et2_x2, a2_et2_y2] = map.get_destination_xy(a2_et2.et.e);
+                                                    const auto [a2_et2_x2, a2_et2_y2] = map.get_destination_xy(a2_et2);
 
                                                     debugln("   Creating four-edge conflict cut on edges "
                                                             "(({},{}),({},{}),{}) and (({},{}),({},{}),{}) for agent {} and "

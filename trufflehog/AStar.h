@@ -26,8 +26,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "LabelPool.h"
 #include "ReservationTable.h"
 #include "PriorityQueue.h"
-#include "EdgePenalties.h"
-#include "Crossings.h"
+#include "Penalties.h"
 #include "Heuristic.h"
 
 namespace TruffleHog
@@ -35,11 +34,15 @@ namespace TruffleHog
 
 class AStar
 {
+    // Label for main low-level search
     struct Label
     {
+#ifdef DEBUG
+        size_t label_id;
+#endif
         Label* parent;
-        Cost f;
         Cost g;
+        Cost f;
         union
         {
             struct
@@ -54,18 +57,15 @@ class AStar
             };
         };
         Int pqueue_index;
-#ifdef DEBUG
-        Int label_id;
-#endif
         std::byte state_[0];
     };
 #ifdef DEBUG
-    static_assert(sizeof(Label) == 8 + 8 + 8 + 8 + 4 + 4);
+    static_assert(sizeof(Label) == 5*8 + 1*4 + 4);
 #else
-    static_assert(sizeof(Label) == 8 + 8 + 8 + 8 + 4 + 4);
+    static_assert(sizeof(Label) == 4*8 + 1*4 + 4);
 #endif
 
-    // Comparison of labels in heuristic
+    // Comparison of labels
     struct LabelCompare
     {
         ReservationTable reservation_table_;
@@ -83,37 +83,99 @@ class AStar
         }
     };
 
+    // Priority queue holding labels
+    class AStarPriorityQueue : public PriorityQueue<Label, LabelCompare>
+    {
+        friend class AStar;
+
+      public:
+        // Inherit constructors.
+        using PriorityQueue::PriorityQueue;
+
+        // Check.
+#ifdef DEBUG
+        void check() const
+        {
+            for (Int pqueue_index = 0; pqueue_index < size_; ++pqueue_index)
+            {
+                debug_assert(elts_[pqueue_index]->pqueue_index == pqueue_index);
+            }
+        }
+        void check_label(const Label* const label)
+        {
+            debug_assert(label &&
+                         (-1 == label->pqueue_index ||
+                          (label->pqueue_index < size_ && elts_[label->pqueue_index] == label)));
+        }
+#endif
+
+      protected:
+        // Modify the handle in the label pointing to its position in the priority queue
+        inline void update_pqueue_index(Label* label, const Int pqueue_index)
+        {
+            label->pqueue_index = pqueue_index;
+        }
+
+        // Reprioritise an element up or down
+        void decrease_key(Label* label)
+        {
+            debug_assert(contains(label));
+            heapify_up(label->pqueue_index);
+        }
+        void increase_key(Label* label)
+        {
+            debug_assert(contains(label));
+            heapify_down(label->pqueue_index);
+        }
+
+#ifdef DEBUG
+        // Check if the priority queue contains label
+        inline bool contains(Label* label) const
+        {
+            const auto index = label->pqueue_index;
+            return index < size_ && label == elts_[index];
+        }
+#endif
+    };
+
+  public:
+    struct Data
+    {
+        // Waypoints
+        Node start;
+        Vector<NodeTime> waypoints;
+        Node goal;
+        Time earliest_goal_time;
+        Time latest_goal_time;
+
+        // Costs
+        Cost cost_offset;
+        EdgePenalties edge_penalties;
+        FinishTimePenalties finish_time_penalties;
+#ifdef USE_GOAL_CONFLICTS
+        GoalPenalties goal_penalties;
+#endif
+
+        // Check if any cost is better
+        bool can_be_better(const Data& previous_data);
+    };
+
+  private:
     // Instance
     const Map& map_;
 
-    // Labels
-    LabelPool label_pool_;
+    // Inputs for a run
+    Data data_;
 
-    // Heuristic
+    // Solver data structures
+    const Vector<IntCost>* h_node_to_waypoint_;
+    Vector<IntCost> h_waypoint_to_goal_;
     Heuristic heuristic_;
-
-    // Penalties
-    EdgePenalties edge_penalties_;
-    Vector<Cost> time_finish_penalties_;
-#ifdef USE_GOAL_CONFLICTS
-    Vector<GoalCrossing> goal_crossings_;
-#endif
-#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-    Vector<RectangleCrossing> rectangle_crossings_;
-#endif
-
-    // Temporary storage for each run
-    PriorityQueue<Label, LabelCompare, false> open_;
-    HashTable<NodeTime, Label*> frontier_without_resources_;
-#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-    HashTable<NodeTime, Vector<Label*>> frontier_with_resources_;
-#endif
-    const Vector<IntCost>* h_;
-    Vector<Cost> time_finish_h_;
-
-    // Label counter
+    LabelPool label_pool_;
+    AStarPriorityQueue open_;
+    HashTable<NodeTime, Label*> frontier_;
 #ifdef DEBUG
-    Int nb_labels_;
+    size_t nb_labels_;
 #endif
 
   public:
@@ -129,68 +191,38 @@ class AStar
     // Getters
     inline auto max_path_length() const { return heuristic_.max_path_length(); }
     auto& reservation_table() { return open_.cmp().reservation_table_; };
-    auto& edge_penalties() { return edge_penalties_; }
-    auto& time_finish_penalties() { return time_finish_penalties_; }
-#ifdef USE_GOAL_CONFLICTS
-    auto& goal_crossings() { return goal_crossings_; }
-#endif
-#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-    auto& rectangle_crossings() { return rectangle_crossings_; }
-#endif
+    auto& data() { return data_; }
+    const auto& data() const { return data_; }
 
     // Solve
-    inline void compute_h(const Node goal) { heuristic_.compute_h(goal); }
+    inline void compute_h(const Node goal) { heuristic_.get_h(goal); }
+    void preprocess_input();
     template<bool is_farkas>
-    Pair<Vector<NodeTime>, Cost> solve(const NodeTime start,
-                                       const Node goal,
-                                       const Time goal_earliest = 0,
-                                       const Time goal_latest = std::numeric_limits<Time>::max(),
-                                       const Cost max_cost = std::numeric_limits<Cost>::infinity());
+    Pair<Vector<NodeTime>, Cost> solve();
 
     // Debug
 #ifdef DEBUG
-    template<bool without_resources>
     Pair<Vector<NodeTime>, Cost> calculate_cost(const Vector<Edge>& input_path);
     void set_verbose(const bool on = true);
-    void print_crossings() const;
-    void print_edge_penalties() const;
-    void print_used_edge_penalties() const;
 #endif
 
   private:
     // Check if a label is dominated by an existing label
-    AStar::Label* dominated_without_resources(Label* const new_label);
-#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-    AStar::Label* dominated_with_resources(Label* const new_label);
-#endif
+    AStar::Label* dominated(Label* const new_label);
 
     // Solve
-    template <bool without_resources>
-    void generate_start(const NodeTime start);
-    void generate_end(Label* const current, const Cost max_cost);
-    template <bool without_resources>
+    void generate_start();
+    template<IntCost default_cost>
+    void generate_neighbours(Label* const current, const Waypoint w, const Time waypoint_time);
     void generate(Label* const current,
-                  const Node node,
-#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-                  const Direction d,
-#endif
+                  const Waypoint w,
+                  const Node next_n,
                   const Cost cost,
-                  const Time goal_latest,
-                  const Cost max_cost);
-    template<bool without_resources, IntCost default_cost>
-    void generate_neighbours(Label* const current,
-                             const Node goal,
-                             const Time goal_earliest,
-                             const Time goal_latest,
-                             const Cost max_cost);
-    template<bool without_resources, IntCost default_cost>
-    void generate_goal_neighbours(const Label* const current);
-    template<bool without_resources, bool is_farkas>
-    Pair<Vector<NodeTime>, Cost> solve_internal(const NodeTime start,
-                                                const Node goal,
-                                                const Time goal_earliest = 0,
-                                                const Time goal_latest = std::numeric_limits<Time>::max(),
-                                                const Cost max_cost = std::numeric_limits<Cost>::infinity());
+                  const Time waypoint_time);
+    template<IntCost default_cost>
+    void generate_neighbours_last_segment(Label* const current);
+    void generate_last_segment(Label* const current, const Node next_n, const Cost cost);
+    void generate_end(Label* const current);
 };
 
 }

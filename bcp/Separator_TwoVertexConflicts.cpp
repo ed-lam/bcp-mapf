@@ -62,13 +62,13 @@ SCIP_RETCODE twovertex_conflicts_create_cut(
     const auto& map = SCIPprobdataGetMap(probdata);
 
     const auto [a1_et_x1, a1_et_y1] = map.get_xy(a1_et.n);
-    const auto [a1_et_x2, a1_et_y2] = map.get_destination_xy(a1_et.et.e);
+    const auto [a1_et_x2, a1_et_y2] = map.get_destination_xy(a1_et);
 
     const auto [a2_et1_x1, a2_et1_y1] = map.get_xy(a2_et1.n);
-    const auto [a2_et1_x2, a2_et1_y2] = map.get_destination_xy(a2_et1.et.e);
+    const auto [a2_et1_x2, a2_et1_y2] = map.get_destination_xy(a2_et1);
 
     const auto [a2_et2_x1, a2_et2_y1] = map.get_xy(a2_et2.n);
-    const auto [a2_et2_x2, a2_et2_y2] = map.get_destination_xy(a2_et2.et.e);
+    const auto [a2_et2_x2, a2_et2_y2] = map.get_destination_xy(a2_et2);
 
     auto name = fmt::format("twovertex_conflict("
                             "{},{},"
@@ -190,7 +190,7 @@ SCIP_RETCODE twovertex_conflicts_separate(
             Array<const Vector<SCIP_Real>*, 5> a2_et2_vals;
             Int a2_et2_size = 0;
             {
-                const auto a2_et2_dest = map.get_destination(a1_et.et.e);
+                const auto a2_et2_dest = map.get_destination(a1_et);
                 const auto a2_et1s_end = a2_et1s.begin() + a2_et1_size;
                 {
                     const EdgeTime et{map.get_south(a2_et2_dest), Direction::NORTH, a1_et.t};
@@ -265,7 +265,7 @@ SCIP_RETCODE twovertex_conflicts_separate(
 
                             // Check.
                             debug_assert(a1_et.n == a2_et1.n);
-                            debug_assert(map.get_destination(a1_et.et.e) == map.get_destination(a2_et2.et.e));
+                            debug_assert(map.get_destination(a1_et) == map.get_destination(a2_et2));
                             debug_assert(a2_et1 != a2_et2);
 
                             // Compute the LHS.
@@ -296,13 +296,13 @@ SCIP_RETCODE twovertex_conflicts_separate(
 #ifdef PRINT_DEBUG
             {
                 const auto [a1_et_x1, a1_et_y1] = map.get_xy(a1_et.n);
-                const auto [a1_et_x2, a1_et_y2] = map.get_destination_xy(a1_et.et.e);
+                const auto [a1_et_x2, a1_et_y2] = map.get_destination_xy(a1_et);
 
                 const auto [a2_et1_x1, a2_et1_y1] = map.get_xy(a2_et1.n);
-                const auto [a2_et1_x2, a2_et1_y2] = map.get_destination_xy(a2_et1.et.e);
+                const auto [a2_et1_x2, a2_et1_y2] = map.get_destination_xy(a2_et1);
 
                 const auto [a2_et2_x1, a2_et2_y1] = map.get_xy(a2_et2.n);
-                const auto [a2_et2_x2, a2_et2_y2] = map.get_destination_xy(a2_et2.et.e);
+                const auto [a2_et2_x2, a2_et2_y2] = map.get_destination_xy(a2_et2);
 
                 debugln("   Creating two-vertex conflict cut on edges "
                         "(({},{}),({},{}),{}) for agent {} and "

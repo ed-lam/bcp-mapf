@@ -61,11 +61,11 @@ SCIP_RETCODE stepaside_conflicts_create_cut(
 
     const auto a1_et1 = a1_ets[0];
     const auto [a1_x1, a1_y1] = map.get_xy(a1_et1.n);
-    const auto [a1_x2, a1_y2] = map.get_destination_xy(a1_et1.et.e);
+    const auto [a1_x2, a1_y2] = map.get_destination_xy(a1_et1);
 
     const auto a2_et1 = a2_ets[2];
     const auto [a2_x1, a2_y1] = map.get_xy(a2_et1.n);
-    const auto [a2_x2, a2_y2] = map.get_destination_xy(a2_et1.et.e);
+    const auto [a2_x2, a2_y2] = map.get_destination_xy(a2_et1);
 
     auto name = fmt::format("stepaside_conflict("
                             "{},{},"
@@ -190,7 +190,7 @@ SCIP_RETCODE stepaside_conflicts_separate(
                     for (const auto [et, val] : agent_dir_edges[d][a])
                     {
                         const auto [x1, y1] = map.get_xy(et.n);
-                        const auto [x2, y2] = map.get_destination_xy(et.et.e);
+                        const auto [x2, y2] = map.get_destination_xy(et);
                         debugln("      (({},{}),({},{}),{}) val {:.4f}",
                                 x1, y1, x2, y2, et.t, val);
                     }
@@ -224,7 +224,7 @@ SCIP_RETCODE stepaside_conflicts_separate(
                 const auto a1_et2_val = a1_et2_it != a1_dir_edges.end() ? a1_et2_it->second : 0.0;
 
                 // Loop through the second agent.
-                const auto a2_et3_orig = map.get_destination(a1_et1.et.e);
+                const auto a2_et3_orig = map.get_destination(a1_et1);
                 for (Agent a2 = a1 + 1; a2 < N; ++a2)
                 {
                     // Get the edges of the second agent.
@@ -268,7 +268,7 @@ SCIP_RETCODE stepaside_conflicts_separate(
                             const auto a1_et4_val = a1_et4_it != a1_dir_edges.end() ? a1_et4_it->second : 0.0;
 
                             // Get the first edge of agent 2.
-                            const EdgeTime a2_et1{map.get_destination(a1_et3.et.e), d2, a1_et1.t};
+                            const EdgeTime a2_et1{map.get_destination(a1_et3), d2, a1_et1.t};
                             const auto a2_et1_it = a2_dir_edges.find(a2_et1);
                             const auto a2_et1_val = a2_et1_it != a2_dir_edges.end() ? a2_et1_it->second : 0.0;
 
@@ -312,35 +312,35 @@ SCIP_RETCODE stepaside_conflicts_separate(
             {
                 const auto a1_et1 = a1_ets[0];
                 const auto [a1_et1_x1, a1_et1_y1] = map.get_xy(a1_et1.n);
-                const auto [a1_et1_x2, a1_et1_y2] = map.get_destination_xy(a1_et1.et.e);
+                const auto [a1_et1_x2, a1_et1_y2] = map.get_destination_xy(a1_et1);
 
                 const auto a1_et2 = a1_ets[1];
                 const auto [a1_et2_x1, a1_et2_y1] = map.get_xy(a1_et2.n);
-                const auto [a1_et2_x2, a1_et2_y2] = map.get_destination_xy(a1_et2.et.e);
+                const auto [a1_et2_x2, a1_et2_y2] = map.get_destination_xy(a1_et2);
 
                 const auto a1_et3 = a1_ets[2];
                 const auto [a1_et3_x1, a1_et3_y1] = map.get_xy(a1_et3.n);
-                const auto [a1_et3_x2, a1_et3_y2] = map.get_destination_xy(a1_et3.et.e);
+                const auto [a1_et3_x2, a1_et3_y2] = map.get_destination_xy(a1_et3);
 
                 const auto a1_et4 = a1_ets[3];
                 const auto [a1_et4_x1, a1_et4_y1] = map.get_xy(a1_et4.n);
-                const auto [a1_et4_x2, a1_et4_y2] = map.get_destination_xy(a1_et4.et.e);
+                const auto [a1_et4_x2, a1_et4_y2] = map.get_destination_xy(a1_et4);
 
                 const auto a2_et1 = a2_ets[0];
                 const auto [a2_et1_x1, a2_et1_y1] = map.get_xy(a2_et1.n);
-                const auto [a2_et1_x2, a2_et1_y2] = map.get_destination_xy(a2_et1.et.e);
+                const auto [a2_et1_x2, a2_et1_y2] = map.get_destination_xy(a2_et1);
 
                 const auto a2_et2 = a2_ets[1];
                 const auto [a2_et2_x1, a2_et2_y1] = map.get_xy(a2_et2.n);
-                const auto [a2_et2_x2, a2_et2_y2] = map.get_destination_xy(a2_et2.et.e);
+                const auto [a2_et2_x2, a2_et2_y2] = map.get_destination_xy(a2_et2);
 
                 const auto a2_et3 = a2_ets[2];
                 const auto [a2_et3_x1, a2_et3_y1] = map.get_xy(a2_et3.n);
-                const auto [a2_et3_x2, a2_et3_y2] = map.get_destination_xy(a2_et3.et.e);
+                const auto [a2_et3_x2, a2_et3_y2] = map.get_destination_xy(a2_et3);
 
                 const auto a2_et4 = a2_ets[3];
                 const auto [a2_et4_x1, a2_et4_y1] = map.get_xy(a2_et4.n);
-                const auto [a2_et4_x2, a2_et4_y2] = map.get_destination_xy(a2_et4.et.e);
+                const auto [a2_et4_x2, a2_et4_y2] = map.get_destination_xy(a2_et4);
 
                 debugln("   Creating step-aside conflict cut on "
                         "(({},{}),({},{}),{}), (({},{}),({},{}),{}), (({},{}),({},{}),{}) and (({},{}),({},{}),{}) for agent {} and "

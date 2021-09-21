@@ -171,7 +171,7 @@ SCIP_RETCODE twoedge_conflicts_separate(
             const auto& a2_et1_vals = a2_et1_it != agent_edges_vec.end() ? a2_et1_it->second : zeros;
 
             // Get the second edge of agent 1.
-            const auto a1_e2_orig = map.get_destination(a1_et1.et.e);
+            const auto a1_e2_orig = map.get_destination(a1_et1);
             Array<Edge, 4> a1_e2s;
             Int a1_e2_size = 0;
             if (const Edge e{a1_e2_orig, Direction::NORTH}; map.get_destination(e) != a1_et1.n)

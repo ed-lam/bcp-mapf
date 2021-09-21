@@ -241,24 +241,24 @@ SCIP_RETCODE corridor_conflicts_separate(
 #ifdef PRINT_DEBUG
             {
                 const auto [a1_et1_x1, a1_et1_y1] = map.get_xy(a1_et1.n);
-                const auto [a1_et1_x2, a1_et1_y2] = map.get_xy(map.get_destination(a1_et1.et.e));
+                const auto [a1_et1_x2, a1_et1_y2] = map.get_destination_xy(a1_et1);
 
                 const auto [a1_et2_x1, a1_et2_y1] = map.get_xy(a1_et2.n);
-                const auto [a1_et2_x2, a1_et2_y2] = map.get_xy(map.get_destination(a1_et2.et.e));
+                const auto [a1_et2_x2, a1_et2_y2] = map.get_destination_xy(a1_et2);
 
 #ifdef USE_WAITCORRIDOR_CONFLICTS
                 const auto [a1_et3_x1, a1_et3_y1] = map.get_xy(a1_et3.n);
-                const auto [a1_et3_x2, a1_et3_y2] = map.get_xy(map.get_destination(a1_et3.et.e));
+                const auto [a1_et3_x2, a1_et3_y2] = map.get_destination_xy(a1_et3);
 
                 const auto [a1_et4_x1, a1_et4_y1] = map.get_xy(a1_et4.n);
-                const auto [a1_et4_x2, a1_et4_y2] = map.get_xy(map.get_destination(a1_et4.et.e));
+                const auto [a1_et4_x2, a1_et4_y2] = map.get_destination_xy(a1_et4);
 #endif
 
                 const auto [a2_et1_x1, a2_et1_y1] = map.get_xy(a2_et1.n);
-                const auto [a2_et1_x2, a2_et1_y2] = map.get_xy(map.get_destination(a2_et1.et.e));
+                const auto [a2_et1_x2, a2_et1_y2] = map.get_destination_xy(a2_et1);
 
                 const auto [a2_et2_x1, a2_et2_y1] = map.get_xy(a2_et2.n);
-                const auto [a2_et2_x2, a2_et2_y2] = map.get_xy(map.get_destination(a2_et2.et.e));
+                const auto [a2_et2_x2, a2_et2_y2] = map.get_destination_xy(a2_et2);
 
                 debugln("   Creating corridor conflict cut on "
                         "(({},{}),({},{}),{})"

@@ -45,11 +45,11 @@ class LabelPool
     ~LabelPool() = default;
 
     // Getters
-    Int label_size() const { return label_size_; }
+    inline Int label_size() const { return label_size_; }
 
     // Get pointer to store a label
     void* get_label_buffer();
-    void take_label();
+    void commit_latest_label();
 
     // Reset all labels
     void reset(const Int label_size);

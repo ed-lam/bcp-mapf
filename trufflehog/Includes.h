@@ -38,6 +38,7 @@ using Position = Int;
 using Agent = Int;
 using Cost = Float;
 using IntCost = Int;
+using Waypoint = Int;
 
 using String = std::string;
 

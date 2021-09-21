@@ -34,20 +34,20 @@ class Heuristic
     // Label for heuristic
     struct Label
     {
-        const Label* parent;
-        IntCost g;
-        Node n;
 #ifdef DEBUG
-        Int label_id;
+        size_t label_id;
+        const Label* parent;
 #endif
+        Node n;
+        IntCost g;
     };
 #ifdef DEBUG
-    static_assert(sizeof(Label) == 8 + 4 + 4 + 8);
+    static_assert(sizeof(Label) == 2*8 + 2*4);
 #else
-    static_assert(sizeof(Label) == 8 + 4 + 4);
+    static_assert(sizeof(Label) == 2*4);
 #endif
 
-    // Comparison of labels in heuristic
+    // Comparison of labels
     struct LabelCompare
     {
         inline bool operator()(const Label* const a, const Label* const b)
@@ -56,30 +56,37 @@ class Heuristic
         }
     };
 
+    // Priority queue holding labels
+    class HeuristicPriorityQueue : public PriorityQueue<Label, LabelCompare>
+    {
+      public:
+        // Inherit constructors.
+        using PriorityQueue::PriorityQueue;
+
+      protected:
+        // Modify the handle in the label pointing to its position in the priority queue
+        inline void update_pqueue_index(Label*, const Int) {}
+    };
+
     // Instance
     const Map& map_;
 
-    // Global memory pool
-    LabelPool& label_pool_;
-
-    // Runs
-    Vector<Node> goals_;
-    Vector<Vector<IntCost>> h_;
+    // Lower bounds
+    HashTable<Node, Vector<IntCost>> h_;
     Time max_path_length_;
 
-    // Temporary storage for each run
-    PriorityQueue<Label, LabelCompare, true> open_;
+    // Solver data structures
+    LabelPool label_pool_;
+    HeuristicPriorityQueue open_;
     Vector<bool> visited_;
-
-    // Label counter
 #ifdef DEBUG
-    Int nb_labels_;
+    size_t nb_labels_;
 #endif
 
   public:
     // Constructors
     Heuristic() = delete;
-    Heuristic(const Map& map, LabelPool& label_pool);
+    Heuristic(const Map& map);
     Heuristic(const Heuristic&) = delete;
     Heuristic(Heuristic&&) = delete;
     Heuristic& operator=(const Heuristic&) = delete;
@@ -89,8 +96,8 @@ class Heuristic
     // Getters
     inline auto max_path_length() const { return max_path_length_; }
 
-    // Compute heuristic costs to a goal node
-    const Vector<IntCost>& compute_h(const Node goal);
+    // Get the lower bound from every node to a goal node
+    const Vector<IntCost>& get_h(const Node goal);
 
   private:
     // Check if a node has already been visited
@@ -101,7 +108,7 @@ class Heuristic
     void generate(const Label* const current, const Node n);
     void generate_neighbours(const Label* const current);
 
-    // Find h of each node to a goal
+    // Compute lower bound from every node to a goal node
     void search(const Node goal, Vector<IntCost>& h);
 };
 

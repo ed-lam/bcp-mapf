@@ -204,6 +204,9 @@ void check_propagation(
     SCIP_Bool beforeprop                  // Is this check performed before propagation?
 )
 {
+    // Get problem data.
+    const auto& map = SCIPprobdataGetMap(probdata);
+
     // Get variables.
     const auto& vars = SCIPprobdataGetVars(probdata);
     const auto nvars = beforeprop ? consdata->npropagatedvars : static_cast<Int>(vars.size());
@@ -245,9 +248,15 @@ void check_propagation(
 
         // Check.
         release_assert(!(disable_path_of_same_agent || disable_path_of_diff_agent),
-                       "Branching decision is not propagated correctly for agent {},"
+                       "Branching decision to {} agent {} at (({},{}),{}) is not propagated correctly for agent {}, "
                        "path {}",
-                       path_a, format_path(probdata, path_length, path));
+                       dir == VertexBranchDirection::Use ? "use" : "forbid",
+                       a,
+                       map.get_x(nt.n),
+                       map.get_y(nt.n),
+                       nt.t,
+                       path_a,
+                       format_path(probdata, path_length, path));
     }
 }
 #endif

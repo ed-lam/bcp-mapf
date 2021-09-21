@@ -24,12 +24,14 @@ Author: Edward Lam <ed@ed-lam.com>
 namespace TruffleHog
 {
 
-LabelPool::LabelPool()
-    : blocks_(),
-      block_idx_(0),
-      byte_idx_(0),
-      label_size_(1)
+LabelPool::LabelPool() :
+    blocks_(),
+    block_idx_(0),
+    byte_idx_(0),
+    label_size_(1)
 {
+    debug_assert(BLOCK_SIZE % 8 == 0);
+
     blocks_.reserve(50);
     blocks_.push_back(std::make_unique<std::byte[]>(BLOCK_SIZE));
     debug_assert(blocks_.back());
@@ -61,10 +63,11 @@ void* LabelPool::get_label_buffer()
     return label;
 }
 
-void LabelPool::take_label()
+void LabelPool::commit_latest_label()
 {
     debug_assert(block_idx_ < static_cast<Int>(blocks_.size()));
     debug_assert(byte_idx_ < BLOCK_SIZE);
+    debug_assert(label_size_ % 8 == 0);
     byte_idx_ += label_size_;
 }
 

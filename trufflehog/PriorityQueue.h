@@ -25,22 +25,23 @@ Author: Edward Lam <ed@ed-lam.com>
 namespace TruffleHog
 {
 
-template<class Label, class Compare, bool IsHeuristic>
+template<class Label, class Compare>
 class PriorityQueue
 {
+  protected:
     Compare cmp_;
+    Label** elts_;
     Int capacity_;
     Int size_;
-    Label** elts_;
 
   public:
     // Constructors
     template<class ...Args>
     PriorityQueue(Args... args) :
         cmp_(args...),
+        elts_(nullptr),
         capacity_(0),
-        size_(0),
-        elts_(nullptr)
+        size_(0)
     {
         enlarge(8192);
     }
@@ -59,46 +60,17 @@ class PriorityQueue
         size_ = 0;
     }
 
-    // Reprioritise an element up or down
-    void decrease_key(Label* label)
-    {
-        if constexpr (!IsHeuristic)
-        {
-            debug_assert(contains(label));
-            heapify_up(label->pqueue_index);
-        }
-        else
-        {
-            err("");
-        }
-    }
-    void increase_key(Label* label)
-    {
-        if constexpr (!IsHeuristic)
-        {
-            debug_assert(contains(label));
-            heapify_down(label->pqueue_index);
-        }
-        else
-        {
-            err("");
-        }
-    }
-
     // Add an element
     void push(Label* label)
     {
-        if (size_ + 1 > capacity_)
+        if (size_ >= capacity_)
         {
             enlarge(capacity_ * 2);
         }
 
         auto index = size_;
         elts_[index] = label;
-        if constexpr (!IsHeuristic)
-        {
-            label->pqueue_index = index;
-        }
+        update_pqueue_index(elts_[index], index);
         size_++;
         heapify_up(index);
     }
@@ -109,41 +81,21 @@ class PriorityQueue
         debug_assert(size_ > 0);
 
         auto label = elts_[0];
-        if constexpr (!IsHeuristic)
-        {
-            label->pqueue_index = -1;
-        }
+        update_pqueue_index(label, -1);
         size_--;
 
         if (size_ > 0)
         {
             elts_[0] = elts_[size_];
-            if constexpr (!IsHeuristic)
-            {
-                elts_[0]->pqueue_index = 0;
-            }
+            update_pqueue_index(elts_[0], 0);
             heapify_down(0);
         }
 
         return label;
     }
 
-    // Check if a label is contained within
-    inline bool contains(Label* label) const
-    {
-        if constexpr (!IsHeuristic)
-        {
-            const auto index = label->pqueue_index;
-            return index < size_ && label == elts_[index];
-        }
-        else
-        {
-            err("");
-        }
-    }
-
     // Retrieve the top element without removing it
-    inline Label* top()
+    inline Label* top() const
     {
         debug_assert(size_ > 0);
         return elts_[0];
@@ -165,7 +117,7 @@ class PriorityQueue
     inline Compare& cmp() { return cmp_; }
     inline const Compare& cmp() const { return cmp_; }
 
-  private:
+  protected:
     // Reorder the subtree containing elts_[index]
     void heapify_up(Int index)
     {
@@ -176,7 +128,7 @@ class PriorityQueue
             const auto parent = (index - 1) >> 1;
             if (cmp_(elts_[index], elts_[parent]))
             {
-                swap(parent, index);
+                swap(index, parent);
                 index = parent;
             }
             else
@@ -194,14 +146,14 @@ class PriorityQueue
         const auto first_leaf_index = size_ >> 1;
         while (index < first_leaf_index)
         {
-            // find smallest (or largest, depending on heap type) child
+            // Find Better child.
             const auto child1 = (index << 1) + 1;
             const auto child2 = (index << 1) + 2;
             const auto which = child2 < size_ && cmp_(elts_[child2], elts_[child1]) ?
                                child2 :
                                child1;
 
-            // swap child with parent if necessary
+            // Swap child with parent if necessary.
             if (cmp_(elts_[which], elts_[index]))
             {
                 swap(index, which);
@@ -228,34 +180,13 @@ class PriorityQueue
     {
         debug_assert(index1 < size_ && index2 < size_);
 
-        if constexpr (!IsHeuristic)
-        {
-            elts_[index1]->pqueue_index = index2;
-            elts_[index2]->pqueue_index = index1;
-        }
         std::swap(elts_[index1], elts_[index2]);
+        update_pqueue_index(elts_[index1], index1);
+        update_pqueue_index(elts_[index2], index2);
     }
 
-    // Check.
-#ifdef DEBUG
-    void check() const
-    {
-        if constexpr (!IsHeuristic)
-        {
-            for (Int index = 0; index < size_; ++index)
-            {
-                debug_assert(elts_[index]->pqueue_index == index);
-            }
-        }
-    }
-  public:
-    void check_label(Label* label)
-    {
-        debug_assert(label &&
-                     (-1 == label->pqueue_index ||
-                      (label->pqueue_index < size_ && elts_[label->pqueue_index] == label)));
-    }
-#endif
+    // Modify the handle in the label pointing to its position in the priority queue
+    virtual void update_pqueue_index(Label* label, const Int pqueue_index) = 0;
 };
 
 }

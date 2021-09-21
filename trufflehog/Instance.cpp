@@ -77,16 +77,16 @@ void read_map(const char* const map_path, Map& map)
 
     // Read grid.
     map_file >> param;
-    release_assert(param == "map", "Invalid map file format");
+    release_assert(param == "map", "Invalid map file header");
     {
         auto c = static_cast<char>(map_file.get());
-        release_assert(map_file.good(), "Invalid map format");
+        release_assert(map_file.good(), "Invalid map header");
         if (c == '\r')
         {
             c = static_cast<char>(map_file.get());
-            release_assert(map_file.good(), "Invalid map format");
+            release_assert(map_file.good(), "Invalid map header");
         }
-        release_assert(c == '\n', "Invalid map format");
+        release_assert(c == '\n', "Invalid map header");
     }
     Node n = width + 1; // Start reading into the second row, second column of the grid
     while (true)
@@ -111,8 +111,7 @@ void read_map(const char* const map_path, Map& map)
             case '\r':
                 continue;
             case '.':
-                release_assert(n < map.size(),
-                               "More tiles in the map file than its size");
+                release_assert(n < map.size(), "More cells in the map file than its size");
                 map.set_passable(n);
                 [[fallthrough]];
             default:
@@ -121,7 +120,7 @@ void read_map(const char* const map_path, Map& map)
         }
     }
     n += width + 1; // Should be +2 but already counted a +1 from the previous \n
-    release_assert(n == map.size(), "Unexpected number of tiles");
+    release_assert(n == map.size(), "Unexpected number of cells");
 
     // Close file.
     map_file.close();
@@ -141,7 +140,7 @@ Instance::Instance(const char* scenario_path, const Agent nb_agents)
         {
             char buf[1024];
             scen_file.getline(buf, 1024);
-            release_assert(strstr(buf, "version 1"), "Invalid scenario file format");
+            release_assert(strstr(buf, "version 1"), "Expecting \"version 1\" scenario file format");
         }
 
         // Read agents data.
@@ -189,14 +188,10 @@ Instance::Instance(const char* scenario_path, const Agent nb_agents)
                 agents_map_data.push_back(agent_map_data);
             }
         }
-        release_assert(
-            nb_agents == std::numeric_limits<Int>::max() || agents.size() == nb_agents,
-            "Scenario file contained {} agents. Not enough to read {} agents",
-            agents.size(), nb_agents);
-        if (agents.empty())
-        {
-            err("No agents in scenario file {}", scenario_path);
-        }
+        release_assert(nb_agents == std::numeric_limits<Int>::max() || agents.size() == nb_agents,
+                       "Scenario file contained {} agents. Not enough to read {} agents",
+                       agents.size(), nb_agents);
+        release_assert(!agents.empty(), "No agents in scenario file {}", scenario_path);
 
         // Close file.
         scen_file.close();

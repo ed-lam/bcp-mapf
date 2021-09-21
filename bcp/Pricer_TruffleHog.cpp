@@ -62,18 +62,11 @@ struct SCIP_PricerData
 
     SCIP_Real* agent_part_dual;                                                    // Dual variable values of agent set partition constraints
     SCIP_Real* price_priority;                                                     // Pricing priority of each agent
+    bool* agent_priced;                                                            // Indicates if an agent is priced in the current round
     PricingOrder* order;                                                           // Order of agents to price
 
 #ifdef USE_ASTAR_SOLUTION_CACHING
-    Vector<Vector<NodeTime>> previous_segments;                                    // End-points of segments in previous failed iteration
-    Vector<Time> previous_earliest_finish;                                         // Earliest time to reach the goal in the previous failed iteration
-    Vector<Time> previous_latest_finish;                                           // Latest time to reach the goal in the previous failed iteration
-    Vector<Float> previous_agent_part_dual;                                        // Dual variable values of agent set partition constraints in previous failed iteration
-    Vector<HashTable<NodeTime, TruffleHog::EdgeCosts>> previous_edge_penalties;    // Edge penalties used in previous failed iteration
-    Vector<Vector<Cost>> previous_time_finish_penalties;                           // Time to finish penalties in previous failed iteration
-#ifdef USE_GOAL_CONFLICTS
-    Vector<Vector<GoalCrossing>> previous_goal_crossings;                          // Goal crossing penalties in previous failed iteration
-#endif
+    Vector<AStar::Data> previous_data;                                             // Inputs to the previous run for an agent
 #endif
 
     SCIP_Longint last_solved_node;                                                 // Node number of the last node pricing
@@ -120,21 +113,17 @@ SCIP_DECL_PRICERINIT(pricerTruffleHogInit)
     SCIP_CALL(SCIPallocBlockMemoryArray(scip, &pricerdata->price_priority, pricerdata->N));
     memset(pricerdata->price_priority, 0, sizeof(SCIP_Real) * pricerdata->N);
 
+    // Create array for priced indicator.
+    SCIP_CALL(SCIPallocBlockMemoryArray(scip, &pricerdata->agent_priced, pricerdata->N));
+    memset(pricerdata->agent_priced, 0, sizeof(bool) * pricerdata->N);
+
     // Create array for order of agents to price.
     SCIP_CALL(SCIPallocBlockMemoryArray(scip, &pricerdata->order, pricerdata->N));
     // Overwritten in each run. No need for initialisation.
 
     // Create space to store the penalties from the previous failed iteration.
 #ifdef USE_ASTAR_SOLUTION_CACHING
-    pricerdata->previous_segments.resize(pricerdata->N);
-    pricerdata->previous_earliest_finish.resize(pricerdata->N);
-    pricerdata->previous_latest_finish.resize(pricerdata->N);
-    pricerdata->previous_agent_part_dual.resize(pricerdata->N, -std::numeric_limits<Float>::infinity());
-    pricerdata->previous_edge_penalties.resize(pricerdata->N);
-    pricerdata->previous_time_finish_penalties.resize(pricerdata->N);
-#ifdef USE_GOAL_CONFLICTS
-    pricerdata->previous_goal_crossings.resize(pricerdata->N);
-#endif
+    pricerdata->previous_data.resize(pricerdata->N);
 #endif
 
     // Set pointer to pricer data.
@@ -161,6 +150,7 @@ SCIP_DECL_PRICERFREE(pricerTruffleHogFree)
     // Deallocate.
     SCIPfreeBlockMemoryArray(scip, &pricerdata->agent_part_dual, pricerdata->N);
     SCIPfreeBlockMemoryArray(scip, &pricerdata->price_priority, pricerdata->N);
+    SCIPfreeBlockMemoryArray(scip, &pricerdata->agent_priced, pricerdata->N);
     SCIPfreeBlockMemoryArray(scip, &pricerdata->order, pricerdata->N);
     pricerdata->~SCIP_PricerData();
     SCIPfreeBlockMemory(scip, &pricerdata);
@@ -246,6 +236,9 @@ MasterProblemStatus calculate_agents_order(
                              (a.must_price == b.must_price && price_priority[a.a] > price_priority[b.a]);
                   });
     }
+
+    // Reset.
+    memset(pricerdata->agent_priced, 0, sizeof(bool) * pricerdata->N);
 
     // Done.
     return master_lp_status;
@@ -372,23 +365,27 @@ SCIP_RETCODE run_trufflehog_pricer(
     const auto n_vertex_branching_conss = SCIPconshdlrGetNConss(pricerdata->vertex_branching_conshdlr);
     auto vertex_branching_conss = SCIPconshdlrGetConss(pricerdata->vertex_branching_conshdlr);
     debug_assert(n_vertex_branching_conss == 0 || vertex_branching_conss);
-//    const auto n_wait_branching_conss = SCIPconshdlrGetNConss(pricerdata->wait_branching_conshdlr);
-//    auto wait_branching_conss = SCIPconshdlrGetConss(pricerdata->wait_branching_conshdlr);
-//    debug_assert(n_wait_branching_conss == 0 || wait_branching_conss);
     const auto n_length_branching_conss = SCIPconshdlrGetNConss(pricerdata->length_branching_conshdlr);
     auto length_branching_conss = SCIPconshdlrGetConss(pricerdata->length_branching_conshdlr);
     debug_assert(n_length_branching_conss == 0 || length_branching_conss);
 
-    // Get solver.
+    // Get the low-level solver.
     auto& astar = SCIPprobdataGetAStar(probdata);
     auto& restab = astar.reservation_table();
-    auto& edge_penalties = astar.edge_penalties();
+
+    // Get data from the low-level solver.
+    auto& [start, 
+           waypoints, 
+           goal, 
+           earliest_goal_time, 
+           latest_goal_time, 
+           cost_offset, 
+           edge_penalties, 
+           finish_time_penalties
 #ifdef USE_GOAL_CONFLICTS
-    auto& goal_crossings = astar.goal_crossings();
+         , goal_penalties
 #endif
-#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-    auto& rectangle_crossings = astar.rectangle_crossings();
-#endif
+    ] = astar.data();
 
     // Print used paths.
 #ifdef PRINT_DEBUG
@@ -553,25 +550,6 @@ SCIP_RETCODE run_trufflehog_pricer(
 //#endif
 //#endif
 
-    // Get dual variable values of agent partition constraints.
-    auto agent_part_dual = pricerdata->agent_part_dual;
-    for (Agent a = 0; a < N; ++a)
-    {
-        // Get the constraint.
-        auto cons = agent_part[a];
-        debug_assert(cons);
-
-        // Check that the constraint is not (locally) disabled/redundant.
-        debug_assert(SCIPconsIsEnabled(cons));
-
-        // Check that no variable is fixed to one.
-        debug_assert(SCIPgetNFixedonesSetppc(scip, cons) == 0);
-
-        // Store dual value.
-        agent_part_dual[a] = is_farkas ? SCIPgetDualfarkasSetppc(scip, cons) : SCIPgetDualsolSetppc(scip, cons);
-        debug_assert(SCIPisGE(scip, agent_part_dual[a], 0.0));
-    }
-
     // Make edge penalties for all agents.
     EdgePenalties global_edge_penalties;
 
@@ -632,28 +610,26 @@ SCIP_RETCODE run_trufflehog_pricer(
 
     // Price each agent.
     Float min_reduced_cost = 0;
-    Vector<bool> agent_priced(N);
 #ifdef PRINT_DEBUG
     Int nb_new_cols = 0;
 #endif
     bool found = false;
+    auto agent_priced = pricerdata->agent_priced;
     for (Int order_idx = 0;
          order_idx < N && (!found || order[order_idx].must_price) && !SCIPisStopped(scip);
          ++order_idx)
     {
-        // Get agent.
-        const auto a = order[order_idx].a;
-        const auto start = agents[a].start;
-        const auto goal = agents[a].goal;
-        SCIP_Real path_cost = 0.0;
+        // Create output.
         Vector<Edge> path;
+        Vector<NodeTime> path_vertices;
+        SCIP_Real path_cost;
 
-        // Clear previous run.
-        auto& time_finish_penalties = astar.time_finish_penalties();
-        time_finish_penalties.clear();
+        // Set up start and end points.
+        const auto a = order[order_idx].a;
+        start = agents[a].start;
+        goal = agents[a].goal;
 
-        // Set up reservation table. Reserve vertices in use by all other agents and
-        // reserve vertices in all new paths.
+        // Set up reservation table. Reserve vertices in use by all other agents and reserve vertices in all new paths.
         restab.clear_reservations();
         for (auto var : vars)
         {
@@ -678,7 +654,7 @@ SCIP_RETCODE run_trufflehog_pricer(
                         restab.reserve(NodeTime{n, t});
                         restab.reserve(NodeTime{n, t + 1});
                     }
-                    for (t = 1; t < path_length; ++t)
+                    for (++t; t < path_length; ++t)
                     {
                         const auto n = path[t].n;
                         restab.reserve(NodeTime{n, t - 1});
@@ -711,7 +687,7 @@ SCIP_RETCODE run_trufflehog_pricer(
                     restab.reserve(NodeTime{n, t});
                     restab.reserve(NodeTime{n, t + 1});
                 }
-                for (t = 1; t < path_length; ++t)
+                for (++t; t < path_length; ++t)
                 {
                     const auto n = path[t].n;
                     restab.reserve(NodeTime{n, t - 1});
@@ -726,91 +702,160 @@ SCIP_RETCODE run_trufflehog_pricer(
             }
         }
 
+        // Input the agent partition dual.
+        {
+            // Get the constraint.
+            auto cons = agent_part[a];
+            debug_assert(cons);
+
+            // Check that the constraint is not (locally) disabled/redundant.
+            debug_assert(SCIPconsIsEnabled(cons));
+
+            // Check that no variable is fixed to one.
+            debug_assert(SCIPgetNFixedonesSetppc(scip, cons) == 0);
+
+            // Store dual value.
+            const auto dual = is_farkas ? SCIPgetDualfarkasSetppc(scip, cons) : SCIPgetDualsolSetppc(scip, cons);
+            debug_assert(SCIPisGE(scip, dual, 0.0));
+            cost_offset = -dual;
+        }
+
         // Modify edge costs for two-agent robust cuts.
         edge_penalties = global_edge_penalties;
+        finish_time_penalties.clear();
+#ifdef USE_GOAL_CONFLICTS
+        goal_penalties.clear();
+#endif
         for (const auto& cut : two_agent_robust_cuts)
             if (a == cut.a1() || a == cut.a2())
             {
-                const auto dual = is_farkas ?
-                                  SCIProwGetDualfarkas(cut.row()) :
-                                  SCIProwGetDualsol(cut.row());
+                const auto dual = is_farkas ? SCIProwGetDualfarkas(cut.row()) : SCIProwGetDualsol(cut.row());
                 debug_assert(SCIPisFeasLE(scip, dual, 0.0));
                 if (SCIPisFeasLT(scip, dual, 0.0))
                 {
-                    // Add the dual variable value to the edges.
                     if (cut.is_same_time())
                     {
                         const auto t = cut.t();
                         for (auto [it, end] = cut.edges(a); it != end; ++it)
                         {
+                            // Incur the penalty on the edge.
                             const auto e = *it;
                             auto& penalties = edge_penalties.get_edge_penalties(e.n, t);
                             penalties.d[e.d] -= dual;
+
+                            // If a wait edge in a two-agent robust cut corresponds to waiting at the goal, incur the
+                            // penalty for staying at the goal because the low-level solver doesn't traverse this edge.
+                            if (e.n == goal && e.d == Direction::WAIT)
+                            {
+                                finish_time_penalties.add(t, -dual);
+                            }
                         }
                     }
                     else
                     {
                         for (auto [it, end] = cut.edge_times(a); it != end; ++it)
                         {
+                            // Incur the penalty on the edge.
                             const auto n = it->n;
                             const auto d = it->d;
                             const auto t = it->t;
                             auto& penalties = edge_penalties.get_edge_penalties(n, t);
                             penalties.d[d] -= dual;
+
+                            // If a wait edge in a two-agent robust cut corresponds to waiting at the goal, incur the
+                            // penalty for staying at the goal because the low-level solver doesn't traverse this edge.
+                            if (n == goal && d == Direction::WAIT)
+                            {
+                                const auto conflict_time = it->t;
+                                finish_time_penalties.add(conflict_time, -dual);
+                            }
                         }
                     }
                 }
             }
 
-        // Add goal crossings. If a2 uses the goal of a1 at or after time t, incur the penalty.
-#ifdef USE_GOAL_CONFLICTS
-        goal_crossings.clear();
-        for (const auto& [row, a1, a2, nt] : goal_conflicts)
-            if (a == a2)
+        // If the node of a vertex conflict is the goal, incur a penalty for waiting (indefinitely) at the goal
+        // after the agent has completed its path.
+        for (const auto& [nt, vertex_conflict] : vertex_conflicts_conss)
+        {
+            const auto& [row] = vertex_conflict;
+            if (nt.n == goal)
             {
-                const auto dual = is_farkas ?
-                                  SCIProwGetDualfarkas(row) :
-                                  SCIProwGetDualsol(row);
+                const auto dual = is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row);
                 debug_assert(SCIPisFeasLE(scip, dual, 0.0));
                 if (SCIPisFeasLT(scip, dual, 0.0))
                 {
-                    auto& goal = goal_crossings.emplace_back();
-                    goal.dual = dual;
-                    goal.nt = nt;
+                    // Add the penalty if the agent finishes before time t. The penalty at time t is accounted for
+                    // in the global edge penalties.
+                    finish_time_penalties.add(nt.t - 1, -dual);
                 }
             }
+        }
+
+        // If the wait edge in a wait edge conflict is at the goal, incur a penalty for staying at the goal.
+#ifdef USE_WAITEDGE_CONFLICTS
+        for (const auto& [et, edge_conflict] : edge_conflicts_conss)
+        {
+            const auto& [row, edges, t] = edge_conflict;
+            const auto e = edges[2];
+            debug_assert(e.d == Direction::WAIT);
+            if (e.n == goal)
+            {
+                const auto dual = is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row);
+                debug_assert(SCIPisFeasLE(scip, dual, 0.0));
+                if (SCIPisFeasLT(scip, dual, 0.0))
+                {
+                    finish_time_penalties.add(t, -dual);
+                }
+            }
+        }
 #endif
 
-        // Modify edge costs for rectangle clique conflicts.
-#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-        rectangle_crossings.clear();
-        for (const auto& conflict : rectangle_clique_conflicts_conss)
-            if (a == conflict.a1 || a == conflict.a2)
+        // Add goal crossings or finish time penalties for goal conflicts. If agent a1 finishes at or before time t,
+        // incur the penalty. If agent a2 crosses the goal of agent a1 at or after time t, incur the penalty.
+#ifdef USE_GOAL_CONFLICTS
+        for (const auto& [row, a1, a2, nt] : goal_conflicts)
+        {
+            if (a == a1)
             {
-                const auto dual = is_farkas ?
-                                  SCIProwGetDualfarkas(conflict.row) :
-                                  SCIProwGetDualsol(conflict.row);
+                debug_assert(nt.n == goal);
+
+                const auto dual = is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row);
                 debug_assert(SCIPisFeasLE(scip, dual, 0.0));
                 if (SCIPisFeasLT(scip, dual, 0.0))
                 {
-                    // Add a rectangle crossing penalty.
-                    auto& rectangle = rectangle_crossings.emplace_back();
-                    const auto [it1, it2, it3] = conflict.agent_in_out_edges(a);
-                    rectangle.dual = dual;
-                    rectangle.mid = it2 - it1;
-                    rectangle.end = it3 - it1;
-                    rectangle.other_dir = a == conflict.a1 ?
-                                          conflict.in2_begin()->e.d :
-                                          conflict.in1_begin()->e.d;
-                    rectangle.edges = UniquePtr<EdgeTime[]>(new EdgeTime[rectangle.end]);
-                    std::copy(it1, it3, rectangle.edges.get());
+                    finish_time_penalties.add(nt.t, -dual);
                 }
             }
+            else if (a == a2)
+            {
+                const auto dual = is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row);
+                debug_assert(SCIPisFeasLE(scip, dual, 0.0));
+                if (SCIPisFeasLT(scip, dual, 0.0))
+                {
+                    goal_penalties.add(nt, -dual);
+                }
+            }
+        }
+#endif
+
+        // Modify edge costs for path length nogoods. If agent a finishes at or before time t, incur the penalty.
+#ifdef USE_PATH_LENGTH_NOGOODS
+        for (const auto& [row, latest_finish_times] : path_length_nogoods)
+            for (const auto& [nogood_a, t] : latest_finish_times)
+                if (a == nogood_a)
+                {
+                    const auto dual = is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row);
+                    debug_assert(SCIPisFeasLE(scip, dual, 0.0));
+                    if (SCIPisFeasLT(scip, dual, 0.0))
+                    {
+                        finish_time_penalties.add(t, -dual);
+                    }
+                }
 #endif
 
         // Modify edge costs for vertex branching decisions.
-        Vector<NodeTime> segments;
-        segments.push_back(NodeTime{start, 0});
+        waypoints.clear();
         for (Int c = 0; c < n_vertex_branching_conss; ++c)
         {
             // Get the constraint.
@@ -826,12 +871,8 @@ SCIP_RETCODE run_trufflehog_pricer(
             const auto branch_a = SCIPgetVertexBranchingAgent(cons);
             const auto dir = SCIPgetVertexBranchingDirection(cons);
             const auto nt = SCIPgetVertexBranchingNodeTime(cons);
-            if (branch_a == a && dir == VertexBranchDirection::Use)
-            {
-                // End the path segment.
-                segments.push_back(nt);
-            }
-            else if (branch_a == a || dir == VertexBranchDirection::Use)
+            if ((a == branch_a && dir == VertexBranchDirection::Forbid) ||
+                (a != branch_a && dir == VertexBranchDirection::Use))
             {
                 // Don't use the vertex.
                 const auto prev_time = nt.t - 1;
@@ -861,93 +902,54 @@ SCIP_RETCODE run_trufflehog_pricer(
                     penalties.wait = std::numeric_limits<Cost>::infinity();
                 }
             }
+            else if (a == branch_a)
+            {
+                debug_assert(dir == VertexBranchDirection::Use);
+
+                // Store a waypoint to enforce use of the vertex.
+                waypoints.push_back(nt);
+            }
         }
 
-        // Modify edge costs for wait branching decisions.
-        Time earliest_finish = 0;
-//        for (Int c = 0; c < n_wait_branching_conss; ++c)
-//        {
-//            // Get the constraint.
-//            auto cons = wait_branching_conss[c];
-//            debug_assert(cons);
-//
-//            // Ignore constraints that are not active since these are not on the current
-//            // active path of the search tree or constraints for a different agent.
-//            if (!SCIPconsIsActive(cons) || SCIPgetWaitBranchingAgent(cons) != a)
-//                continue;
-//
-//            // Enforce the decision.
-//            const auto dir = SCIPgetWaitBranchingDirection(cons);
-//            const auto t = SCIPgetWaitBranchingTime(cons);
-//            if (dir == WaitBranchDirection::MustWait)
-//            {
-//                for (Coord x = 0; x < width; ++x)
-//                    for (Coord y = 0; y < height; ++y)
-//                    {
-//                        const auto n = map.get_id(x, y);
-//                        auto& duals = edge_duals.get_edge_duals(n, t);
-//                        duals.north = std::numeric_limits<Cost>::infinity();
-//                        duals.south = std::numeric_limits<Cost>::infinity();
-//                        duals.east = std::numeric_limits<Cost>::infinity();
-//                        duals.west = std::numeric_limits<Cost>::infinity();
-//                    }
-//
-//                if (t + 1 > earliest_finish)
-//                    earliest_finish = t + 1;
-//            }
-//            else
-//            {
-//                for (Coord x = 0; x < width; ++x)
-//                    for (Coord y = 0; y < height; ++y)
-//                    {
-//                        const auto n = map.get_id(x, y);
-//                        auto& duals = edge_duals.get_edge_duals(n, t);
-//                        duals.wait = std::numeric_limits<Cost>::infinity();
-//                    }
-//            }
-//            edge_duals_changed = true;
-//        }
-
-        // Sort segments by time.
-        std::sort(segments.begin(), segments.end(), [](const auto& a, const auto& b)
+        // Sort waypoints by time.
+        std::sort(waypoints.begin(), waypoints.end(), [](const auto& a, const auto& b)
         {
             return a.t < b.t;
         });
 #ifdef DEBUG
-        for (size_t idx = 0; idx < segments.size() - 1; ++idx)
+        for (size_t idx = 1; idx < waypoints.size(); ++idx)
         {
-            debug_assert(segments[idx].t < segments[idx + 1].t);
+            debug_assert(waypoints[idx - 1].t < waypoints[idx].t);
         }
 #endif
 
         // Modify edge costs for length branching decisions.
         debug_assert(astar.max_path_length() >= 1);
-        Time latest_finish = astar.max_path_length() - 1;
+        earliest_goal_time = 0;
+        latest_goal_time = astar.max_path_length() - 1;
         for (Int c = 0; c < n_length_branching_conss; ++c)
         {
             // Get the constraint.
             auto cons = length_branching_conss[c];
             debug_assert(cons);
 
-            // Ignore constraints that are not active since these are not on the current
-            // active path of the search tree.
+            // Ignore constraints that are not active since these are not on the current active path of the search tree.
             if (!SCIPconsIsActive(cons))
                 continue;
 
-            // Enforce the decision if the same agent. Disable crossing if different
-            // agent.
+            // Enforce the decision if the same agent. Disable crossing if different agent.
             const auto branch_a = SCIPgetLengthBranchingAgent(cons);
             const auto dir = SCIPgetLengthBranchingDirection(cons);
             const auto nt = SCIPgetLengthBranchingNodeTime(cons);
-            if (branch_a == a)
+            if (a == branch_a)
             {
-                if (dir == LengthBranchDirection::LEq && nt.t < latest_finish)
+                if (dir == LengthBranchDirection::LEq)
                 {
-                    latest_finish = nt.t;
+                    latest_goal_time = std::min(latest_goal_time, nt.t);
                 }
-                else if (dir == LengthBranchDirection::GEq && nt.t > earliest_finish)
+                else
                 {
-                    earliest_finish = nt.t;
+                    earliest_goal_time = std::max(earliest_goal_time, nt.t);
                 }
             }
             else if (dir == LengthBranchDirection::LEq)
@@ -984,473 +986,80 @@ SCIP_RETCODE run_trufflehog_pricer(
                 }
             }
         }
-        debug_assert(latest_finish >= segments.back().t);
+        debug_assert(waypoints.empty() || latest_goal_time >= waypoints.back().t);
 
-        // Print time constraints.
-//#ifdef PRINT_DEBUG
-//        {
-//            debugln("   Modified edge costs for agent {}", a);
-//            const uint32_t size = gm.height() * gm.width();
-//            for (uint32_t node1 = 0; node1 < size; ++node1)
-//            {
-//                uint32_t x, y;
-//                gm.to_unpadded_xy(node1, x, y);
-//                const auto& constraints = time_cons.get_constraint_set(node1);
-//                for (const auto& constraint : constraints)
-//                {
-//                    const auto t = constraint.timestep_;
-//                    if (constraint.e_[Direction::NORTH] != 1)
-//                    {
-//                        debugln("      (({},{}),({},{})) time {} edge cost {:.4f}",
-//                                x, y, x, y - 1, t,
-//                                constraint.e_[Direction::NORTH]);
-//                    }
-//                    if (constraint.e_[Direction::SOUTH] != 1)
-//                    {
-//                        debugln("      (({},{}),({},{})) time {} edge cost {:.4f}",
-//                                x, y, x, y + 1, t,
-//                                constraint.e_[Direction::SOUTH]);
-//                    }
-//                    if (constraint.e_[Direction::EAST] != 1)
-//                    {
-//                        debugln("      (({},{}),({},{})) time {} edge cost {:.4f}",
-//                                x, y, x + 1, y, t,
-//                                constraint.e_[Direction::EAST]);
-//                    }
-//                    if (constraint.e_[Direction::WEST] != 1)
-//                    {
-//                        debugln("      (({},{}),({},{})) time {} edge cost {:.4f}",
-//                                x, y, x - 1, y, t,
-//                                constraint.e_[Direction::WEST]);
-//                    }
-//                    if (constraint.e_[Direction::WAIT] != 1)
-//                    {
-//                        debugln("      (({},{}),({},{})) time {} edge cost {:.4f}",
-//                                x, y, x, y, t,
-//                                constraint.e_[Direction::WAIT]);
-//                    }
-//                }
-//            }
-//        }
-//#endif
+        // Preprocess input data.
+        astar.preprocess_input();
 
         // Start timer.
 #ifdef PRINT_DEBUG
         const auto start_time = std::chrono::high_resolution_clock::now();
 #endif
 
-        // Solve each segment.
-//        bool skipping = false;
-        size_t idx = 0;
-        for (; idx < segments.size() - 1; ++idx)
-        {
-            // Get the start and goal of this segment.
-            const auto segment_start = segments[idx];
-            const auto segment_goal = segments[idx + 1];
-
-            // Print.
-#ifdef PRINT_DEBUG
-            {
-                const auto [x1, y1] = map.get_xy(segments[idx].n);
-                const auto [x2, y2] = map.get_xy(segments[idx + 1].n);
-                debugln("   Solving segment {} for agent {} from ({},{}) at {} to ({},{}) at {}",
-                        idx, a, x1, y1, segments[idx].t, x2, y2, segments[idx + 1].t);
-            }
-#endif
-
-            // Solve.
-            const auto max_cost = agent_part_dual[a] - path_cost - EPS;
-            const auto [segment, segment_cost] = astar.solve<is_farkas>(segment_start,
-                                                                        segment_goal.n,
-                                                                        segment_goal.t,
-                                                                        segment_goal.t,
-                                                                        max_cost);
-
-            // Advance to the next agent if no path is found.
-            if (segment.empty())
-            {
-                goto AGENT_FAILED;
-            }
-
-            // Get the solution.
-            path_cost += segment_cost;
-            for (auto it = segment.begin(); it != segment.end() - 1; ++it)
-            {
-                const auto d = map.get_direction(it->n, (it + 1)->n);
-                path.push_back(Edge{it->n, d});
-            }
-        }
-
-        // Solve from the last segment to the goal.
-        {
-            // Get the start and goal of this segment.
-            const auto segment_start = segments[idx];
-
-            // Modify edge costs for vertex conflicts at the goal after the agent has completed its
-            // path. Incur a penalty for staying at the goal.
-            for (const auto& [nt, vertex_conflict] : vertex_conflicts_conss)
-            {
-                const auto& [row] = vertex_conflict;
-                if (nt.n == goal)
-                {
-                    const auto dual = is_farkas ?
-                                      SCIProwGetDualfarkas(row) :
-                                      SCIProwGetDualsol(row);
-                    debug_assert(SCIPisFeasLE(scip, dual, 0.0));
-                    if (SCIPisFeasLT(scip, dual, 0.0))
-                    {
-                        // Add the penalty if the a1 finishes before time t. The timestep of the
-                        // conflict is accounted for in the global edge duals, so this loop has
-                        // terminal condition < instead of <=.
-                        if (static_cast<Time>(time_finish_penalties.size()) < nt.t)
-                        {
-                            time_finish_penalties.resize(nt.t);
-                        }
-                        for (Time t = 0; t < nt.t; ++t)
-                        {
-                            time_finish_penalties[t] -= dual;
-                        }
-                    }
-                }
-            }
-
-            // Modify edge costs for wait-edge conflicts at the goal. Incur a penalty for staying at the goal.
-#ifdef USE_WAITEDGE_CONFLICTS
-            for (const auto& [et, edge_conflict] : edge_conflicts_conss)
-            {
-                const auto& [row, edges, conflict_time] = edge_conflict;
-                const auto e = edges[2];
-                debug_assert(e.d == Direction::WAIT);
-                if (e.n == goal)
-                {
-                    const auto dual = is_farkas ?
-                                      SCIProwGetDualfarkas(row) :
-                                      SCIProwGetDualsol(row);
-                    debug_assert(SCIPisFeasLE(scip, dual, 0.0));
-                    if (SCIPisFeasLT(scip, dual, 0.0))
-                    {
-                        if (static_cast<Time>(time_finish_penalties.size()) < conflict_time + 1)
-                        {
-                            time_finish_penalties.resize(conflict_time + 1);
-                        }
-                        for (Time t = 0; t <= conflict_time; ++t)
-                        {
-                            time_finish_penalties[t] -= dual;
-                        }
-                    }
-                }
-            }
-#endif
-
-            // Modify edge costs for waits in robust cuts. Incur a penalty for staying at the goal.
-            for (const auto& cut : two_agent_robust_cuts)
-                if (a == cut.a1() || a == cut.a2())
-                {
-                    const auto dual = is_farkas ?
-                                      SCIProwGetDualfarkas(cut.row()) :
-                                      SCIProwGetDualsol(cut.row());
-                    debug_assert(SCIPisFeasLE(scip, dual, 0.0));
-                    if (SCIPisFeasLT(scip, dual, 0.0))
-                    {
-                        // Add the dual variable value to the edges.
-                        if (cut.is_same_time())
-                        {
-                            const auto conflict_time = cut.t();
-                            for (auto [it, end] = cut.edges(a); it != end; ++it)
-                            {
-                                const auto e = *it;
-                                if (e.n == goal && e.d == Direction::WAIT)
-                                {
-                                    if (static_cast<Time>(time_finish_penalties.size()) < conflict_time + 1)
-                                    {
-                                        time_finish_penalties.resize(conflict_time + 1);
-                                    }
-                                    for (Time t = 0; t <= conflict_time; ++t)
-                                    {
-                                        time_finish_penalties[t] -= dual;
-                                    }
-                                }
-                            }
-                        }
-                        else
-                        {
-                            for (auto [it, end] = cut.edge_times(a); it != end; ++it)
-                            {
-                                const auto n = it->n;
-                                const auto d = it->d;
-                                const auto conflict_time = it->t;
-                                if (n == goal && d == Direction::WAIT)
-                                {
-                                    if (static_cast<Time>(time_finish_penalties.size()) < conflict_time + 1)
-                                    {
-                                        time_finish_penalties.resize(conflict_time + 1);
-                                    }
-                                    for (Time t = 0; t <= conflict_time; ++t)
-                                    {
-                                        time_finish_penalties[t] -= dual;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-            // Modify edge costs for goal conflicts. If a1 finishes at or before time t, incur the penalty.
-#ifdef USE_GOAL_CONFLICTS
-            for (const auto& [row, a1, a2, nt] : goal_conflicts)
-                if (a == a1)
-                {
-                    debug_assert(nt.n == goal);
-
-                    const auto dual = is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row);
-                    debug_assert(SCIPisFeasLE(scip, dual, 0.0));
-                    if (SCIPisFeasLT(scip, dual, 0.0))
-                    {
-                        if (static_cast<Time>(time_finish_penalties.size()) < nt.t + 1)
-                        {
-                            time_finish_penalties.resize(nt.t + 1);
-                        }
-                        for (Time t = 0; t <= nt.t; ++t)
-                        {
-                            time_finish_penalties[t] -= dual;
-                        }
-                    }
-                }
-#endif
-
-            // Modify edge costs for path length nogoods. If agent a finishes at or before time t, incur the penalty.
-#ifdef USE_PATH_LENGTH_NOGOODS
-            for (const auto& [row, latest_finish_times] : path_length_nogoods)
-                for (const auto& [nogood_a, nogood_t] : latest_finish_times)
-                    if (a == nogood_a)
-                    {
-                        const auto dual = is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row);
-                        debug_assert(SCIPisFeasLE(scip, dual, 0.0));
-                        if (SCIPisFeasLT(scip, dual, 0.0))
-                        {
-                            if (static_cast<Time>(time_finish_penalties.size()) < nogood_t + 1)
-                            {
-                                time_finish_penalties.resize(nogood_t + 1);
-                            }
-                            for (Time t = 0; t <= nogood_t; ++t)
-                            {
-                                time_finish_penalties[t] -= dual;
-                            }
-                        }
-                    }
-#endif
-
-            // Print.
-#ifdef PRINT_DEBUG
-            {
-                const auto [x1, y1] = map.get_xy(segments[idx].n);
-                const auto [x2, y2] = map.get_xy(goal);
-                debugln("   Solving last segment {} for agent {} from ({},{}) at {} to "
-                        "({},{})",
-                        idx, a, x1, y1, segments[idx].t, x2, y2);
-            }
-#endif
-
-            // Skip running A* if the penalties in the last iteration of this agent have stayed the same or worsened.
+        // Skip running A* if the penalties in the last iteration of this agent have stayed the same or worsened.
 #ifdef USE_ASTAR_SOLUTION_CACHING
-            {
-//                println("Agent {}", a);
-//                println("Previous segments:");
-//                println("{}", fmt::join(pricerdata->previous_segments[a], ","));
-//                println("Current segments:");
-//                println("{}", fmt::join(segments, ","));
-//                println("Previous agent dual:");
-//                println("{}", pricerdata->previous_agent_part_dual[a]);
-//                println("Current agent dual:");
-//                println("{}", agent_part_dual[a]);
-//                println("Previous edge penalties:");
-//                for (const auto& [nt, e] : pricerdata->previous_edge_penalties[a])
-//                {
-//                    println("({},{}) time {}, north {}, south {}, east {}, west {}, wait {}",
-//                            map.get_x(nt.n), map.get_y(nt.n), nt.t, e.d[0], e.d[1], e.d[2], e.d[3], e.d[4]);
-//                }
-//                println("Current edge penalties:");
-//                for (const auto& [nt, e] : astar.edge_penalties())
-//                {
-//                    println("({},{}) time {}, north {}, south {}, east {}, west {}, wait {}",
-//                            map.get_x(nt.n), map.get_y(nt.n), nt.t, e.d[0], e.d[1], e.d[2], e.d[3], e.d[4]);
-//                }
-//                println("Previous time finish penalties:");
-//                for (const auto x : pricerdata->previous_time_finish_penalties[a])
-//                {
-//                    println("{}", x);
-//                }
-//                println("Current time finish penalties:");
-//                for (const auto x : astar.time_finish_penalties())
-//                {
-//                    println("{}", x);
-//                }
-//                println("Previous goal crossing:");
-//                for (const auto [dual, nt] : pricerdata->previous_goal_crossings[a])
-//                {
-//                    println("{} {}", dual, nt);
-//                }
-//                println("Current goal crossing:");
-//                for (const auto [dual, nt] : astar.goal_crossings())
-//                {
-//                    println("{} {}", dual, nt);
-//                }
-
-                if (segments != pricerdata->previous_segments[a])
-                {
-                    goto SOLVE;
-                }
-
-                if (earliest_finish != pricerdata->previous_earliest_finish[a])
-                {
-                    goto SOLVE;
-                }
-
-                if (latest_finish != pricerdata->previous_latest_finish[a])
-                {
-                    goto SOLVE;
-                }
-
-                if (agent_part_dual[a] > pricerdata->previous_agent_part_dual[a])
-                {
-                    goto SOLVE;
-                }
-
-                if (time_finish_penalties.size() != pricerdata->previous_time_finish_penalties[a].size())
-                {
-                    goto SOLVE;
-                }
-                for (Time t = 0; t < static_cast<Time>(time_finish_penalties.size()); ++t)
-                    if (time_finish_penalties[t] < pricerdata->previous_time_finish_penalties[a][t])
-                    {
-                        goto SOLVE;
-                    }
-
-#ifdef USE_GOAL_CONFLICTS
-                if (goal_crossings.size() != pricerdata->previous_goal_crossings[a].size())
-                {
-                    goto SOLVE;
-                }
-                for (Int idx = 0; idx < static_cast<Int>(goal_crossings.size()); ++idx)
-                    if (goal_crossings[idx].nt != pricerdata->previous_goal_crossings[a][idx].nt ||
-                        goal_crossings[idx].dual > pricerdata->previous_goal_crossings[a][idx].dual)
-                    {
-                        goto SOLVE;
-                    }
+        if (!astar.data().can_be_better(pricerdata->previous_data[a]))
+        {
+            goto FINISHED_PRICING_AGENT;
+        }
 #endif
 
-                for (const auto& [nt, previous_edge_costs] : pricerdata->previous_edge_penalties[a])
-                {
-                    const auto it = edge_penalties.find(nt);
-                    if (it == edge_penalties.end())
-                    {
-                        goto SOLVE;
-                    }
-                    const auto& current_edge_costs = it->second;
-                    if (current_edge_costs.north < previous_edge_costs.north ||
-                        current_edge_costs.south < previous_edge_costs.south ||
-                        current_edge_costs.east < previous_edge_costs.east ||
-                        current_edge_costs.west < previous_edge_costs.west ||
-                        current_edge_costs.wait < previous_edge_costs.wait)
-                    {
-                        goto SOLVE;
-                    }
-                }
-
-//                skipping = true;
-                goto AGENT_SUCCESS;
-            }
-
-            SOLVE:
-#endif
-            // Solve.
-            const auto max_cost = agent_part_dual[a] - path_cost - EPS;
-            const auto [segment, segment_cost] = astar.solve<is_farkas>(segment_start,
-                                                                        goal,
-                                                                        earliest_finish,
-                                                                        latest_finish,
-                                                                        max_cost);
-
-            // Advance to next agent if no path is found.
-            if (segment.empty())
-            {
-                goto AGENT_FAILED;
-            }
-
+        // Solve.
+        std::tie(path_vertices, path_cost) = astar.solve<is_farkas>();
+        if (!path_vertices.empty())
+        {
             // Get the solution.
-            path_cost += segment_cost;
-            for (auto it = segment.begin(); it != segment.end(); ++it)
+            for (auto it = path_vertices.begin(); it != path_vertices.end(); ++it)
             {
-                const auto d = it != segment.end() - 1 ?
+                const auto d = it != path_vertices.end() - 1 ?
                                map.get_direction(it->n, (it + 1)->n) :
                                Direction::INVALID;
                 path.push_back(Edge{it->n, d});
             }
-        }
 
-        // Add a column only if the path has negative reduced cost.
-        min_reduced_cost = std::min(min_reduced_cost, path_cost - agent_part_dual[a]);
-        if (SCIPisSumLT(scip, path_cost - agent_part_dual[a], 0.0))
-        {
-            // Print.
-            debugln("      Found path with length {}, reduced cost {:.6f} ({})",
-                    path.size(),
-                    path_cost - agent_part_dual[a],
-                    format_path(probdata, path.size(), path.data()));
+            // Add a column only if the path has negative reduced cost.
+            min_reduced_cost = std::min(min_reduced_cost, path_cost);
+            if (SCIPisSumLT(scip, path_cost, 0.0))
+            {
+                // Print.
+                debugln("    Found path with length {}, reduced cost {:.6f} ({})",
+                        path.size(),
+                        path_cost,
+                        format_path(probdata, path.size(), path.data()));
 
-            // Add column.
-//            debug_assert(!skipping);
-            SCIP_VAR* var = nullptr;
-            SCIP_CALL(SCIPprobdataAddPricedVar(scip,
-                                               probdata,
-                                               a,
-                                               path.size(),
-                                               path.data(),
-                                               &var));
-            debug_assert(var);
-            found = true;
-            order[order_idx].new_var = var;
-            pricerdata->price_priority[a]++;
+                // Add column.
+                SCIP_VAR* var = nullptr;
+                SCIP_CALL(SCIPprobdataAddPricedVar(scip, probdata, a, path.size(), path.data(), &var));
+                debug_assert(var);
+                found = true;
+                order[order_idx].new_var = var;
+                pricerdata->price_priority[a]++;
 #ifdef PRINT_DEBUG
-            nb_new_cols++;
+                nb_new_cols++;
 #endif
-            goto AGENT_SUCCESS;
+                goto FINISHED_PRICING_AGENT;
+            }
         }
 
         // Store the penalties of the run.
-        AGENT_FAILED:
 #ifdef USE_ASTAR_SOLUTION_CACHING
-        pricerdata->previous_segments[a] = segments;
-        pricerdata->previous_earliest_finish[a] = earliest_finish;
-        pricerdata->previous_latest_finish[a] = latest_finish;
-        pricerdata->previous_agent_part_dual[a] = agent_part_dual[a];
-        pricerdata->previous_edge_penalties[a].clear();
-        for (const auto& [nt, edge_costs] : astar.edge_penalties())
-            if (edge_costs.used)
-            {
-                pricerdata->previous_edge_penalties[a][nt] = edge_costs;
-            }
-        pricerdata->previous_time_finish_penalties[a] = time_finish_penalties;
-#ifdef USE_GOAL_CONFLICTS
-        pricerdata->previous_goal_crossings[a] = goal_crossings;
-#endif
+        pricerdata->previous_data[a] = astar.data();
 #endif
 
         // End of this agent.
-        AGENT_SUCCESS:
+        FINISHED_PRICING_AGENT:
         agent_priced[a] = true;
 
         // End timer.
 #ifdef PRINT_DEBUG
         const auto end_time = std::chrono::high_resolution_clock::now();
-        const auto duration =
-            std::chrono::duration<double>(end_time - start_time).count();
-        debugln("      Done in {:.4f} seconds", duration);
+        const auto duration = std::chrono::duration<double>(end_time - start_time).count();
+        debugln("    Done in {:.4f} seconds", duration);
 #endif
     }
 
     // Print.
-    debugln("   Added {} new columns", nb_new_cols);
+    debugln("Added {} new columns", nb_new_cols);
 
     // Finish.
     if (!SCIPisStopped(scip))
@@ -1544,65 +1153,69 @@ SCIP_RETCODE add_initial_solution(
     SCIP* scip    // SCIP
 )
 {
-    // Get problem data.
-    auto probdata = SCIPgetProbData(scip);
-    const auto N = SCIPprobdataGetN(probdata);
-    const auto& map = SCIPprobdataGetMap(probdata);
-    const auto& agents = SCIPprobdataGetAgentsData(probdata);
+    err("Not yet implemented");
 
-    // Get shortest path solver.
-    auto& astar = SCIPprobdataGetAStar(probdata);
-    auto& restab = astar.reservation_table();
-    auto& edge_penalties = astar.edge_penalties();
-    restab.clear_reservations();
-#ifdef USE_GOAL_CONFLICTS
-    auto& goal_crossings = astar.goal_crossings();
-    release_assert(goal_crossings.empty(), "Cannot have goal crossings in warm-start solution");
-#endif
-
-    // Find a path for each agent.
-    for (Agent a = 0; a < N; ++a)
-    {
-        // Set edge costs.
-        edge_penalties.reset();
-
-        // Solve.
-        const auto start = NodeTime{agents[a].start, 0};
-        const auto goal = agents[a].goal;
-        const Time earliest_finish = 0;
-        const Time latest_finish = astar.max_path_length() - 1;
-        const auto [segment, path_cost] = astar.solve<false>(start,
-                                                             goal,
-                                                             earliest_finish,
-                                                             latest_finish,
-                                                             std::numeric_limits<Cost>::max());
-
-        // Get the solution.
-        Vector<Edge> path;
-        for (auto it = segment.begin(); it != segment.end(); ++it)
-        {
-            const auto d = it != segment.end() - 1 ?
-                           map.get_direction(it->n, (it + 1)->n) :
-                           Direction::INVALID;
-            path.push_back(Edge{it->n, d});
-        }
-
-        // Print.
-        debugln("      Found path with length {}, cost {:.6f} ({})",
-                path.size(),
-                path_cost,
-                format_path(probdata, path.size(), path.data()));
-
-        // Add column.
-        SCIP_VAR* var = nullptr;
-        SCIP_CALL(SCIPprobdataAddInitialVar(scip,
-                                            probdata,
-                                            a,
-                                            path.size(),
-                                            path.data(),
-                                            &var));
-        debug_assert(var);
-    }
+//    // Get problem data.
+//    auto probdata = SCIPgetProbData(scip);
+//    const auto N = SCIPprobdataGetN(probdata);
+//    const auto& map = SCIPprobdataGetMap(probdata);
+//    const auto& agents = SCIPprobdataGetAgentsData(probdata);
+//
+//    // Get shortest path solver.
+//    auto& astar = SCIPprobdataGetAStar(probdata);
+//    auto& restab = astar.reservation_table();
+//    restab.clear_reservations();
+//    auto& edge_penalties = astar.edge_penalties();
+//    auto& finish_time_penalties = astar.finish_time_penalties();
+//    release_assert(finish_time_penalties.empty(), "Cannot have time finish penalties in warm-start solution");
+//#ifdef USE_GOAL_CONFLICTS
+//    auto& goal_penalties = astar.goal_penalties();
+//    release_assert(goal_penalties.empty(), "Cannot have goal penalties in warm-start solution");
+//#endif
+//
+//    // Find a path for each agent.
+//    for (Agent a = 0; a < N; ++a)
+//    {
+//        // Set edge costs.
+//        edge_penalties.clear();
+//
+//        // Solve.
+//        const auto start = NodeTime{agents[a].start, 0};
+//        const auto goal = agents[a].goal;
+//        const Time earliest_finish = 0;
+//        const Time latest_finish = astar.max_path_length() - 1;
+//        const auto [segment, path_cost] = astar.solve<false>(start,
+//                                                             goal,
+//                                                             earliest_finish,
+//                                                             latest_finish,
+//                                                             std::numeric_limits<Cost>::max());
+//
+//        // Get the solution.
+//        Vector<Edge> path;
+//        for (auto it = segment.begin(); it != segment.end(); ++it)
+//        {
+//            const auto d = it != segment.end() - 1 ?
+//                           map.get_direction(it->n, (it + 1)->n) :
+//                           Direction::INVALID;
+//            path.push_back(Edge{it->n, d});
+//        }
+//
+//        // Print.
+//        debugln("      Found path with length {}, cost {:.6f} ({})",
+//                path.size(),
+//                path_cost,
+//                format_path(probdata, path.size(), path.data()));
+//
+//        // Add column.
+//        SCIP_VAR* var = nullptr;
+//        SCIP_CALL(SCIPprobdataAddInitialVar(scip,
+//                                            probdata,
+//                                            a,
+//                                            path.size(),
+//                                            path.data(),
+//                                            &var));
+//        debug_assert(var);
+//    }
 
     return SCIP_OKAY;
 }

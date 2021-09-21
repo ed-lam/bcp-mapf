@@ -31,11 +31,11 @@ class ReservationTable
 {
     char* table_;
     Time timesteps_;
-    const Int map_size_;
+    const Node map_size_;
 
   public:
     // Constructors
-    ReservationTable(const Int map_size) :
+    ReservationTable(const Node map_size) :
         map_size_(map_size)
     {
         timesteps_ = 4 * std::sqrt(map_size_);
@@ -57,10 +57,10 @@ class ReservationTable
     {
         return map_size_;
     }
-    inline bool is_reserved(const NodeTime nt) const
+    bool is_reserved(const NodeTime nt) const
     {
         // Check.
-        debug_assert(nt.n < map_size_);
+        debug_assert(0 <= nt.n && nt.n < map_size_);
         debug_assert(nt.t >= 0);
 
         // Not reserved if beyond allocated memory.
@@ -72,14 +72,15 @@ class ReservationTable
         // Get the bit.
         const auto elem = static_cast<size_t>(nt.t) * map_size_ + nt.n;
         const auto idx = elem / CHAR_BIT;
-        const char mask = 0x1 << (elem % CHAR_BIT);
-        const auto val = (table_[idx] & mask) != 0x0;
+        debug_assert(idx < table_size(timesteps_));
+        const char mask = 0b1 << (elem % CHAR_BIT);
+        const auto val = (table_[idx] & mask) != 0b0;
         return val;
     }
-    inline void reserve(const NodeTime nt)
+    void reserve(const NodeTime nt)
     {
         // Check.
-        debug_assert(nt.n < map_size_);
+        debug_assert(0 <= nt.n && nt.n < map_size_);
         debug_assert(nt.t >= 0);
 
         // Reallocate if not enough memory.
@@ -102,13 +103,14 @@ class ReservationTable
         // Set the bit.
         const auto elem = static_cast<size_t>(nt.t) * map_size_ + nt.n;
         const auto idx = elem / CHAR_BIT;
-        const char mask = 0x1 << (elem % CHAR_BIT);
+        debug_assert(idx < table_size(timesteps_));
+        const char mask = 0b1 << (elem % CHAR_BIT);
         table_[idx] |= mask;
     }
     inline void unreserve(const NodeTime nt)
     {
         // Check.
-        debug_assert(nt.n < map_size_);
+        debug_assert(0 <= nt.n && nt.n < map_size_);
         debug_assert(nt.t >= 0);
 
         // Clear the bit.
@@ -116,7 +118,8 @@ class ReservationTable
         {
             const auto elem = static_cast<size_t>(nt.t) * map_size_ + nt.n;
             const auto idx = elem / CHAR_BIT;
-            const char mask = 0x1 << (elem % CHAR_BIT);
+            debug_assert(idx < table_size(timesteps_));
+            const char mask = 0b1 << (elem % CHAR_BIT);
             table_[idx] &= ~mask;
         }
     }
@@ -127,9 +130,11 @@ class ReservationTable
 
   private:
     // Calculate the size of the reservation table in memory
-    size_t table_size(const Time timesteps)
+    inline size_t table_size(const Time timesteps) const
     {
-        return (static_cast<size_t>(timesteps) * static_cast<size_t>(map_size_)) / CHAR_BIT;
+        const auto tn_size = static_cast<size_t>(timesteps) * static_cast<size_t>(map_size_);
+        const auto size = (tn_size + CHAR_BIT - 1) / CHAR_BIT;
+        return size;
     }
 };
 

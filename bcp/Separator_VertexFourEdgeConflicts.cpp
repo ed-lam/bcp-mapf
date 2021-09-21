@@ -53,19 +53,19 @@ SCIP_RETCODE vertexfouredge_conflicts_create_cut(
     // Create constraint name.
 #ifdef DEBUG
     const auto [a1_et1_x1, a1_et1_y1] = map.get_xy(a1_et1.n);
-    const auto [a1_et1_x2, a1_et1_y2] = map.get_xy(map.get_destination(a1_et1.et.e));
+    const auto [a1_et1_x2, a1_et1_y2] = map.get_destination_xy(a1_et1);
 
     const auto [a1_et2_x1, a1_et2_y1] = map.get_xy(a1_et2.n);
-    const auto [a1_et2_x2, a1_et2_y2] = map.get_xy(map.get_destination(a1_et2.et.e));
+    const auto [a1_et2_x2, a1_et2_y2] = map.get_destination_xy(a1_et2);
 
     const auto a1_nt = a1_nts.front();
     const auto [a1_nt_x1, a1_nt_y1] = map.get_xy(a1_nt.n);
 
     const auto [a2_et1_x1, a2_et1_y1] = map.get_xy(a2_et1.n);
-    const auto [a2_et1_x2, a2_et1_y2] = map.get_xy(map.get_destination(a2_et1.et.e));
+    const auto [a2_et1_x2, a2_et1_y2] = map.get_destination_xy(a2_et1);
 
     const auto [a2_et2_x1, a2_et2_y1] = map.get_xy(a2_et2.n);
-    const auto [a2_et2_x2, a2_et2_y2] = map.get_xy(map.get_destination(a2_et2.et.e));
+    const auto [a2_et2_x2, a2_et2_y2] = map.get_destination_xy(a2_et2);
 
     auto name = fmt::format("vertexfouredge_conflict("
                             "{},(({},{}),({},{}),{}),(({},{}),({},{}),{}),(({},{}),{}),"
@@ -156,7 +156,7 @@ SCIP_RETCODE vertexfouredge_conflicts_separate(
             const auto [a1_et1_x, a1_et1_y] = map.get_xy(a1_et1.n);
 
             // Get the destination of the first edge of agent 1.
-            const auto a1_et1_dest = map.get_destination(a1_et1.et.e);
+            const auto a1_et1_dest = map.get_destination(a1_et1);
 
             // Get the first edge of agent 2.
             const EdgeTime a2_et1{map.get_opposite_edge(a1_et1.et.e), a1_et1.t};
@@ -217,19 +217,19 @@ SCIP_RETCODE vertexfouredge_conflicts_separate(
 #ifdef PRINT_DEBUG
                                             {
                                                     const auto [a1_et1_x1, a1_et1_y1] = map.get_xy(a1_et1.n);
-                                                    const auto [a1_et1_x2, a1_et1_y2] = map.get_xy(map.get_destination(a1_et1.et.e));
+                                                    const auto [a1_et1_x2, a1_et1_y2] = map.get_destination_xy(a1_et1);
 
                                                     const auto [a1_et2_x1, a1_et2_y1] = map.get_xy(a1_et2.n);
-                                                    const auto [a1_et2_x2, a1_et2_y2] = map.get_xy(map.get_destination(a1_et2.et.e));
+                                                    const auto [a1_et2_x2, a1_et2_y2] = map.get_destination_xy(a1_et2);
 
                                                     const auto a1_nt = a1_nts.front();
                                                     const auto [a1_nt_x1, a1_nt_y1] = map.get_xy(a1_nt.n);
 
                                                     const auto [a2_et1_x1, a2_et1_y1] = map.get_xy(a2_et1.n);
-                                                    const auto [a2_et1_x2, a2_et1_y2] = map.get_xy(map.get_destination(a2_et1.et.e));
+                                                    const auto [a2_et1_x2, a2_et1_y2] = map.get_destination_xy(a2_et1);
 
                                                     const auto [a2_et2_x1, a2_et2_y1] = map.get_xy(a2_et2.n);
-                                                    const auto [a2_et2_x2, a2_et2_y2] = map.get_xy(map.get_destination(a2_et2.et.e));
+                                                    const auto [a2_et2_x2, a2_et2_y2] = map.get_destination_xy(a2_et2);
 
                                                     debugln("   Creating vertex four-edge conflict cut (type A) on "
                                                             "(({},{}),({},{}),{}), (({},{}),({},{}),{}) and (({},{}),{}) for agent {} "
@@ -309,19 +309,19 @@ SCIP_RETCODE vertexfouredge_conflicts_separate(
 #ifdef PRINT_DEBUG
                                         {
                                             const auto [a1_et1_x1, a1_et1_y1] = map.get_xy(a1_et1.n);
-                                            const auto [a1_et1_x2, a1_et1_y2] = map.get_xy(map.get_destination(a1_et1.et.e));
+                                            const auto [a1_et1_x2, a1_et1_y2] = map.get_destination_xy(a1_et1);
 
                                             const auto [a1_et2_x1, a1_et2_y1] = map.get_xy(a1_et2.n);
-                                            const auto [a1_et2_x2, a1_et2_y2] = map.get_xy(map.get_destination(a1_et2.et.e));
+                                            const auto [a1_et2_x2, a1_et2_y2] = map.get_destination_xy(a1_et2);
 
                                             const auto a1_nt = a1_nts.front();
                                             const auto [a1_nt_x1, a1_nt_y1] = map.get_xy(a1_nt.n);
 
                                             const auto [a2_et1_x1, a2_et1_y1] = map.get_xy(a2_et1.n);
-                                            const auto [a2_et1_x2, a2_et1_y2] = map.get_xy(map.get_destination(a2_et1.et.e));
+                                            const auto [a2_et1_x2, a2_et1_y2] = map.get_destination_xy(a2_et1);
 
                                             const auto [a2_et2_x1, a2_et2_y1] = map.get_xy(a2_et2.n);
-                                            const auto [a2_et2_x2, a2_et2_y2] = map.get_xy(map.get_destination(a2_et2.et.e));
+                                            const auto [a2_et2_x2, a2_et2_y2] = map.get_destination_xy(a2_et2);
 
                                             debugln("   Creating vertex four-edge conflict cut (type B) on "
                                                     "(({},{}),{},({},{})), (({},{}),{},({},{})) and (({},{}),{}) for agent {} "

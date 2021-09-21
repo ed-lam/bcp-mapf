@@ -53,10 +53,10 @@ SCIP_RETCODE threevertex_conflicts_create_cut(
     // Create constraint name.
 #ifdef DEBUG
     const auto [a1_et1_x1, a1_et1_y1] = map.get_xy(a1_et1.n);
-    const auto [a1_et1_x2, a1_et1_y2] = map.get_destination_xy(a1_et1.et.e);
+    const auto [a1_et1_x2, a1_et1_y2] = map.get_destination_xy(a1_et1);
 
     const auto [a1_et2_x1, a1_et2_y1] = map.get_xy(a1_et2.n);
-    const auto [a1_et2_x2, a1_et2_y2] = map.get_destination_xy(a1_et2.et.e);
+    const auto [a1_et2_x2, a1_et2_y2] = map.get_destination_xy(a1_et2);
 
     const auto [a2_v1_x, a2_v1_y] = map.get_xy(a2_v1.n);
     const auto [a2_v2_x, a2_v2_y] = map.get_xy(a2_v2.n);
@@ -159,14 +159,14 @@ SCIP_RETCODE threevertex_conflicts_separate(
             // Get the vertices of the edge.
             const auto a1_et1_orig = a1_et1.n;
             const auto [a1_et1_orig_x, a1_et1_orig_y] = map.get_xy(a1_et1.n);
-            const auto a1_et1_dest = map.get_destination(a1_et1.et.e);
+            const auto a1_et1_dest = map.get_destination(a1_et1);
 
             // Loop through the second edge of agent 1.
             for (const auto [a1_et2, a1_et2_val] : agent_edges_a1)
             {
                 // Get the vertices of the edge.
                 const auto a1_et2_orig = a1_et2.n;
-                const auto a1_et2_dest = map.get_destination(a1_et2.et.e);
+                const auto a1_et2_dest = map.get_destination(a1_et2);
                 const auto [a1_et2_dest_x, a1_et2_dest_y] = map.get_xy(a1_et2_dest);
 
                 // Continue if the two edges are one timestep apart and incompatible.
@@ -230,10 +230,10 @@ SCIP_RETCODE threevertex_conflicts_separate(
 #ifdef PRINT_DEBUG
                                         {
                                             const auto [a1_et1_x1, a1_et1_y1] = map.get_xy(a1_et1.n);
-                                            const auto [a1_et1_x2, a1_et1_y2] = map.get_destination_xy(a1_et1.et.e);
+                                            const auto [a1_et1_x2, a1_et1_y2] = map.get_destination_xy(a1_et1);
 
                                             const auto [a1_et2_x1, a1_et2_y1] = map.get_xy(a1_et2.n);
-                                            const auto [a1_et2_x2, a1_et2_y2] = map.get_destination_xy(a1_et2.et.e);
+                                            const auto [a1_et2_x2, a1_et2_y2] = map.get_destination_xy(a1_et2);
 
                                             const auto [a2_v1_x, a2_v1_y] = map.get_xy(a2_v1.n);
                                             const auto [a2_v2_x, a2_v2_y] = map.get_xy(a2_v2.n);

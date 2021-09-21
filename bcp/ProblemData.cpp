@@ -1592,7 +1592,7 @@ void update_fractional_vertices_and_edges(
             for (const auto [et, val] : agent_edges)
             {
                 const auto [x1, y1] = map.get_xy(et.n);
-                const auto [x2, y2] = map.get_destination_xy(et.et.e);
+                const auto [x2, y2] = map.get_destination_xy(et);
                 println("      (({},{}),({},{}),{}) val {:.4f}", x1, y1, x2, y2, et.t, val);
             }
         }
@@ -1606,7 +1606,7 @@ void update_fractional_vertices_and_edges(
             for (const auto [et, val] : agent_edges_no_waits)
             {
                 const auto [x1, y1] = map.get_xy(et.n);
-                const auto [x2, y2] = map.get_destination_xy(et.et.e);
+                const auto [x2, y2] = map.get_destination_xy(et);
                 println("      (({},{}),({},{}),{}) val {:.4f}", x1, y1, x2, y2, et.t, val);
             }
         }
