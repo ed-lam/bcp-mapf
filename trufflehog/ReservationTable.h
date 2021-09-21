@@ -24,6 +24,8 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "Coordinates.h"
 #include <cmath>
 
+#ifdef USE_RESERVATION_TABLE
+
 namespace TruffleHog
 {
 
@@ -139,5 +141,7 @@ class ReservationTable
 };
 
 }
+
+#endif
 
 #endif

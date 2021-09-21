@@ -144,7 +144,11 @@ AStar::AStar(const Map& map) :
     h_waypoint_to_goal_(),
     heuristic_(map),
     label_pool_(),
+#ifdef USE_RESERVATION_TABLE
     open_(map.size()),
+#else
+    open_(),
+#endif
     frontier_()
 #ifdef DEBUG
   , nb_labels_(0)
@@ -414,7 +418,9 @@ void AStar::generate(Label* const current,
     next_label->parent = current;
     next_label->g = current->g + cost;
     next_label->nt = next_nt.nt;
+#ifdef USE_RESERVATION_TABLE
     next_label->reserved = reservation_table().is_reserved(next_nt);
+#endif
 
     // Check all goal crossings.
 #ifdef USE_GOAL_CONFLICTS
@@ -578,7 +584,9 @@ void AStar::generate_last_segment(Label* const current,
     next_label->parent = current;
     next_label->g = current->g + cost;
     next_label->nt = next_nt.nt;
+#ifdef USE_RESERVATION_TABLE
     next_label->reserved = reservation_table().is_reserved(next_nt);
+#endif
 
     // Check all goal crossings.
 #ifdef USE_GOAL_CONFLICTS

@@ -45,6 +45,7 @@ class AStar
         Cost f;
         union
         {
+#ifdef USE_RESERVATION_TABLE
             struct
             {
                 uint64_t nt : 63;
@@ -55,6 +56,14 @@ class AStar
                 Node n : 32;
                 Time t : 31;
             };
+#else
+            uint64_t nt;
+            struct
+            {
+                Node n;
+                Time t;
+            };
+#endif
         };
         Int pqueue_index;
         std::byte state_[0];
@@ -68,18 +77,26 @@ class AStar
     // Comparison of labels
     struct LabelCompare
     {
+#ifdef USE_RESERVATION_TABLE
         ReservationTable reservation_table_;
 
         LabelCompare(const Int map_size) : reservation_table_(map_size) {}
+#endif
 
         inline bool operator()(const Label* const a, const Label* const b)
         {
             // Prefer smallest f (shorter path) and break ties with smallest reserved
             // status (not reserved) and then largest g (near the end).
+#ifdef USE_RESERVATION_TABLE
             return (a->f <  b->f) ||
                    (a->f == b->f && a->reserved <  b->reserved) ||
                    (a->f == b->f && a->reserved == b->reserved && a->g >  b->g) ||
                    (a->f == b->f && a->reserved == b->reserved && a->g == b->g && static_cast<bool>(rand() % 2));
+#else
+            return (a->f <  b->f) ||
+                   (a->f == b->f && a->g >  b->g) ||
+                   (a->f == b->f && a->g == b->g && static_cast<bool>(rand() % 2));
+#endif
         }
     };
 
@@ -191,7 +208,9 @@ class AStar
 
     // Getters
     inline auto max_path_length() const { return heuristic_.max_path_length(); }
+#ifdef USE_RESERVATION_TABLE
     auto& reservation_table() { return open_.cmp().reservation_table_; };
+#endif
     auto& data() { return data_; }
     const auto& data() const { return data_; }
 
