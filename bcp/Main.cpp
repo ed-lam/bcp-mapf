@@ -166,8 +166,89 @@ SCIP_RETCODE start_solver(
 
     // Set up plugins.
     {
-        // Include default SCIP plugins.
-        SCIP_CALL(SCIPincludeDefaultPlugins(scip));
+        // Include some default SCIP plugins.
+        {
+            SCIP_CALL( SCIPincludeConshdlrLinear(scip) ); /* linear must be before its specializations due to constraint upgrading */
+            SCIP_CALL( SCIPincludeConshdlrIndicator(scip) );
+            SCIP_CALL( SCIPincludeConshdlrIntegral(scip) );
+            SCIP_CALL( SCIPincludeConshdlrKnapsack(scip) );
+            SCIP_CALL( SCIPincludeConshdlrSetppc(scip) );
+
+            SCIP_CALL( SCIPincludeNodeselBfs(scip) );
+            SCIP_CALL( SCIPincludeNodeselBreadthfirst(scip) );
+            SCIP_CALL( SCIPincludeNodeselDfs(scip) );
+            SCIP_CALL( SCIPincludeNodeselEstimate(scip) );
+            SCIP_CALL( SCIPincludeNodeselHybridestim(scip) );
+            SCIP_CALL( SCIPincludeNodeselRestartdfs(scip) );
+            SCIP_CALL( SCIPincludeNodeselUct(scip) );
+
+            SCIP_CALL( SCIPincludeEventHdlrEstim(scip) );
+            SCIP_CALL( SCIPincludeEventHdlrSolvingphase(scip) );
+
+            SCIP_CALL( SCIPincludeHeurActconsdiving(scip) );
+            SCIP_CALL( SCIPincludeHeurAdaptivediving(scip) );
+            SCIP_CALL( SCIPincludeHeurBound(scip) );
+            SCIP_CALL( SCIPincludeHeurClique(scip) );
+            SCIP_CALL( SCIPincludeHeurCoefdiving(scip) );
+            SCIP_CALL( SCIPincludeHeurCompletesol(scip) );
+            SCIP_CALL( SCIPincludeHeurConflictdiving(scip) );
+            SCIP_CALL( SCIPincludeHeurCrossover(scip) );
+            SCIP_CALL( SCIPincludeHeurDins(scip) );
+            SCIP_CALL( SCIPincludeHeurDistributiondiving(scip) );
+            SCIP_CALL( SCIPincludeHeurDualval(scip) );
+            SCIP_CALL( SCIPincludeHeurFarkasdiving(scip) );
+            SCIP_CALL( SCIPincludeHeurFeaspump(scip) );
+            SCIP_CALL( SCIPincludeHeurFixandinfer(scip) );
+            SCIP_CALL( SCIPincludeHeurFracdiving(scip) );
+            SCIP_CALL( SCIPincludeHeurGins(scip) );
+            SCIP_CALL( SCIPincludeHeurGuideddiving(scip) );
+            SCIP_CALL( SCIPincludeHeurZeroobj(scip) );
+            SCIP_CALL( SCIPincludeHeurIndicator(scip) );
+            SCIP_CALL( SCIPincludeHeurIntdiving(scip) );
+            SCIP_CALL( SCIPincludeHeurIntshifting(scip) );
+            SCIP_CALL( SCIPincludeHeurLinesearchdiving(scip) );
+            SCIP_CALL( SCIPincludeHeurLocalbranching(scip) );
+            SCIP_CALL( SCIPincludeHeurLocks(scip) );
+            SCIP_CALL( SCIPincludeHeurLpface(scip) );
+            SCIP_CALL( SCIPincludeHeurAlns(scip) );
+            SCIP_CALL( SCIPincludeHeurNlpdiving(scip) );
+            SCIP_CALL( SCIPincludeHeurMutation(scip) );
+            SCIP_CALL( SCIPincludeHeurMultistart(scip) );
+            SCIP_CALL( SCIPincludeHeurMpec(scip) );
+            SCIP_CALL( SCIPincludeHeurObjpscostdiving(scip) );
+            SCIP_CALL( SCIPincludeHeurOctane(scip) );
+            SCIP_CALL( SCIPincludeHeurOfins(scip) );
+            SCIP_CALL( SCIPincludeHeurOneopt(scip) );
+            SCIP_CALL( SCIPincludeHeurPADM(scip) );
+            SCIP_CALL( SCIPincludeHeurProximity(scip) );
+            SCIP_CALL( SCIPincludeHeurPscostdiving(scip) );
+            SCIP_CALL( SCIPincludeHeurRandrounding(scip) );
+            SCIP_CALL( SCIPincludeHeurRens(scip) );
+            SCIP_CALL( SCIPincludeHeurReoptsols(scip) );
+            SCIP_CALL( SCIPincludeHeurRepair(scip) );
+            SCIP_CALL( SCIPincludeHeurRins(scip) );
+            SCIP_CALL( SCIPincludeHeurRootsoldiving(scip) );
+            SCIP_CALL( SCIPincludeHeurRounding(scip) );
+            SCIP_CALL( SCIPincludeHeurShiftandpropagate(scip) );
+            SCIP_CALL( SCIPincludeHeurShifting(scip) );
+            SCIP_CALL( SCIPincludeHeurSimplerounding(scip) );
+            SCIP_CALL( SCIPincludeHeurSubNlp(scip) );
+            SCIP_CALL( SCIPincludeHeurTrivial(scip) );
+            SCIP_CALL( SCIPincludeHeurTrivialnegation(scip) );
+            SCIP_CALL( SCIPincludeHeurTrustregion(scip) );
+            SCIP_CALL( SCIPincludeHeurTrySol(scip) );
+            SCIP_CALL( SCIPincludeHeurTwoopt(scip) );
+            SCIP_CALL( SCIPincludeHeurUndercover(scip) );
+            SCIP_CALL( SCIPincludeHeurVbounds(scip) );
+            SCIP_CALL( SCIPincludeHeurVeclendiving(scip) );
+            SCIP_CALL( SCIPincludeHeurZirounding(scip) );
+
+            SCIP_CALL( SCIPincludeDispDefault(scip) );
+            SCIP_CALL( SCIPincludeTableDefault(scip) );
+
+            SCIP_CALL( SCIPincludeConcurrentScipSolvers(scip) );
+        }
+        // SCIP_CALL(SCIPincludeDefaultPlugins(scip));
 
         // Disable parallel solve.
         SCIP_CALL(SCIPsetIntParam(scip, "parallel/maxnthreads", 1));
@@ -175,7 +256,7 @@ SCIP_RETCODE start_solver(
 
         // Set parameters.
         SCIP_CALL(SCIPsetIntParam(scip, "presolving/maxrounds", 0));
-        SCIP_CALL(SCIPsetIntParam(scip, "propagating/rootredcost/freq", -1));
+        // SCIP_CALL(SCIPsetIntParam(scip, "propagating/rootredcost/freq", -1));
         SCIP_CALL(SCIPsetIntParam(scip, "separating/maxaddrounds", -1));
         SCIP_CALL(SCIPsetIntParam(scip, "separating/maxstallrounds", 5));
         SCIP_CALL(SCIPsetIntParam(scip, "separating/maxstallroundsroot", 20));
