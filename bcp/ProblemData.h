@@ -164,6 +164,20 @@ Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetAgentGoalEdgeConflicts(
 );
 #endif
 
+// Get array of goal conflicts of an agent whose goal is in conflict
+#ifdef USE_GOAL_CONFLICTS
+Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetGoalAgentGoalConflicts(
+    SCIP_ProbData* probdata    // Problem data
+);
+#endif
+
+// Get array of goal conflicts of an agent crossing the goal of another agent
+#ifdef USE_GOAL_CONFLICTS
+Vector<Vector<Pair<NodeTime, SCIP_ROW*>>>& SCIPprobdataGetCrossingAgentGoalConflicts(
+    SCIP_ProbData* probdata    // Problem data
+);
+#endif
+
 // Get the vertices fractionally used by each agent
 const Vector<HashTable<NodeTime, SCIP_Real>>& SCIPprobdataGetAgentFractionalVertices(
     SCIP_ProbData* probdata    // Problem data

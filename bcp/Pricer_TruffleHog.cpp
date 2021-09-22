@@ -359,7 +359,8 @@ SCIP_RETCODE run_trufflehog_pricer(
     const auto& rectangle_clique_conflicts_conss = rectangle_clique_conflicts_get_constraints(probdata);
 #endif
 #ifdef USE_GOAL_CONFLICTS
-    const auto& goal_conflicts = SCIPprobdataGetGoalConflicts(probdata);
+    const auto& goal_agent_goal_conflicts = SCIPprobdataGetGoalAgentGoalConflicts(probdata);
+    const auto& crossing_agent_goal_conflicts = SCIPprobdataGetCrossingAgentGoalConflicts(probdata);
 #endif
 #ifdef USE_PATH_LENGTH_NOGOODS
     const auto& path_length_nogoods = SCIPprobdataGetPathLengthNogoods(probdata);
@@ -746,27 +747,22 @@ SCIP_RETCODE run_trufflehog_pricer(
         // Add goal crossings or finish time penalties for goal conflicts. If agent a1 finishes at or before time t,
         // incur the penalty. If agent a2 crosses the goal of agent a1 at or after time t, incur the penalty.
 #ifdef USE_GOAL_CONFLICTS
-        for (const auto& [row, a1, a2, nt] : goal_conflicts)
+        for (const auto& [t, row] : goal_agent_goal_conflicts[a])
         {
-            if (a == a1)
+            const auto dual = is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row);
+            debug_assert(SCIPisFeasLE(scip, dual, 0.0));
+            if (SCIPisFeasLT(scip, dual, 0.0))
             {
-                debug_assert(nt.n == goal);
-
-                const auto dual = is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row);
-                debug_assert(SCIPisFeasLE(scip, dual, 0.0));
-                if (SCIPisFeasLT(scip, dual, 0.0))
-                {
-                    finish_time_penalties.add(nt.t, -dual);
-                }
+                finish_time_penalties.add(t, -dual);
             }
-            else if (a == a2)
+        }
+        for (const auto& [nt, row] : crossing_agent_goal_conflicts[a])
+        {
+            const auto dual = is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row);
+            debug_assert(SCIPisFeasLE(scip, dual, 0.0));
+            if (SCIPisFeasLT(scip, dual, 0.0))
             {
-                const auto dual = is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row);
-                debug_assert(SCIPisFeasLE(scip, dual, 0.0));
-                if (SCIPisFeasLT(scip, dual, 0.0))
-                {
-                    goal_penalties.add(nt, -dual);
-                }
+                goal_penalties.add(nt, -dual);
             }
         }
 #endif

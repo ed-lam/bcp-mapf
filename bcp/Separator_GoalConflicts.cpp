@@ -45,6 +45,9 @@ SCIP_RETCODE goal_conflicts_create_cut(
     SCIP_Result* result                      // Output result
 )
 {
+    // Get problem data.
+    auto probdata = SCIPgetProbData(scip);
+
     // Create constraint name.
 #ifdef DEBUG
     const auto& map = SCIPprobdataGetMap(SCIPgetProbData(scip));
@@ -137,6 +140,19 @@ SCIP_RETCODE goal_conflicts_create_cut(
     else
     {
         *result = SCIP_SEPARATED;
+    }
+
+    // Store the constraint by agent.
+    {
+        debug_assert(nt.n == SCIPprobdataGetAgentsData(probdata)[a1].goal);
+
+        auto& goal_agent_goal_conflicts = SCIPprobdataGetGoalAgentGoalConflicts(probdata);
+        goal_agent_goal_conflicts[a1].push_back({nt.t, row});
+    }
+    {
+
+        auto& crossing_agent_goal_conflicts = SCIPprobdataGetCrossingAgentGoalConflicts(probdata);
+        crossing_agent_goal_conflicts[a2].push_back({nt, row});
     }
 
     // Store the constraint.

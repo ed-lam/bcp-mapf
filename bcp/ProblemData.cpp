@@ -135,6 +135,10 @@ struct SCIP_ProbData
 #ifdef USE_WAITEDGE_CONFLICTS
     Vector<Vector<Pair<Time, SCIP_ROW*>>> agent_goal_edge_conflicts;     // Edge conflicts at the goal of an agent
 #endif
+#ifdef USE_GOAL_CONFLICTS
+    Vector<Vector<Pair<Time, SCIP_ROW*>>> goal_agent_goal_conflicts;     // Goal conflicts of an agent whose goal is in conflict
+    Vector<Vector<Pair<NodeTime, SCIP_ROW*>>> crossing_agent_goal_conflicts;  // Goal conflicts of an agent crossing the goal of another agent
+#endif
 };
 
 // Create problem data for transformed problem
@@ -269,6 +273,26 @@ SCIP_DECL_PROBTRANS(probtrans)
     for (Agent a = 0; a < N; ++a)
     {
         (*targetdata)->agent_goal_edge_conflicts[a].reserve(5000);
+    }
+#endif
+
+    // Allocate memory for goal conflicts of an agent whose goal is in conflict.
+#ifdef USE_GOAL_CONFLICTS
+    debug_assert(sourcedata->goal_agent_goal_conflicts.empty());
+    (*targetdata)->goal_agent_goal_conflicts.resize(N);
+    for (Agent a = 0; a < N; ++a)
+    {
+        (*targetdata)->goal_agent_goal_conflicts[a].reserve(5000);
+    }
+#endif
+
+    // Allocate memory for goal conflicts of an agent crossing the goal of another agent.
+#ifdef USE_GOAL_CONFLICTS
+    debug_assert(sourcedata->crossing_agent_goal_conflicts.empty());
+    (*targetdata)->crossing_agent_goal_conflicts.resize(N);
+    for (Agent a = 0; a < N; ++a)
+    {
+        (*targetdata)->crossing_agent_goal_conflicts[a].reserve(5000);
     }
 #endif
     
@@ -1318,6 +1342,28 @@ Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetAgentGoalEdgeConflicts(
 {
     debug_assert(probdata);
     return probdata->agent_goal_edge_conflicts;
+}
+#endif
+
+// Get array of goal conflicts of an agent whose goal is in conflict
+#ifdef USE_GOAL_CONFLICTS
+Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetGoalAgentGoalConflicts(
+    SCIP_ProbData* probdata    // Problem data
+)
+{
+    debug_assert(probdata);
+    return probdata->goal_agent_goal_conflicts;
+}
+#endif
+
+// Get array of goal conflicts of an agent crossing the goal of another agent
+#ifdef USE_GOAL_CONFLICTS
+Vector<Vector<Pair<NodeTime, SCIP_ROW*>>>& SCIPprobdataGetCrossingAgentGoalConflicts(
+    SCIP_ProbData* probdata    // Problem data
+)
+{
+    debug_assert(probdata);
+    return probdata->crossing_agent_goal_conflicts;
 }
 #endif
 
