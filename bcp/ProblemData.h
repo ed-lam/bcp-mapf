@@ -119,11 +119,6 @@ Vector<TwoAgentRobustCut>& SCIPprobdataGetTwoAgentRobustCuts(
     SCIP_ProbData* probdata    // Problem data
 );
 
-// Get array of agent-specific two-agent robust cuts
-Vector<Vector<AgentRobustCut>>& SCIPprobdataGetAgentRobustCuts(
-    SCIP_ProbData* probdata    // Problem data
-);
-
 // Get separator for rectangle knapsack conflicts
 #ifdef USE_RECTANGLE_KNAPSACK_CONFLICTS
 SCIP_SEPA* SCIPprobdataGetRectangleKnapsackConflictsSepa(
@@ -148,6 +143,23 @@ SCIP_ProbData* probdata    // Problem data
 // Get path length nogoods
 #ifdef USE_PATH_LENGTH_NOGOODS
 Vector<PathLengthNogood>& SCIPprobdataGetPathLengthNogoods(
+    SCIP_ProbData* probdata    // Problem data
+);
+#endif
+
+// Get array of two-agent robust cuts grouped by agent
+Vector<Vector<AgentRobustCut>>& SCIPprobdataGetAgentRobustCuts(
+    SCIP_ProbData* probdata    // Problem data
+);
+
+// Get array of vertex conflicts at the goal of an agent
+Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetAgentGoalVertexConflicts(
+    SCIP_ProbData* probdata    // Problem data
+);
+
+// Get array of edge conflicts at the goal of an agent
+#ifdef USE_WAITEDGE_CONFLICTS
+Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetAgentGoalEdgeConflicts(
     SCIP_ProbData* probdata    // Problem data
 );
 #endif

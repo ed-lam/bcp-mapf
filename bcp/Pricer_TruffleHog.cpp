@@ -348,17 +348,21 @@ SCIP_RETCODE run_trufflehog_pricer(
     const auto& agent_part = SCIPprobdataGetAgentPartConss(probdata);
     const auto& vertex_conflicts_conss = vertex_conflicts_get_constraints(probdata);
     const auto& edge_conflicts_conss = edge_conflicts_get_constraints(probdata);
+    const auto& agent_goal_vertex_conflicts = SCIPprobdataGetAgentGoalVertexConflicts(probdata);
+#ifdef USE_WAITEDGE_CONFLICTS
+    const auto& agent_goal_edge_conflicts = SCIPprobdataGetAgentGoalEdgeConflicts(probdata);
+#endif
 
     // Get cuts.
     const auto& agent_robust_cuts = SCIPprobdataGetAgentRobustCuts(probdata);
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+    const auto& rectangle_clique_conflicts_conss = rectangle_clique_conflicts_get_constraints(probdata);
+#endif
 #ifdef USE_GOAL_CONFLICTS
     const auto& goal_conflicts = SCIPprobdataGetGoalConflicts(probdata);
 #endif
 #ifdef USE_PATH_LENGTH_NOGOODS
     const auto& path_length_nogoods = SCIPprobdataGetPathLengthNogoods(probdata);
-#endif
-#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-    const auto& rectangle_clique_conflicts_conss = rectangle_clique_conflicts_get_constraints(probdata);
 #endif
 
     // Get constraints for branching decisions.
@@ -712,37 +716,29 @@ SCIP_RETCODE run_trufflehog_pricer(
 
         // If the node of a vertex conflict is the goal, incur a penalty for waiting (indefinitely) at the goal
         // after the agent has completed its path.
-        for (const auto& [nt, vertex_conflict] : vertex_conflicts_conss)
+        for (const auto& [t, row] : agent_goal_vertex_conflicts[a])
         {
-            const auto& [row] = vertex_conflict;
-            if (nt.n == goal)
+            const auto dual = is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row);
+            debug_assert(SCIPisFeasLE(scip, dual, 0.0));
+            if (SCIPisFeasLT(scip, dual, 0.0))
             {
-                const auto dual = is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row);
-                debug_assert(SCIPisFeasLE(scip, dual, 0.0));
-                if (SCIPisFeasLT(scip, dual, 0.0))
-                {
-                    // Add the penalty if the agent finishes before time t. The penalty at time t is accounted for
-                    // in the global edge penalties.
-                    finish_time_penalties.add(nt.t - 1, -dual);
-                }
+                // Add the penalty if the agent finishes before time t. The penalty at time t is accounted for in the
+                // global edge penalties.
+                finish_time_penalties.add(t - 1, -dual);
             }
         }
 
         // If the wait edge in a wait edge conflict is at the goal, incur a penalty for staying at the goal.
 #ifdef USE_WAITEDGE_CONFLICTS
-        for (const auto& [et, edge_conflict] : edge_conflicts_conss)
+        for (const auto& [t, row] : agent_goal_edge_conflicts[a])
         {
-            const auto& [row, edges, t] = edge_conflict;
-            const auto e = edges[2];
-            debug_assert(e.d == Direction::WAIT);
-            if (e.n == goal)
+            const auto dual = is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row);
+            debug_assert(SCIPisFeasLE(scip, dual, 0.0));
+            if (SCIPisFeasLT(scip, dual, 0.0))
             {
-                const auto dual = is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row);
-                debug_assert(SCIPisFeasLE(scip, dual, 0.0));
-                if (SCIPisFeasLT(scip, dual, 0.0))
-                {
-                    finish_time_penalties.add(t, -dual);
-                }
+                // If an agent finishes at time t, it does not traverse the edge at time t to t+1. So the agent is 
+                // penalised here.
+                finish_time_penalties.add(t, -dual);
             }
         }
 #endif

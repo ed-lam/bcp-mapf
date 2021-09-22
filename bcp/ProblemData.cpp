@@ -116,7 +116,6 @@ struct SCIP_ProbData
     SCIP_CONS* vertex_conflicts;                                         // Constraint for vertex conflicts
     SCIP_CONS* edge_conflicts;                                           // Constraint for edge conflicts
     Vector<TwoAgentRobustCut> two_agent_robust_cuts;                     // Robust cuts over two agents
-    Vector<Vector<AgentRobustCut>> agent_robust_cuts;                    // Two-agent robust cuts separated by agent
 #ifdef USE_RECTANGLE_KNAPSACK_CONFLICTS
     SCIP_SEPA* rectangle_knapsack_conflicts;                             // Separator for rectangle knapsack conflicts
 #endif
@@ -128,6 +127,13 @@ struct SCIP_ProbData
 #endif
 #ifdef USE_PATH_LENGTH_NOGOODS
     Vector<PathLengthNogood> path_length_nogoods;                        // Path length nogoods
+#endif
+
+    // Constraints separated by agent for fast retrieval
+    Vector<Vector<AgentRobustCut>> agent_robust_cuts;                    // Two-agent robust cuts grouped by agent
+    Vector<Vector<Pair<Time, SCIP_ROW*>>> agent_goal_vertex_conflicts;   // Vertex conflicts at the goal of an agent
+#ifdef USE_WAITEDGE_CONFLICTS
+    Vector<Vector<Pair<Time, SCIP_ROW*>>> agent_goal_edge_conflicts;     // Edge conflicts at the goal of an agent
 #endif
 };
 
@@ -222,14 +228,6 @@ SCIP_DECL_PROBTRANS(probtrans)
     debug_assert(sourcedata->two_agent_robust_cuts.empty());
     (*targetdata)->two_agent_robust_cuts.reserve(5000);
 
-    // Allocate memory for agent-specific two-agent robust cuts.
-    debug_assert(sourcedata->agent_robust_cuts.empty());
-    (*targetdata)->agent_robust_cuts.resize(N);
-    for (Agent a = 0; a < N; ++a)
-    {
-        (*targetdata)->agent_robust_cuts[a].reserve(5000);
-    }
-
     // Copy separator for rectangle knapsack conflicts.
 #ifdef USE_RECTANGLE_KNAPSACK_CONFLICTS
     debug_assert(sourcedata->rectangle_knapsack_conflicts);
@@ -240,6 +238,38 @@ SCIP_DECL_PROBTRANS(probtrans)
 #ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
     debug_assert(sourcedata->rectangle_clique_conflicts);
     (*targetdata)->rectangle_clique_conflicts = sourcedata->rectangle_clique_conflicts;
+#endif
+
+    // Allocate memory for goal conflicts.
+#ifdef USE_GOAL_CONFLICTS
+    debug_assert(sourcedata->goal_conflicts.empty());
+    (*targetdata)->goal_conflicts.reserve(5000);
+#endif
+
+    // Allocate memory for two-agent robust cuts grouped by agent.
+    debug_assert(sourcedata->agent_robust_cuts.empty());
+    (*targetdata)->agent_robust_cuts.resize(N);
+    for (Agent a = 0; a < N; ++a)
+    {
+        (*targetdata)->agent_robust_cuts[a].reserve(5000);
+    }
+
+    // Allocate memory for vertex conflicts at the goal of an agent.
+    debug_assert(sourcedata->agent_goal_vertex_conflicts.empty());
+    (*targetdata)->agent_goal_vertex_conflicts.resize(N);
+    for (Agent a = 0; a < N; ++a)
+    {
+        (*targetdata)->agent_goal_vertex_conflicts[a].reserve(5000);
+    }
+
+    // Allocate memory for edge conflicts at the goal of an agent.
+#ifdef USE_WAITEDGE_CONFLICTS
+    debug_assert(sourcedata->agent_goal_edge_conflicts.empty());
+    (*targetdata)->agent_goal_edge_conflicts.resize(N);
+    for (Agent a = 0; a < N; ++a)
+    {
+        (*targetdata)->agent_goal_edge_conflicts[a].reserve(5000);
+    }
 #endif
     
     // Create a warm-start solution.
@@ -864,7 +894,7 @@ SCIP_RETCODE SCIPprobdataAddTwoAgentRobustCut(
     // Set status.
     *result = infeasible ? SCIP_CUTOFF : SCIP_SEPARATED;
 
-    // Store the edge-times of the two agents separately.
+    // Store the cut in the set of cuts specific to an agent.
     for (const auto& [a, ets_begin, ets_end] : iterators)
     {
         probdata->agent_robust_cuts[a].push_back(AgentRobustCut{cut.row(), ets_begin, ets_end});
@@ -1216,15 +1246,6 @@ Vector<TwoAgentRobustCut>& SCIPprobdataGetTwoAgentRobustCuts(
     return probdata->two_agent_robust_cuts;
 }
 
-// Get array of agent-specific two-agent robust cuts
-Vector<Vector<AgentRobustCut>>& SCIPprobdataGetAgentRobustCuts(
-    SCIP_ProbData* probdata    // Problem data
-)
-{
-    debug_assert(probdata);
-    return probdata->agent_robust_cuts;
-}
-
 // Get separator for rectangle knapsack conflicts
 #ifdef USE_RECTANGLE_KNAPSACK_CONFLICTS
 SCIP_SEPA* SCIPprobdataGetRectangleKnapsackConflictsSepa(
@@ -1268,6 +1289,35 @@ Vector<PathLengthNogood>& SCIPprobdataGetPathLengthNogoods(
 {
     debug_assert(probdata);
     return probdata->path_length_nogoods;
+}
+#endif
+
+// Get array of two-agent robust cuts grouped by agent
+Vector<Vector<AgentRobustCut>>& SCIPprobdataGetAgentRobustCuts(
+    SCIP_ProbData* probdata    // Problem data
+)
+{
+    debug_assert(probdata);
+    return probdata->agent_robust_cuts;
+}
+
+// Get array of vertex conflicts at the goal of an agent
+Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetAgentGoalVertexConflicts(
+    SCIP_ProbData* probdata    // Problem data
+)
+{
+    debug_assert(probdata);
+    return probdata->agent_goal_vertex_conflicts;
+}
+
+// Get array of edge conflicts at the goal of an agent
+#ifdef USE_WAITEDGE_CONFLICTS
+Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetAgentGoalEdgeConflicts(
+    SCIP_ProbData* probdata    // Problem data
+)
+{
+    debug_assert(probdata);
+    return probdata->agent_goal_edge_conflicts;
 }
 #endif
 

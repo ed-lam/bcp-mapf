@@ -99,9 +99,13 @@ SCIP_RETCODE vertex_conflicts_create_cut(
     SCIP_Result* result                   // Output result
 )
 {
+    // Get problem data.
+    auto probdata = SCIPgetProbData(scip);
+    const auto N = SCIPprobdataGetN(probdata);
+    const auto& agents = SCIPprobdataGetAgentsData(probdata);
+
     // Create constraint name.
 #ifdef DEBUG
-    auto probdata = SCIPgetProbData(scip);
     const auto& map = SCIPprobdataGetMap(probdata);
     const auto [x, y] = map.get_xy(nt.n);
     const auto name = fmt::format("vertex_conflict(({},{}),{})", x, y, nt.t);
@@ -171,6 +175,17 @@ SCIP_RETCODE vertex_conflicts_create_cut(
     else
     {
         *result = SCIP_SEPARATED;
+    }
+
+    // Store the constraint by agent if the vertex conflict is at the goal of an agent.
+    {
+        auto& agent_goal_vertex_conflicts = SCIPprobdataGetAgentGoalVertexConflicts(probdata);
+        for (Agent a = 0; a < N; ++a)
+            if (nt.n == agents[a].goal)
+            {
+                agent_goal_vertex_conflicts[a].push_back({nt.t, row});
+                break;
+            }
     }
 
     // Store the constraint.

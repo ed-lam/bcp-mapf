@@ -108,10 +108,16 @@ SCIP_RETCODE edge_conflicts_create_cut(
     SCIP_Result* result                 // Output result
 )
 {
+    // Get problem data.
+#ifdef USE_WAITEDGE_CONFLICTS
+    auto probdata = SCIPgetProbData(scip);
+    const auto N = SCIPprobdataGetN(probdata);
+    const auto& agents = SCIPprobdataGetAgentsData(probdata);
+#endif
+
     // Create constraint name.
 #ifdef DEBUG
-    auto probdata = SCIPgetProbData(scip);
-    const auto& map = SCIPprobdataGetMap(probdata);
+    const auto& map = SCIPprobdataGetMap(SCIPgetProbData(scip));
     const auto [x1, y1] = map.get_xy(edges[0].n);
     const auto [x2, y2] = map.get_destination_xy(edges[0]);
     const auto name = fmt::format("edge_conflict(({},{}),({},{}),{})", x1, y1, x2, y2, t);
@@ -186,6 +192,22 @@ SCIP_RETCODE edge_conflicts_create_cut(
     {
         *result = SCIP_SEPARATED;
     }
+
+    // Store the constraint by agent if the edge conflict is at the goal of an agent.
+#ifdef USE_WAITEDGE_CONFLICTS
+    {
+        const auto e = edges[2];
+        debug_assert(e.d == Direction::WAIT);
+
+        auto& agent_goal_edge_conflicts = SCIPprobdataGetAgentGoalEdgeConflicts(probdata);
+        for (Agent a = 0; a < N; ++a)
+            if (e.n == agents[a].goal)
+            {
+                agent_goal_edge_conflicts[a].push_back({t, row});
+                break;
+            }
+    }
+#endif
 
     // Store the constraint.
     {
