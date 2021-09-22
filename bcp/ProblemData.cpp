@@ -101,6 +101,7 @@ struct SCIP_ProbData
     // Model data
     SCIP_PricerData* pricerdata;                                                // Pricer data
     SharedPtr<AStar> astar;                                                     // Pricing solver
+    bool found_cuts;                                                            // Indicates whether a cut is found in the current separation round
 
     // Variables
     Vector<SCIP_VAR*> vars;                                                     // Array of variables
@@ -165,6 +166,7 @@ SCIP_DECL_PROBTRANS(probtrans)
     // Copy model data.
     (*targetdata)->pricerdata = sourcedata->pricerdata;
     (*targetdata)->astar = sourcedata->astar;
+    (*targetdata)->found_cuts = false;
 
     // Copy agent path variables.
     (*targetdata)->vars.resize(sourcedata->vars.size());
@@ -1636,6 +1638,14 @@ void SCIPprobdataSetPricerData(
 )
 {
     probdata->pricerdata = pricerdata;
+}
+
+// Get found cuts indicator
+bool& SCIPprobdataGetFoundCutsIndicator(
+    SCIP_ProbData* probdata    // Problem data
+)
+{
+    return probdata->found_cuts;
 }
 
 // Get the map

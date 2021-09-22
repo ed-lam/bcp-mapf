@@ -23,16 +23,16 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "ProblemData.h"
 #include "VariableData.h"
 
-#define CONSHDLR_NAME                                           "vertex"
+#define CONSHDLR_NAME          "vertex"
 #define CONSHDLR_DESC          "Constraint handler for vertex conflicts"
-#define CONSHDLR_SEPAPRIORITY                                        101 // priority of the constraint handler for separation
-#define CONSHDLR_ENFOPRIORITY                                    -900000 // priority of the constraint handler for constraint enforcing
-#define CONSHDLR_CHECKPRIORITY                                   -900000 // priority of the constraint handler for checking feasibility
-#define CONSHDLR_SEPAFREQ                                              1 // frequency for separating cuts; zero means to separate only in the root node
-#define CONSHDLR_EAGERFREQ                                             1 // frequency for using all instead of only the useful constraints in separation,
-                                                                         // propagation and enforcement, -1 for no eager evaluations, 0 for first only
-#define CONSHDLR_DELAYSEPA                                          TRUE // should separation method be delayed, if other separators found cuts?
-#define CONSHDLR_NEEDSCONS                                          TRUE // should the constraint handler be skipped, if no constraints are available?
+#define CONSHDLR_SEPAPRIORITY  11         // priority of the constraint handler for separation
+#define CONSHDLR_ENFOPRIORITY  -900000    // priority of the constraint handler for constraint enforcing
+#define CONSHDLR_CHECKPRIORITY -900000    // priority of the constraint handler for checking feasibility
+#define CONSHDLR_SEPAFREQ      1          // frequency for separating cuts; zero means to separate only in the root node
+#define CONSHDLR_EAGERFREQ     1          // frequency for using all instead of only the useful constraints in separation,
+                                          // propagation and enforcement, -1 for no eager evaluations, 0 for first only
+#define CONSHDLR_DELAYSEPA     TRUE       // should separation method be delayed, if other separators found cuts?
+#define CONSHDLR_NEEDSCONS     TRUE       // should the constraint handler be skipped, if no constraints are available?
 
 // Data for vertex conflicts
 struct VertexConflictsConsData

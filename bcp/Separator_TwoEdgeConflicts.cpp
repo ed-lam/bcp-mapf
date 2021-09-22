@@ -25,17 +25,17 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "ProblemData.h"
 #include "VariableData.h"
 
-#ifdef USE_WAITTWOEDGE_CONFLICTS
-#define SEPA_NAME                               "wait_two_edge"
+#ifdef USE_WAITTWOEDGE_CONFLICTS 
+#define SEPA_NAME         "wait_two_edge"
 #else
-#define SEPA_NAME                                    "two_edge"
+#define SEPA_NAME         "two_edge"
 #endif
-#define SEPA_DESC            "Separator for two edge conflicts"
-#define SEPA_PRIORITY                                      1000 // priority of the constraint handler for separation
-#define SEPA_FREQ                                             1 // frequency for separating cuts; zero means to separate only in the root node
-#define SEPA_MAXBOUNDDIST                                   1.0
-#define SEPA_USESSUBSCIP                                  FALSE // does the separator use a secondary SCIP instance? */
-#define SEPA_DELAY                                        FALSE // should separation method be delayed, if other separators found cuts? */
+#define SEPA_DESC         "Separator for two edge conflicts"
+#define SEPA_PRIORITY     109      // priority of the constraint handler for separation
+#define SEPA_FREQ         1        // frequency for separating cuts; zero means to separate only in the root node
+#define SEPA_MAXBOUNDDIST 1.0
+#define SEPA_USESSUBSCIP  FALSE    // does the separator use a secondary SCIP instance? */
+#define SEPA_DELAY        FALSE    // should separation method be delayed, if other separators found cuts? */
 
 struct TwoEdgeConflictData
 {
@@ -147,6 +147,11 @@ SCIP_RETCODE twoedge_conflicts_separate(
     auto probdata = SCIPgetProbData(scip);
     const auto N = SCIPprobdataGetN(probdata);
     const auto& map = SCIPprobdataGetMap(probdata);
+
+    // Skip this separator if an earlier separator found cuts.
+    auto& found_cuts = SCIPprobdataGetFoundCutsIndicator(probdata);
+    if (found_cuts)
+        return SCIP_OKAY;
 
     // Get the edges fractionally used by each agent.
     const auto& agent_edges_no_waits = SCIPprobdataGetAgentFractionalEdgesNoWaits(probdata);
@@ -347,6 +352,7 @@ SCIP_RETCODE twoedge_conflicts_separate(
                                                    t,
                                                    result));
             ++nb_cuts;
+            found_cuts = true;
         }
     }
 

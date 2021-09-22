@@ -25,13 +25,13 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "ProblemData.h"
 #include "VariableData.h"
 
-#define SEPA_NAME                                  "wait_delay"
-#define SEPA_DESC          "Separator for wait delay conflicts"
-#define SEPA_PRIORITY                                      1000 // priority of the constraint handler for separation
-#define SEPA_FREQ                                             1 // frequency for separating cuts; zero means to separate only in the root node
-#define SEPA_MAXBOUNDDIST                                   1.0
-#define SEPA_USESSUBSCIP                                  FALSE // does the separator use a secondary SCIP instance? */
-#define SEPA_DELAY                                        FALSE // should separation method be delayed, if other separators found cuts? */
+#define SEPA_NAME         "wait_delay"
+#define SEPA_DESC         "Separator for wait delay conflicts"
+#define SEPA_PRIORITY     107      // priority of the constraint handler for separation
+#define SEPA_FREQ         1        // frequency for separating cuts; zero means to separate only in the root node
+#define SEPA_MAXBOUNDDIST 1.0
+#define SEPA_USESSUBSCIP  FALSE    // does the separator use a secondary SCIP instance? */
+#define SEPA_DELAY        FALSE    // should separation method be delayed, if other separators found cuts? */
 
 SCIP_RETCODE waitdelay_conflicts_create_cut(
     SCIP* scip,                          // SCIP
@@ -91,6 +91,11 @@ SCIP_RETCODE waitdelay_conflicts_separate(
     auto probdata = SCIPgetProbData(scip);
     const auto N = SCIPprobdataGetN(probdata);
     const auto& map = SCIPprobdataGetMap(probdata);
+
+    // Skip this separator if an earlier separator found cuts.
+    auto& found_cuts = SCIPprobdataGetFoundCutsIndicator(probdata);
+    if (found_cuts)
+        return SCIP_OKAY;
 
     // Get the edges fractionally used by each agent.
     const auto& agent_edges = SCIPprobdataGetAgentFractionalEdges(probdata);
@@ -167,6 +172,7 @@ SCIP_RETCODE waitdelay_conflicts_separate(
                                                                      a1_ets,
                                                                      a2_et,
                                                                      result));
+                            found_cuts = true;
                             goto NEXT_AGENT;
                         }
                     }

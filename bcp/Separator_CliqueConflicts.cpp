@@ -32,13 +32,13 @@ extern "C" {
 }
 #pragma GCC diagnostic pop
 
-#define SEPA_NAME                                     "vertex_edge_clique"
-#define SEPA_DESC                         "Separator for clique conflicts"
-#define SEPA_PRIORITY                                                   10 // priority of the constraint handler for separation
-#define SEPA_FREQ                                                        0 // frequency for separating cuts; zero means to separate only in the root node
-#define SEPA_MAXBOUNDDIST                                              1.0
-#define SEPA_USESSUBSCIP                                             FALSE // does the separator use a secondary SCIP instance? */
-#define SEPA_DELAY                                                    TRUE // should separation method be delayed, if other separators found cuts? */
+#define SEPA_NAME         "vertex_edge_clique"
+#define SEPA_DESC         "Separator for clique conflicts"
+#define SEPA_PRIORITY     2        // priority of the constraint handler for separation
+#define SEPA_FREQ         0        // frequency for separating cuts; zero means to separate only in the root node
+#define SEPA_MAXBOUNDDIST 1.0
+#define SEPA_USESSUBSCIP  FALSE    // does the separator use a secondary SCIP instance? */
+#define SEPA_DELAY        FALSE    // should separation method be delayed, if other separators found cuts? */
 
 //#define RUN_ONLY_ON_MULTI_AGENT_RESOURCES
 #define MIN_CLIQUE_SIZE                                                  3
@@ -420,6 +420,11 @@ SCIP_RETCODE clique_conflicts_separate(
     auto probdata = SCIPgetProbData(scip);
     const auto N = SCIPprobdataGetN(probdata);
     const auto& map = SCIPprobdataGetMap(probdata);
+
+    // Skip this separator if an earlier separator found cuts.
+    auto& found_cuts = SCIPprobdataGetFoundCutsIndicator(probdata);
+    if (found_cuts)
+        return SCIP_OKAY;
 
     // Get variables.
     const auto& vars = SCIPprobdataGetVars(probdata);

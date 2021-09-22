@@ -27,13 +27,13 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "VariableData.h"
 #include <algorithm>
 
-#define SEPA_NAME                           "rectangle_knapsack"
-#define SEPA_DESC   "Separator for rectangle knapsack conflicts"
-#define SEPA_PRIORITY                                       1000 // priority of the constraint handler for separation
-#define SEPA_FREQ                                              1 // frequency for separating cuts; zero means to separate only in the root node
-#define SEPA_MAXBOUNDDIST                                    1.0
-#define SEPA_USESSUBSCIP                                   FALSE // does the separator use a secondary SCIP instance? */
-#define SEPA_DELAY                                         FALSE // should separation method be delayed, if other separators found cuts? */
+#define SEPA_NAME         "rectangle_knapsack"
+#define SEPA_DESC         "Separator for rectangle knapsack conflicts"
+#define SEPA_PRIORITY     1000     // priority of the constraint handler for separation
+#define SEPA_FREQ         1        // frequency for separating cuts; zero means to separate only in the root node
+#define SEPA_MAXBOUNDDIST 1.0
+#define SEPA_USESSUBSCIP  FALSE    // does the separator use a secondary SCIP instance? */
+#define SEPA_DELAY        FALSE    // should separation method be delayed, if other separators found cuts? */
 
 // Data for rectangle knapsack cuts
 struct RectangleKnapsackSepaData
@@ -332,6 +332,11 @@ SCIP_RETCODE rectangle_knapsack_conflicts_separate(
     const auto N = SCIPprobdataGetN(probdata);
     const auto& map = SCIPprobdataGetMap(probdata);
 
+    // Skip this separator if an earlier separator found cuts.
+    auto& found_cuts = SCIPprobdataGetFoundCutsIndicator(probdata);
+    if (found_cuts)
+        return SCIP_OKAY;
+
     // Get variables.
     const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
 
@@ -602,6 +607,7 @@ SCIP_RETCODE rectangle_knapsack_conflicts_separate(
 #endif
                                                                           conflict,
                                                                           result));
+                        found_cuts = true;
                         goto NEXT_AGENT;
                     }
             }

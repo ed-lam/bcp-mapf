@@ -26,16 +26,16 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "VariableData.h"
 
 #ifdef USE_WAITCORRIDOR_CONFLICTS
-#define SEPA_NAME                               "wait_corridor"
+#define SEPA_NAME         "wait_corridor"
 #else
-#define SEPA_NAME                                    "corridor"
+#define SEPA_NAME         "corridor"
 #endif
-#define SEPA_DESC            "Separator for corridor conflicts"
-#define SEPA_PRIORITY                                      1000 // priority of the constraint handler for separation
-#define SEPA_FREQ                                             1 // frequency for separating cuts; zero means to separate only in the root node
-#define SEPA_MAXBOUNDDIST                                   1.0
-#define SEPA_USESSUBSCIP                                  FALSE // does the separator use a secondary SCIP instance? */
-#define SEPA_DELAY                                        FALSE // should separation method be delayed, if other separators found cuts? */
+#define SEPA_DESC         "Separator for corridor conflicts"
+#define SEPA_PRIORITY     108      // priority of the constraint handler for separation
+#define SEPA_FREQ         1        // frequency for separating cuts; zero means to separate only in the root node
+#define SEPA_MAXBOUNDDIST 1.0
+#define SEPA_USESSUBSCIP  FALSE    // does the separator use a secondary SCIP instance? */
+#define SEPA_DELAY        FALSE    // should separation method be delayed, if other separators found cuts? */
 
 struct CorridorConflictData
 {
@@ -136,6 +136,11 @@ SCIP_RETCODE corridor_conflicts_separate(
     auto probdata = SCIPgetProbData(scip);
     const auto N = SCIPprobdataGetN(probdata);
     const auto& map = SCIPprobdataGetMap(probdata);
+
+    // Skip this separator if an earlier separator found cuts.
+    auto& found_cuts = SCIPprobdataGetFoundCutsIndicator(probdata);
+    if (found_cuts)
+        return SCIP_OKAY;
 
     // Get the edges fractionally used by each agent.
     const auto& agent_edges = SCIPprobdataGetAgentFractionalEdges(probdata);
@@ -299,6 +304,7 @@ SCIP_RETCODE corridor_conflicts_separate(
                                                     a2_et2,
                                                     result));
             ++nb_cuts;
+            found_cuts = true;
         }
     }
 

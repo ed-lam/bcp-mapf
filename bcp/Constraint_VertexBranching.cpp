@@ -24,17 +24,17 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "VariableData.h"
 
 // Constraint handler properties
-#define CONSHDLR_NAME                               "vertex_branching"
+#define CONSHDLR_NAME          "vertex_branching"
 #define CONSHDLR_DESC          "Stores the vertex branching decisions"
-#define CONSHDLR_ENFOPRIORITY                                        0 // priority of the constraint handler for constraint enforcing
-#define CONSHDLR_CHECKPRIORITY                                 9999999 // priority of the constraint handler for checking feasibility
-#define CONSHDLR_PROPFREQ                                            1 // frequency for propagating domains; zero means only preprocessing propagation
-#define CONSHDLR_EAGERFREQ                                           1 // frequency for using all instead of only the useful constraints in separation,
-                                                                       // propagation and enforcement, -1 for no eager evaluations, 0 for first only
-#define CONSHDLR_DELAYPROP                                       FALSE // should propagation method be delayed, if other propagators found reductions?
-#define CONSHDLR_NEEDSCONS                                        TRUE // should the constraint handler be skipped, if no constraints are available?
+#define CONSHDLR_ENFOPRIORITY  0          // priority of the constraint handler for constraint enforcing
+#define CONSHDLR_CHECKPRIORITY 9999999    // priority of the constraint handler for checking feasibility
+#define CONSHDLR_PROPFREQ      1          // frequency for propagating domains; zero means only preprocessing propagation
+#define CONSHDLR_EAGERFREQ     1          // frequency for using all instead of only the useful constraints in separation,
+                                          // propagation and enforcement, -1 for no eager evaluations, 0 for first only
+#define CONSHDLR_DELAYPROP     FALSE      // should propagation method be delayed, if other propagators found reductions?
+#define CONSHDLR_NEEDSCONS     TRUE       // should the constraint handler be skipped, if no constraints are available?
 
-#define CONSHDLR_PROP_TIMING                  SCIP_PROPTIMING_BEFORELP
+#define CONSHDLR_PROP_TIMING   SCIP_PROPTIMING_BEFORELP
 
 // Constraint data
 struct VertexBranchingConsData

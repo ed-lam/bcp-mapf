@@ -214,6 +214,11 @@ void SCIPprobdataSetPricerData(
     SCIP_PricerData* pricerdata    // Pricer data
 );
 
+// Get found cuts indicator
+bool& SCIPprobdataGetFoundCutsIndicator(
+    SCIP_ProbData* probdata    // Problem data
+);
+
 // Get the map
 const Map& SCIPprobdataGetMap(
     SCIP_ProbData* probdata    // Problem data

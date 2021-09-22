@@ -25,13 +25,13 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "ProblemData.h"
 #include "VariableData.h"
 
-#define SEPA_NAME                                  "exit_entry"
-#define SEPA_DESC          "Separator for exit entry conflicts"
-#define SEPA_PRIORITY                                      1000 // priority of the constraint handler for separation
-#define SEPA_FREQ                                             1 // frequency for separating cuts; zero means to separate only in the root node
-#define SEPA_MAXBOUNDDIST                                   1.0
-#define SEPA_USESSUBSCIP                                  FALSE // does the separator use a secondary SCIP instance? */
-#define SEPA_DELAY                                        FALSE // should separation method be delayed, if other separators found cuts? */
+#define SEPA_NAME         "exit_entry"
+#define SEPA_DESC         "Separator for exit entry conflicts"
+#define SEPA_PRIORITY     111      // priority of the constraint handler for separation
+#define SEPA_FREQ         1        // frequency for separating cuts; zero means to separate only in the root node
+#define SEPA_MAXBOUNDDIST 1.0
+#define SEPA_USESSUBSCIP  FALSE    // does the separator use a secondary SCIP instance? */
+#define SEPA_DELAY        FALSE    // should separation method be delayed, if other separators found cuts? */
 
 struct ExitEntryConflictData
 {
@@ -105,6 +105,11 @@ SCIP_RETCODE exitentry_conflicts_separate(
     auto probdata = SCIPgetProbData(scip);
     const auto N = SCIPprobdataGetN(probdata);
     const auto& map = SCIPprobdataGetMap(probdata);
+
+    // Skip this separator if an earlier separator found cuts.
+    auto& found_cuts = SCIPprobdataGetFoundCutsIndicator(probdata);
+    if (found_cuts)
+        return SCIP_OKAY;
 
     // Get the edges fractionally used by each agent.
     const auto& agent_edges_no_waits = SCIPprobdataGetAgentFractionalEdgesNoWaits(probdata);
@@ -239,6 +244,7 @@ SCIP_RETCODE exitentry_conflicts_separate(
             // Create the cut.
             SCIP_CALL(exitentry_conflicts_create_cut(scip, probdata, sepa, a1, a2, a1_e, a2_es_size, a2_es, t, result));
             ++nb_cuts;
+            found_cuts = true;
         }
     }
 

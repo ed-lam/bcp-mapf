@@ -25,13 +25,13 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "ProblemData.h"
 #include "VariableData.h"
 
-#define SEPA_NAME                                    "goal"
-#define SEPA_DESC            "Separator for goal conflicts"
-#define SEPA_PRIORITY                                 10000 // priority of the constraint handler for separation
-#define SEPA_FREQ                                         1  // frequency for separating cuts; zero means to separate only in the root node
-#define SEPA_MAXBOUNDDIST                               1.0
-#define SEPA_USESSUBSCIP                              FALSE // does the separator use a secondary SCIP instance? */
-#define SEPA_DELAY                                    FALSE // should separation method be delayed, if other separators found cuts? */
+#define SEPA_NAME         "goal"
+#define SEPA_DESC         "Separator for goal conflicts"
+#define SEPA_PRIORITY     1001     // priority of the constraint handler for separation
+#define SEPA_FREQ         1        // frequency for separating cuts; zero means to separate only in the root node
+#define SEPA_MAXBOUNDDIST 1.0
+#define SEPA_USESSUBSCIP  FALSE    // does the separator use a secondary SCIP instance? */
+#define SEPA_DELAY        FALSE    // should separation method be delayed, if other separators found cuts? */
 
 SCIP_RETCODE goal_conflicts_create_cut(
     SCIP* scip,                              // SCIP
@@ -185,6 +185,11 @@ SCIP_RETCODE goal_conflicts_separate(
     const auto& agents = SCIPprobdataGetAgentsData(probdata);
     auto& goal_conflicts = SCIPprobdataGetGoalConflicts(probdata);
 
+    // Skip this separator if an earlier separator found cuts.
+    auto& found_cuts = SCIPprobdataGetFoundCutsIndicator(probdata);
+    if (found_cuts)
+        return SCIP_OKAY;
+
     // Get variables.
     const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
 
@@ -325,6 +330,7 @@ SCIP_RETCODE goal_conflicts_separate(
                                                             agent_vars[a1],
                                                             agent_vars[a2],
                                                             result));
+                        found_cuts = true;
                     }
                 }
         }

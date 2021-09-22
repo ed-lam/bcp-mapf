@@ -25,13 +25,13 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "ProblemData.h"
 #include "VariableData.h"
 
-#define SEPA_NAME                                  "path_length_nogoods"
-#define SEPA_DESC                    "Separator for path length nogoods"
-#define SEPA_PRIORITY                                             100000 // priority of the constraint handler for separation
-#define SEPA_FREQ                                                      1 // frequency for separating cuts; zero means to separate only in the root node
-#define SEPA_MAXBOUNDDIST                                            1.0
-#define SEPA_USESSUBSCIP                                           FALSE // does the separator use a secondary SCIP instance? */
-#define SEPA_DELAY                                                 FALSE // should separation method be delayed, if other separators found cuts? */
+#define SEPA_NAME         "path_length_nogoods"
+#define SEPA_DESC         "Separator for path length nogoods"
+#define SEPA_PRIORITY     10001    // priority of the constraint handler for separation
+#define SEPA_FREQ         1        // frequency for separating cuts; zero means to separate only in the root node
+#define SEPA_MAXBOUNDDIST 1.0
+#define SEPA_USESSUBSCIP  FALSE    // does the separator use a secondary SCIP instance? */
+#define SEPA_DELAY        FALSE    // should separation method be delayed, if other separators found cuts? */
 
 SCIP_RETCODE path_length_nogoods_create_cut(
     SCIP* scip,                                              // SCIP
@@ -140,6 +140,11 @@ SCIP_RETCODE path_length_nogoods_separate(
     auto probdata = SCIPgetProbData(scip);
     auto& path_length_nogoods = SCIPprobdataGetPathLengthNogoods(probdata);
 
+    // Skip this separator if an earlier separator found cuts.
+    auto& found_cuts = SCIPprobdataGetFoundCutsIndicator(probdata);
+    if (found_cuts)
+        return SCIP_OKAY;
+
     // Get variables.
     const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
 
@@ -201,6 +206,7 @@ SCIP_RETCODE path_length_nogoods_separate(
                                                      path_length_nogoods,
                                                      latest_finish_times,
                                                      result));
+            found_cuts = true;
         }
     }
 
