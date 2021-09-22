@@ -116,6 +116,7 @@ struct SCIP_ProbData
     SCIP_CONS* vertex_conflicts;                                         // Constraint for vertex conflicts
     SCIP_CONS* edge_conflicts;                                           // Constraint for edge conflicts
     Vector<TwoAgentRobustCut> two_agent_robust_cuts;                     // Robust cuts over two agents
+    Vector<Vector<AgentRobustCut>> agent_robust_cuts;                    // Two-agent robust cuts separated by agent
 #ifdef USE_RECTANGLE_KNAPSACK_CONFLICTS
     SCIP_SEPA* rectangle_knapsack_conflicts;                             // Separator for rectangle knapsack conflicts
 #endif
@@ -221,6 +222,14 @@ SCIP_DECL_PROBTRANS(probtrans)
     debug_assert(sourcedata->two_agent_robust_cuts.empty());
     (*targetdata)->two_agent_robust_cuts.reserve(5000);
 
+    // Allocate memory for agent-specific two-agent robust cuts.
+    debug_assert(sourcedata->agent_robust_cuts.empty());
+    (*targetdata)->agent_robust_cuts.resize(N);
+    for (Agent a = 0; a < N; ++a)
+    {
+        (*targetdata)->agent_robust_cuts[a].reserve(5000);
+    }
+
     // Copy separator for rectangle knapsack conflicts.
 #ifdef USE_RECTANGLE_KNAPSACK_CONFLICTS
     debug_assert(sourcedata->rectangle_knapsack_conflicts);
@@ -283,21 +292,12 @@ SCIP_RETCODE probdataFree(
     // Release constraint for edge conflicts.
     SCIP_CALL(SCIPreleaseCons(scip, &(*probdata)->edge_conflicts));
 
-    // Release two-agent robust cuts.
+    // Release two-agent robust cuts. Agent-specific two-agent robust cuts are aliases of this.
     for (auto& cut : (*probdata)->two_agent_robust_cuts)
     {
-        if (cut.is_same_time())
-        {
-            auto ptr = cut.edges_a1().first;
-            const auto size = cut.edges_a2().second - cut.edges_a1().first;
-            SCIPfreeBlockMemoryArray(scip, &ptr, size);
-        }
-        else
-        {
-            auto ptr = cut.edge_times_a1().first;
-            const auto size = cut.edge_times_a2().second - cut.edge_times_a1().first;
-            SCIPfreeBlockMemoryArray(scip, &ptr, size);
-        }
+        auto ptr = cut.begin();
+        const auto size = cut.size();
+        SCIPfreeBlockMemoryArray(scip, &ptr, size);
     }
 
     // Destroy object.
@@ -504,35 +504,21 @@ SCIP_RETCODE SCIPprobdataAddInitialVar(
                                      path));
 
     // Add coefficients to two-agent robust cuts.
-    for (const auto& cut : probdata->two_agent_robust_cuts)
+    for (const auto& [row, ets_begin, ets_end] : probdata->agent_robust_cuts[a])
     {
         // Calculate the coefficient.
         SCIP_Real coeff = 0.0;
-        if (a == cut.a1() || a == cut.a2())
+        for (auto it = ets_begin; it != ets_end; ++it)
         {
-            if (cut.is_same_time())
-            {
-                const auto t = cut.t();
-                for (auto [it, end] = cut.edges(a); it != end; ++it)
-                {
-                    const auto e = *it;
-                    coeff += (t < path_length && path[t] == e);
-                }
-            }
-            else
-            {
-                for (auto [it, end] = cut.edge_times(a); it != end; ++it)
-                {
-                    const auto [e, t] = it->et;
-                    coeff += (t < path_length && path[t] == e);
-                }
-            }
+            const auto [e, t] = it->et;
+            coeff += (t < path_length - 1 && e == path[t]) ||
+                     (t >= path_length - 1 && e.n == path[path_length - 1].n && e.d == Direction::WAIT);
         }
 
         // Add variable to the cut.
         if (coeff)
         {
-            SCIP_CALL(SCIPaddVarToRow(scip, cut.row(), *var, coeff));
+            SCIP_CALL(SCIPaddVarToRow(scip, row, *var, coeff));
         }
     }
 
@@ -657,37 +643,21 @@ SCIP_RETCODE SCIPprobdataAddPricedVar(
                                      path));
 
     // Add coefficients to two-agent robust cuts.
-    for (const auto& cut : probdata->two_agent_robust_cuts)
+    for (const auto& [row, ets_begin, ets_end] : probdata->agent_robust_cuts[a])
     {
         // Calculate the coefficient.
         SCIP_Real coeff = 0.0;
-        if (a == cut.a1() || a == cut.a2())
+        for (auto it = ets_begin; it != ets_end; ++it)
         {
-            if (cut.is_same_time())
-            {
-                const auto t = cut.t();
-                for (auto [it, end] = cut.edges(a); it != end; ++it)
-                {
-                    const auto e = *it;
-                    coeff += (t < path_length - 1 && e == path[t]) ||
-                             (t >= path_length - 1 && e.n == path[path_length - 1].n && e.d == Direction::WAIT);
-                }
-            }
-            else
-            {
-                for (auto [it, end] = cut.edge_times(a); it != end; ++it)
-                {
-                    const auto [e, t] = it->et;
-                    coeff += (t < path_length - 1 && e == path[t]) ||
-                             (t >= path_length - 1 && e.n == path[path_length - 1].n && e.d == Direction::WAIT);
-                }
-            }
+            const auto [e, t] = it->et;
+            coeff += (t < path_length - 1 && e == path[t]) ||
+                     (t >= path_length - 1 && e.n == path[path_length - 1].n && e.d == Direction::WAIT);
         }
 
         // Add variable to the cut.
         if (coeff)
         {
-            SCIP_CALL(SCIPaddVarToRow(scip, cut.row(), *var, coeff));
+            SCIP_CALL(SCIPaddVarToRow(scip, row, *var, coeff));
         }
     }
 
@@ -771,7 +741,8 @@ SCIP_RETCODE SCIPprobdataAddTwoAgentRobustCut(
     SCIP_Real lhs = 0.0;
 #endif
     SCIP_CALL(SCIPcacheRowExtensions(scip, row));
-    for (const auto a : Array<Agent, 2>{cut.a1(), cut.a2()})
+    const auto iterators = cut.iterators();
+    for (const auto& [a, ets_begin, ets_end] : iterators)
         for (auto var : agent_vars[a])
         {
             // Get the path.
@@ -783,24 +754,11 @@ SCIP_RETCODE SCIPprobdataAddTwoAgentRobustCut(
 
             // Add coefficients.
             SCIP_Real coeff = 0.0;
-            if (cut.is_same_time())
+            for (auto it = ets_begin; it != ets_end; ++it)
             {
-                const auto t = cut.t();
-                for (auto [it, end] = cut.edges(a); it != end; ++it)
-                {
-                    const auto e = *it;
-                    coeff += (t < path_length - 1 && e == path[t]) ||
-                             (t >= path_length - 1 && e.n == path[path_length - 1].n && e.d == Direction::WAIT);
-                }
-            }
-            else
-            {
-                for (auto [it, end] = cut.edge_times(a); it != end; ++it)
-                {
-                    const auto [e, t] = it->et;
-                    coeff += (t < path_length - 1 && e == path[t]) ||
-                             (t >= path_length - 1 && e.n == path[path_length - 1].n && e.d == Direction::WAIT);
-                }
+                const auto [e, t] = it->et;
+                coeff += (t < path_length - 1 && e == path[t]) ||
+                         (t >= path_length - 1 && e.n == path[path_length - 1].n && e.d == Direction::WAIT);
             }
 
             // Add coefficient.
@@ -828,30 +786,14 @@ SCIP_RETCODE SCIPprobdataAddTwoAgentRobustCut(
     // Check agent and edges.
 #ifdef DEBUG
     release_assert(cut.a1() != cut.a2(), "Same agents in cut");
-    if (cut.is_same_time())
+    for (const auto& [a, ets_begin, ets_end] : iterators)
     {
-        for (auto [it1, end] = cut.edges_a1(); it1 != end; ++it1)
-            for (auto it2 = it1 + 1; it2 != end; ++it2)
+        release_assert(ets_end > ets_begin);
+
+        for (auto it1 = ets_begin; it1 != ets_end; ++it1)
+            for (auto it2 = it1 + 1; it2 != ets_end; ++it2)
             {
-                release_assert(*it1 != *it2, "Agent {} has a duplicate edge in cut", cut.a1());
-            }
-        for (auto [it1, end] = cut.edges_a2(); it1 != end; ++it1)
-            for (auto it2 = it1 + 1; it2 != end; ++it2)
-            {
-                release_assert(*it1 != *it2, "Agent {} has a duplicate edge in cut", cut.a2());
-            }
-    }
-    else
-    {
-        for (auto [it1, end] = cut.edge_times_a1(); it1 != end; ++it1)
-            for (auto it2 = it1 + 1; it2 != end; ++it2)
-            {
-                release_assert(*it1 != *it2, "Agent {} has a duplicate edge in cut", cut.a1());
-            }
-        for (auto [it1, end] = cut.edge_times_a2(); it1 != end; ++it1)
-            for (auto it2 = it1 + 1; it2 != end; ++it2)
-            {
-                release_assert(*it1 != *it2, "Agent {} has a duplicate edge in cut", cut.a2());
+                release_assert(*it1 != *it2, "Agent {} has a duplicate edge in cut", a);
             }
     }
 #endif
@@ -861,57 +803,10 @@ SCIP_RETCODE SCIPprobdataAddTwoAgentRobustCut(
     if (SCIPisEQ(scip, rhs, 1.0))
     {
         const auto& map = SCIPprobdataGetMap(probdata);
-        if (cut.is_same_time())
-        {
-            for (auto [it1, end1] = cut.edges_a1(); it1 != end1; ++it1)
-                for (auto [it2, end2] = cut.edges_a2(); it2 != end2; ++it2)
-                {
-                    const auto a1_n1 = it1->n;
-                    const auto a1_n2 = it1->d == Direction::NORTH ? map.get_north(a1_n1) :
-                                       it1->d == Direction::SOUTH ? map.get_south(a1_n1) :
-                                       it1->d == Direction::EAST ? map.get_east(a1_n1) :
-                                       it1->d == Direction::WEST ? map.get_west(a1_n1) : a1_n1;
-                    const auto a2_n1 = it2->n;
-                    const auto a2_n2 = it2->d == Direction::NORTH ? map.get_north(a2_n1) :
-                                       it2->d == Direction::SOUTH ? map.get_south(a2_n1) :
-                                       it2->d == Direction::EAST ? map.get_east(a2_n1) :
-                                       it2->d == Direction::WEST ? map.get_west(a2_n1) : a2_n1;
 
-                    if (a1_n1 == a2_n1 ||                   // Vertex conflict at time t
-                        a1_n2 == a2_n2 ||                   // Vertex conflict at time t+1
-                        (a1_n1 == a2_n2 && a1_n2 == a2_n1)) // Edge conflict
-                    {
-                        continue;
-                    }
-                    err("Edges in robust cut are not mutually incompatible");
-                }
-        }
-        else
-        {
-            for (auto [it1, end] = cut.edge_times_a1(); it1 != end; ++it1)
-                for (auto it2 = it1 + 1; it2 != end; ++it2)
-                {
-                    const auto t1 = it1->t;
-                    const auto n11 = it1->n;
-                    const auto n12 = it1->d == Direction::NORTH ? map.get_north(n11) :
-                                       it1->d == Direction::SOUTH ? map.get_south(n11) :
-                                       it1->d == Direction::EAST ? map.get_east(n11) :
-                                       it1->d == Direction::WEST ? map.get_west(n11) : n11;
-                    const auto t2 = it2->t;
-                    const auto n21 = it2->n;
-                    const auto n22 = it2->d == Direction::NORTH ? map.get_north(n21) :
-                                     it2->d == Direction::SOUTH ? map.get_south(n21) :
-                                     it2->d == Direction::EAST ? map.get_east(n21) :
-                                     it2->d == Direction::WEST ? map.get_west(n21) : n21;
-
-                    if ((n12 != n21 && t1 == t2 - 1) || (n22 != n11 && t2 == t1 - 1) || (t1 == t2))
-                    {
-                        continue;
-                    }
-                    err("Edges in robust cut are not mutually incompatible");
-                }
-            for (auto [it1, end] = cut.edge_times_a2(); it1 != end; ++it1)
-                for (auto it2 = it1 + 1; it2 != end; ++it2)
+        for (const auto& [a, ets_begin, ets_end] : iterators)
+            for (auto it1 = ets_begin; it1 != ets_end; ++it1)
+                for (auto it2 = it1 + 1; it2 != ets_end; ++it2)
                 {
                     const auto t1 = it1->t;
                     const auto n11 = it1->n;
@@ -933,33 +828,32 @@ SCIP_RETCODE SCIPprobdataAddTwoAgentRobustCut(
                     err("Edges in robust cut are not mutually incompatible");
                 }
 
-            for (auto [it1, end1] = cut.edge_times_a1(); it1 != end1; ++it1)
-                for (auto [it2, end2] = cut.edge_times_a2(); it2 != end2; ++it2)
-                {
-                    const auto a1_t = it1->t;
-                    const auto a1_n1 = it1->n;
-                    const auto a1_n2 = it1->d == Direction::NORTH ? map.get_north(a1_n1) :
-                                       it1->d == Direction::SOUTH ? map.get_south(a1_n1) :
-                                       it1->d == Direction::EAST ? map.get_east(a1_n1) :
-                                       it1->d == Direction::WEST ? map.get_west(a1_n1) : a1_n1;
-                    const auto a2_t = it2->t;
-                    const auto a2_n1 = it2->n;
-                    const auto a2_n2 = it2->d == Direction::NORTH ? map.get_north(a2_n1) :
-                                       it2->d == Direction::SOUTH ? map.get_south(a2_n1) :
-                                       it2->d == Direction::EAST ? map.get_east(a2_n1) :
-                                       it2->d == Direction::WEST ? map.get_west(a2_n1) : a2_n1;
+        for (auto [it1, end1] = cut.a1_edge_times(); it1 != end1; ++it1)
+            for (auto [it2, end2] = cut.a2_edge_times(); it2 != end2; ++it2)
+            {
+                const auto a1_t = it1->t;
+                const auto a1_n1 = it1->n;
+                const auto a1_n2 = it1->d == Direction::NORTH ? map.get_north(a1_n1) :
+                                it1->d == Direction::SOUTH ? map.get_south(a1_n1) :
+                                it1->d == Direction::EAST ? map.get_east(a1_n1) :
+                                it1->d == Direction::WEST ? map.get_west(a1_n1) : a1_n1;
+                const auto a2_t = it2->t;
+                const auto a2_n1 = it2->n;
+                const auto a2_n2 = it2->d == Direction::NORTH ? map.get_north(a2_n1) :
+                                it2->d == Direction::SOUTH ? map.get_south(a2_n1) :
+                                it2->d == Direction::EAST ? map.get_east(a2_n1) :
+                                it2->d == Direction::WEST ? map.get_west(a2_n1) : a2_n1;
 
-                    if ((a1_n1 == a2_n1 && a1_t == a2_t) ||                   // Vertex conflict at time t
-                        (a1_n2 == a2_n2 && a1_t == a2_t) ||                   // Vertex conflict at time t+1
-                        (a1_n1 == a2_n2 && a1_n2 == a2_n1 && a1_t == a2_t) || // Edge conflict
-                        (a1_n2 == a2_n1 && a1_t == a2_t - 1) ||               // Vertex conflict
-                        (a2_n2 == a1_n1 && a2_t == a1_t - 1))                 // Vertex conflict
-                    {
-                        continue;
-                    }
-                    err("Edges in robust cut are not mutually incompatible");
+                if ((a1_n1 == a2_n1 && a1_t == a2_t) ||                   // Vertex conflict at time t
+                    (a1_n2 == a2_n2 && a1_t == a2_t) ||                   // Vertex conflict at time t+1
+                    (a1_n1 == a2_n2 && a1_n2 == a2_n1 && a1_t == a2_t) || // Edge conflict
+                    (a1_n2 == a2_n1 && a1_t == a2_t - 1) ||               // Vertex conflict
+                    (a2_n2 == a1_n1 && a2_t == a1_t - 1))                 // Vertex conflict
+                {
+                    continue;
                 }
-        }
+                err("Edges in robust cut are not mutually incompatible");
+            }
     }
 #endif
 
@@ -969,6 +863,12 @@ SCIP_RETCODE SCIPprobdataAddTwoAgentRobustCut(
 
     // Set status.
     *result = infeasible ? SCIP_CUTOFF : SCIP_SEPARATED;
+
+    // Store the edge-times of the two agents separately.
+    for (const auto& [a, ets_begin, ets_end] : iterators)
+    {
+        probdata->agent_robust_cuts[a].push_back(AgentRobustCut{cut.row(), ets_begin, ets_end});
+    }
 
     // Store the cut.
     if (idx)
@@ -1314,6 +1214,15 @@ Vector<TwoAgentRobustCut>& SCIPprobdataGetTwoAgentRobustCuts(
 {
     debug_assert(probdata);
     return probdata->two_agent_robust_cuts;
+}
+
+// Get array of agent-specific two-agent robust cuts
+Vector<Vector<AgentRobustCut>>& SCIPprobdataGetAgentRobustCuts(
+    SCIP_ProbData* probdata    // Problem data
+)
+{
+    debug_assert(probdata);
+    return probdata->agent_robust_cuts;
 }
 
 // Get separator for rectangle knapsack conflicts

@@ -23,6 +23,13 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "Includes.h"
 #include "Coordinates.h"
 
+struct AgentRobustCut
+{
+    SCIP_ROW* row;
+    const EdgeTime* begin;
+    const EdgeTime* end;
+};
+
 class TwoAgentRobustCut
 {
 #ifdef DEBUG
@@ -30,46 +37,13 @@ class TwoAgentRobustCut
 #endif
     SCIP_ROW* row_;
     Agent a1_;
-    Agent a2_ : 31;
-    bool is_same_time_ : 1;
-    Int a2_begin_;
+    Agent a2_;
+    Int a1_end;
     Int a2_end_;
-    union
-    {
-        EdgeTime* ets_;
-        struct
-        {
-            Edge* es_;
-            Time t_;
-        };
-    };
-  public:
+    EdgeTime* ets_;
 
+  public:
     // Constructors
-    TwoAgentRobustCut(
-        SCIP* scip,
-        const Agent a1,
-        const Agent a2,
-        const Time t,
-        const Int nb_a1_edges,
-        const Int nb_a2_edges
-#ifdef DEBUG
-        , String&& name
-#endif
-    ) :
-#ifdef DEBUG
-        name_(std::move(name)),
-#endif
-        row_(nullptr),
-        a1_(a1),
-        a2_(a2),
-        is_same_time_(true),
-        a2_begin_(nb_a1_edges),
-        a2_end_(nb_a1_edges + nb_a2_edges),
-        t_(t)
-    {
-        scip_assert(SCIPallocBlockMemoryArray(scip, &es_, a2_end_));
-    }
     TwoAgentRobustCut(
         SCIP* scip,
         const Agent a1,
@@ -77,7 +51,7 @@ class TwoAgentRobustCut
         const Int nb_a1_edgetimes,
         const Int nb_a2_edgetimes
 #ifdef DEBUG
-        , String&& name
+      , String&& name
 #endif
     ) :
 #ifdef DEBUG
@@ -86,133 +60,49 @@ class TwoAgentRobustCut
         row_(nullptr),
         a1_(a1),
         a2_(a2),
-        is_same_time_(false),
-        a2_begin_(nb_a1_edgetimes),
+        a1_end(nb_a1_edgetimes),
         a2_end_(nb_a1_edgetimes + nb_a2_edgetimes)
     {
         scip_assert(SCIPallocBlockMemoryArray(scip, &ets_, a2_end_));
     }
 
     // Getters
-    inline auto a1() const { return a1_; }
-    inline auto a2() const { return a2_; }
-    inline auto row() const { return row_; }
-    inline auto is_same_time() const { return is_same_time_; }
-    inline auto t() const { debug_assert(is_same_time()); return t_; }
 #ifdef DEBUG
     inline const auto& name() const { return name_; }
 #endif
+    inline auto row() const { return row_; }
+    inline auto a1() const { return a1_; }
+    inline auto a2() const { return a2_; }
+    inline auto begin() const { return ets_; }
+    inline auto size() const { return a2_end_; }
+    inline const EdgeTime* a1_edge_times_begin() const { return &ets_[0]; }
+    inline const EdgeTime* a1_edge_times_end() const { return &ets_[a1_end]; }
+    inline const EdgeTime* a2_edge_times_begin() const { return &ets_[a1_end]; }
+    inline const EdgeTime* a2_edge_times_end() const { return &ets_[a2_end_]; }
+    inline Pair<const EdgeTime*, const EdgeTime*> a1_edge_times() const
+    {
+        return {a1_edge_times_begin(), a1_edge_times_end()};
+    }
+    inline Pair<const EdgeTime*, const EdgeTime*> a2_edge_times() const
+    {
+        return {a2_edge_times_begin(), a2_edge_times_end()};
+    }
+    inline Array<Tuple<Agent, const EdgeTime*, const EdgeTime*>, 2> iterators() const
+    {
+        using T = Tuple<Agent, const EdgeTime*, const EdgeTime*>;
+        return {T{a1(), a1_edge_times_begin(), a1_edge_times_end()},
+                T{a2(), a2_edge_times_begin(), a2_edge_times_end()}};
+    };
+    inline Pair<const EdgeTime*, const EdgeTime*> edge_times(const Agent a) const
+    {
+        debug_assert(a == a1_ || a == a2_);
+        return a == a1_ ? a1_edge_times() : a2_edge_times();
+    }
 
     // Setters
     inline void set_row(SCIP_ROW* row) { row_ = row; }
-
-    // Get edge-times
-    Pair<const EdgeTime*, const EdgeTime*> edge_times_a1() const
-    {
-        debug_assert(!is_same_time());
-        return {&ets_[0], &ets_[a2_begin_]};
-    }
-    Pair<const EdgeTime*, const EdgeTime*> edge_times_a2() const
-    {
-        debug_assert(!is_same_time());
-        return {&ets_[a2_begin_], &ets_[a2_end_]};
-    }
-    Pair<EdgeTime*, EdgeTime*> edge_times_a1()
-    {
-        debug_assert(!is_same_time());
-        return {&ets_[0], &ets_[a2_begin_]};
-    }
-    Pair<EdgeTime*, EdgeTime*> edge_times_a2()
-    {
-        debug_assert(!is_same_time());
-        return {&ets_[a2_begin_], &ets_[a2_end_]};
-    }
-    Pair<const EdgeTime*, const EdgeTime*> edge_times(const Agent a) const
-    {
-        debug_assert(!is_same_time());
-        debug_assert(a == a1_ || a == a2_);
-        return a == a1_ ? edge_times_a1() : edge_times_a2();
-    }
-    Pair<EdgeTime*, EdgeTime*> edge_times(const Agent a)
-    {
-        debug_assert(!is_same_time());
-        debug_assert(a == a1_ || a == a2_);
-        return a == a1_ ? edge_times_a1() : edge_times_a2();
-    }
-    const EdgeTime& edge_times_a1(const Int idx) const
-    {
-        debug_assert(!is_same_time());
-        return ets_[idx];
-    }
-    const EdgeTime& edge_times_a2(const Int idx) const
-    {
-        debug_assert(!is_same_time());
-        return ets_[a2_begin_ + idx];
-    }
-    EdgeTime& edge_times_a1(const Int idx)
-    {
-        debug_assert(!is_same_time());
-        return ets_[idx];
-    }
-    EdgeTime& edge_times_a2(const Int idx)
-    {
-        debug_assert(!is_same_time());
-        return ets_[a2_begin_ + idx];
-    }
-
-    // Get edges
-    Pair<const Edge*, const Edge*> edges_a1() const
-    {
-        debug_assert(is_same_time());
-        return {&es_[0], &es_[a2_begin_]};
-    }
-    Pair<const Edge*, const Edge*> edges_a2() const
-    {
-        debug_assert(is_same_time());
-        return {&es_[a2_begin_], &es_[a2_end_]};
-    }
-    Pair<Edge*, Edge*> edges_a1()
-    {
-        debug_assert(is_same_time());
-        return {&es_[0], &es_[a2_begin_]};
-    }
-    Pair<Edge*, Edge*> edges_a2()
-    {
-        debug_assert(is_same_time());
-        return {&es_[a2_begin_], &es_[a2_end_]};
-    }
-    Pair<const Edge*, const Edge*> edges(const Agent a) const
-    {
-        debug_assert(is_same_time());
-        debug_assert(a == a1_ || a == a2_);
-        return a == a1_ ? edges_a1() : edges_a2();
-    }
-    Pair<Edge*, Edge*> edges(const Agent a)
-    {
-        debug_assert(is_same_time());
-        debug_assert(a == a1_ || a == a2_);
-        return a == a1_ ? edges_a1() : edges_a2();
-    }
-    const Edge& edges_a1(const Int idx) const
-    {
-        debug_assert(is_same_time());
-        return es_[idx];
-    }
-    const Edge& edges_a2(const Int idx) const
-    {
-        debug_assert(is_same_time());
-        return es_[a2_begin_ + idx];
-    }
-    Edge& edges_a1(const Int idx)
-    {
-        debug_assert(is_same_time());
-        return es_[idx];
-    }
-    Edge& edges_a2(const Int idx)
-    {
-        debug_assert(is_same_time());
-        return es_[a2_begin_ + idx];
-    }
+    inline EdgeTime& a1_edge_time(const Int idx) { return ets_[idx]; }
+    inline EdgeTime& a2_edge_time(const Int idx) { return ets_[a1_end + idx]; }
 };
 
 #endif

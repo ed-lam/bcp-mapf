@@ -98,7 +98,7 @@ SCIP_RETCODE twoedge_conflicts_create_cut(
 #endif
 
     // Create data for the cut.
-    TwoAgentRobustCut cut(scip, a1, a2, t,
+    TwoAgentRobustCut cut(scip, a1, a2,
 #ifdef USE_WAITTWOEDGE_CONFLICTS
                           3, 3
 #else
@@ -108,15 +108,15 @@ SCIP_RETCODE twoedge_conflicts_create_cut(
                           , std::move(name)
 #endif
     );
-    cut.edges_a1(0) = a1_e1;
-    cut.edges_a1(1) = a1_e2;
+    cut.a1_edge_time(0) = EdgeTime{a1_e1, t};
+    cut.a1_edge_time(1) = EdgeTime{a1_e2, t};
 #ifdef USE_WAITTWOEDGE_CONFLICTS
-    cut.edges_a1(2) = a1_e3;
+    cut.a1_edge_time(2) = EdgeTime{a1_e3, t};
 #endif
-    cut.edges_a2(0) = a2_e1;
-    cut.edges_a2(1) = a2_e2;
+    cut.a2_edge_time(0) = EdgeTime{a2_e1, t};
+    cut.a2_edge_time(1) = EdgeTime{a2_e2, t};
 #ifdef USE_WAITTWOEDGE_CONFLICTS
-    cut.edges_a2(2) = a2_e3;
+    cut.a2_edge_time(2) = EdgeTime{a2_e3, t};
 #endif
 
     // Store the cut.

@@ -65,13 +65,17 @@ SCIP_RETCODE exitentry_conflicts_create_cut(
 #endif
 
     // Create data for the cut.
-    TwoAgentRobustCut cut{scip, a1, a2, t, 1, a2_es_size
+    TwoAgentRobustCut cut{scip, a1, a2, 1, a2_es_size
 #ifdef DEBUG
         , std::move(name)
 #endif
     };
-    cut.edges_a1(0) = a1_e;
-    std::copy(a2_es.begin(), a2_es.begin() + a2_es_size, cut.edges_a2().first);
+    cut.a1_edge_time(0) = EdgeTime{a1_e, t};
+    for (Int idx = 0; idx < a2_es_size; ++idx)
+    {
+        cut.a2_edge_time(idx) = EdgeTime{a2_es[idx], t};
+    }
+    // std::copy(a2_es.begin(), a2_es.begin() + a2_es_size, cut.edges_a2().first);
 
     // Store the cut.
     SCIP_CALL(SCIPprobdataAddTwoAgentRobustCut(scip, probdata, sepa, std::move(cut), 1, result));

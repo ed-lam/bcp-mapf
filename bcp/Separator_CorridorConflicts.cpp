@@ -99,14 +99,14 @@ SCIP_RETCODE corridor_conflicts_create_cut(
                         , std::move(name)
 #endif
     );
-    cut.edge_times_a1(0) = a1_et1;
-    cut.edge_times_a1(1) = a1_et2;
+    cut.a1_edge_time(0) = a1_et1;
+    cut.a1_edge_time(1) = a1_et2;
 #ifdef USE_WAITCORRIDOR_CONFLICTS
-    cut.edge_times_a1(2) = a1_et3;
-    cut.edge_times_a1(3) = a1_et4;
+    cut.a1_edge_time(2) = a1_et3;
+    cut.a1_edge_time(3) = a1_et4;
 #endif
-    cut.edge_times_a2(0) = a2_et1;
-    cut.edge_times_a2(1) = a2_et2;
+    cut.a2_edge_time(0) = a2_et1;
+    cut.a2_edge_time(1) = a2_et2;
 
     // Store the cut.
     SCIP_CALL(SCIPprobdataAddTwoAgentRobustCut(scip, probdata, sepa, std::move(cut), 1, result));

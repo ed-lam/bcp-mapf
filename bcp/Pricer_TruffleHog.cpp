@@ -350,7 +350,7 @@ SCIP_RETCODE run_trufflehog_pricer(
     const auto& edge_conflicts_conss = edge_conflicts_get_constraints(probdata);
 
     // Get cuts.
-    const auto& two_agent_robust_cuts = SCIPprobdataGetTwoAgentRobustCuts(probdata);
+    const auto& agent_robust_cuts = SCIPprobdataGetAgentRobustCuts(probdata);
 #ifdef USE_GOAL_CONFLICTS
     const auto& goal_conflicts = SCIPprobdataGetGoalConflicts(probdata);
 #endif
@@ -684,53 +684,31 @@ SCIP_RETCODE run_trufflehog_pricer(
 #ifdef USE_GOAL_CONFLICTS
         goal_penalties.clear();
 #endif
-        for (const auto& cut : two_agent_robust_cuts)
-            if (a == cut.a1() || a == cut.a2())
+        for (const auto& [row, ets_begin, ets_end] : agent_robust_cuts[a])
+        {
+            const auto dual = is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row);
+            debug_assert(SCIPisFeasLE(scip, dual, 0.0));
+            if (SCIPisFeasLT(scip, dual, 0.0))
             {
-                const auto dual = is_farkas ? SCIProwGetDualfarkas(cut.row()) : SCIProwGetDualsol(cut.row());
-                debug_assert(SCIPisFeasLE(scip, dual, 0.0));
-                if (SCIPisFeasLT(scip, dual, 0.0))
+                for (auto it = ets_begin; it != ets_end; ++it)
                 {
-                    if (cut.is_same_time())
-                    {
-                        const auto t = cut.t();
-                        for (auto [it, end] = cut.edges(a); it != end; ++it)
-                        {
-                            // Incur the penalty on the edge.
-                            const auto e = *it;
-                            auto& penalties = edge_penalties.get_edge_penalties(e.n, t);
-                            penalties.d[e.d] -= dual;
+                    // Incur the penalty on the edge.
+                    const auto n = it->n;
+                    const auto d = it->d;
+                    const auto t = it->t;
+                    auto& penalties = edge_penalties.get_edge_penalties(n, t);
+                    penalties.d[d] -= dual;
 
-                            // If a wait edge in a two-agent robust cut corresponds to waiting at the goal, incur the
-                            // penalty for staying at the goal because the low-level solver doesn't traverse this edge.
-                            if (e.n == goal && e.d == Direction::WAIT)
-                            {
-                                finish_time_penalties.add(t, -dual);
-                            }
-                        }
-                    }
-                    else
+                    // If a wait edge in a two-agent robust cut corresponds to waiting at the goal, incur the
+                    // penalty for staying at the goal because the low-level solver doesn't traverse this edge.
+                    if (n == goal && d == Direction::WAIT)
                     {
-                        for (auto [it, end] = cut.edge_times(a); it != end; ++it)
-                        {
-                            // Incur the penalty on the edge.
-                            const auto n = it->n;
-                            const auto d = it->d;
-                            const auto t = it->t;
-                            auto& penalties = edge_penalties.get_edge_penalties(n, t);
-                            penalties.d[d] -= dual;
-
-                            // If a wait edge in a two-agent robust cut corresponds to waiting at the goal, incur the
-                            // penalty for staying at the goal because the low-level solver doesn't traverse this edge.
-                            if (n == goal && d == Direction::WAIT)
-                            {
-                                const auto conflict_time = it->t;
-                                finish_time_penalties.add(conflict_time, -dual);
-                            }
-                        }
+                        const auto conflict_time = it->t;
+                        finish_time_penalties.add(conflict_time, -dual);
                     }
                 }
             }
+        }
 
         // If the node of a vertex conflict is the goal, incur a penalty for waiting (indefinitely) at the goal
         // after the agent has completed its path.

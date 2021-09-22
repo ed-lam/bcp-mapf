@@ -84,34 +84,34 @@ SCIP_RETCODE threevertex_conflicts_create_cut(
         , std::move(name)
 #endif
     );
-    cut.edge_times_a1(0) = a1_et1;
-    cut.edge_times_a1(1) = a1_et2;
+    cut.a1_edge_time(0) = a1_et1;
+    cut.a1_edge_time(1) = a1_et2;
     {
         debug_assert(a2_v1.t >= 1);
         const auto prev_time = a2_v1.t - 1;
-        cut.edge_times_a2(0) = EdgeTime{map.get_south(a2_v1.n), Direction::NORTH, prev_time};
-        cut.edge_times_a2(1) = EdgeTime{map.get_north(a2_v1.n), Direction::SOUTH, prev_time};
-        cut.edge_times_a2(2) = EdgeTime{map.get_west(a2_v1.n), Direction::EAST, prev_time};
-        cut.edge_times_a2(3) = EdgeTime{map.get_east(a2_v1.n), Direction::WEST, prev_time};
-        cut.edge_times_a2(4) = EdgeTime{map.get_wait(a2_v1.n), Direction::WAIT, prev_time};
+        cut.a2_edge_time(0) = EdgeTime{map.get_south(a2_v1.n), Direction::NORTH, prev_time};
+        cut.a2_edge_time(1) = EdgeTime{map.get_north(a2_v1.n), Direction::SOUTH, prev_time};
+        cut.a2_edge_time(2) = EdgeTime{map.get_west(a2_v1.n), Direction::EAST, prev_time};
+        cut.a2_edge_time(3) = EdgeTime{map.get_east(a2_v1.n), Direction::WEST, prev_time};
+        cut.a2_edge_time(4) = EdgeTime{map.get_wait(a2_v1.n), Direction::WAIT, prev_time};
     }
     {
         debug_assert(a2_v2.t >= 1);
         const auto prev_time = a2_v2.t - 1;
-        cut.edge_times_a2(5) = EdgeTime{map.get_south(a2_v2.n), Direction::NORTH, prev_time};
-        cut.edge_times_a2(6) = EdgeTime{map.get_north(a2_v2.n), Direction::SOUTH, prev_time};
-        cut.edge_times_a2(7) = EdgeTime{map.get_west(a2_v2.n), Direction::EAST, prev_time};
-        cut.edge_times_a2(8) = EdgeTime{map.get_east(a2_v2.n), Direction::WEST, prev_time};
-        cut.edge_times_a2(9) = EdgeTime{map.get_wait(a2_v2.n), Direction::WAIT, prev_time};
+        cut.a2_edge_time(5) = EdgeTime{map.get_south(a2_v2.n), Direction::NORTH, prev_time};
+        cut.a2_edge_time(6) = EdgeTime{map.get_north(a2_v2.n), Direction::SOUTH, prev_time};
+        cut.a2_edge_time(7) = EdgeTime{map.get_west(a2_v2.n), Direction::EAST, prev_time};
+        cut.a2_edge_time(8) = EdgeTime{map.get_east(a2_v2.n), Direction::WEST, prev_time};
+        cut.a2_edge_time(9) = EdgeTime{map.get_wait(a2_v2.n), Direction::WAIT, prev_time};
     }
     {
         debug_assert(a2_v3.t >= 1);
         const auto prev_time = a2_v3.t - 1;
-        cut.edge_times_a2(10) = EdgeTime{map.get_south(a2_v3.n), Direction::NORTH, prev_time};
-        cut.edge_times_a2(11) = EdgeTime{map.get_north(a2_v3.n), Direction::SOUTH, prev_time};
-        cut.edge_times_a2(12) = EdgeTime{map.get_west(a2_v3.n), Direction::EAST, prev_time};
-        cut.edge_times_a2(13) = EdgeTime{map.get_east(a2_v3.n), Direction::WEST, prev_time};
-        cut.edge_times_a2(14) = EdgeTime{map.get_wait(a2_v3.n), Direction::WAIT, prev_time};
+        cut.a2_edge_time(10) = EdgeTime{map.get_south(a2_v3.n), Direction::NORTH, prev_time};
+        cut.a2_edge_time(11) = EdgeTime{map.get_north(a2_v3.n), Direction::SOUTH, prev_time};
+        cut.a2_edge_time(12) = EdgeTime{map.get_west(a2_v3.n), Direction::EAST, prev_time};
+        cut.a2_edge_time(13) = EdgeTime{map.get_east(a2_v3.n), Direction::WEST, prev_time};
+        cut.a2_edge_time(14) = EdgeTime{map.get_wait(a2_v3.n), Direction::WAIT, prev_time};
     }    
 
     // Store the cut.

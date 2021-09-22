@@ -94,12 +94,12 @@ SCIP_RETCODE sixedge_conflicts_create_cut(
         , std::move(name)
 #endif
     );
-    cut.edge_times_a1(0) = a1_et1;
-    cut.edge_times_a1(1) = a1_et2;
-    cut.edge_times_a1(2) = a1_et3;
-    cut.edge_times_a2(0) = a2_et1;
-    cut.edge_times_a2(1) = a2_et2;
-    cut.edge_times_a2(2) = a2_et3;
+    cut.a1_edge_time(0) = a1_et1;
+    cut.a1_edge_time(1) = a1_et2;
+    cut.a1_edge_time(2) = a1_et3;
+    cut.a2_edge_time(0) = a2_et1;
+    cut.a2_edge_time(1) = a2_et2;
+    cut.a2_edge_time(2) = a2_et3;
 
     // Store the cut.
     SCIP_CALL(SCIPprobdataAddTwoAgentRobustCut(scip, probdata, sepa, std::move(cut), 2, result));

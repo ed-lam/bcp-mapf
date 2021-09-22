@@ -262,11 +262,11 @@ SCIP_RETCODE clique_conflicts_create_cut(
     );
     for (Int idx = 0; idx < static_cast<Int>(ets1.size()); ++idx)
     {
-        cut.edge_times_a1(idx) = ets1[idx];
+        cut.a1_edge_time(idx) = ets1[idx];
     }
     for (Int idx = 0; idx < static_cast<Int>(ets2.size()); ++idx)
     {
-        cut.edge_times_a2(idx) = ets2[idx];
+        cut.a2_edge_time(idx) = ets2[idx];
     }
 
     // Store the cut.

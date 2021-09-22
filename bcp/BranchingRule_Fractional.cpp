@@ -414,7 +414,7 @@ Pair<AgentNodeTime, bool> find_decision_early_goal(
             // Check.
 #ifdef DEBUG
             SCIP_Real tmp = 0.0;
-            for (const auto a : Array<Agent, 2>{cut.a1(), cut.a2()})
+            for (const auto& [a, ets_begin, ets_end] : cut.iterators())
                 for (auto var : agent_vars[a])
                 {
                     debug_assert(var);
@@ -425,7 +425,7 @@ Pair<AgentNodeTime, bool> find_decision_early_goal(
                     const auto var_val = SCIPgetSolVal(scip, nullptr, var);
 
                     SCIP_Real coeff = 0;
-                    for (auto [it, end] = cut.edge_times(a); it != end; ++it)
+                    for (auto it = ets_begin; it != ets_end; ++it)
                     {
                         const auto e = it->et.e;
                         const auto t = it->t;
@@ -890,7 +890,7 @@ Pair<AgentNodeTime, bool> find_decision_vertex(
             // Check.
 #ifdef DEBUG
             SCIP_Real tmp = 0.0;
-            for (const auto a : Array<Agent, 2>{cut.a1(), cut.a2()})
+            for (const auto& [a, ets_begin, ets_end] : cut.iterators())
                 for (auto var : agent_vars[a])
                 {
                     debug_assert(var);
@@ -901,7 +901,7 @@ Pair<AgentNodeTime, bool> find_decision_vertex(
                     const auto var_val = SCIPgetSolVal(scip, nullptr, var);
 
                     SCIP_Real coeff = 0;
-                    for (auto [it, end] = cut.edge_times(a); it != end; ++it)
+                    for (auto it = ets_begin; it != ets_end; ++it)
                     {
                         const auto e = it->et.e;
                         const auto t = it->t;
@@ -955,8 +955,7 @@ Pair<AgentNodeTime, bool> find_decision_vertex(
                     // Find the time of entry and exit from the rectangle.
                     Time entry = 0, exit = path_length;
                     auto [it, out_end] = cut.edge_times(a);
-                    auto out_begin = cut.edge_times_a1().first +
-                        (a == cut.a1() ? out1_begin : out2_begin);
+                    auto out_begin = cut.a1_edge_times_begin() + (a == cut.a1() ? out1_begin : out2_begin);
                     for (; it != out_begin; ++it)
                     {
                         const auto e = it->et.e;

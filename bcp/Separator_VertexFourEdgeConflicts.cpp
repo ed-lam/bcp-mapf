@@ -89,24 +89,24 @@ SCIP_RETCODE vertexfouredge_conflicts_create_cut(
                         , std::move(name)
 #endif
     );
-    cut.edge_times_a1(0) = a1_et1;
-    cut.edge_times_a1(1) = a1_et2;
+    cut.a1_edge_time(0) = a1_et1;
+    cut.a1_edge_time(1) = a1_et2;
     {
         Int idx = 2;
         for (const auto a1_nt : a1_nts)
         {
             debug_assert(a1_nt.t >= 1);
             const auto prev_time = a1_nt.t - 1;
-            cut.edge_times_a1(idx + 0) = EdgeTime{map.get_south(a1_nt.n), Direction::NORTH, prev_time};
-            cut.edge_times_a1(idx + 1) = EdgeTime{map.get_north(a1_nt.n), Direction::SOUTH, prev_time};
-            cut.edge_times_a1(idx + 2) = EdgeTime{map.get_west(a1_nt.n), Direction::EAST, prev_time};
-            cut.edge_times_a1(idx + 3) = EdgeTime{map.get_east(a1_nt.n), Direction::WEST, prev_time};
-            cut.edge_times_a1(idx + 4) = EdgeTime{map.get_wait(a1_nt.n), Direction::WAIT, prev_time};
+            cut.a1_edge_time(idx + 0) = EdgeTime{map.get_south(a1_nt.n), Direction::NORTH, prev_time};
+            cut.a1_edge_time(idx + 1) = EdgeTime{map.get_north(a1_nt.n), Direction::SOUTH, prev_time};
+            cut.a1_edge_time(idx + 2) = EdgeTime{map.get_west(a1_nt.n), Direction::EAST, prev_time};
+            cut.a1_edge_time(idx + 3) = EdgeTime{map.get_east(a1_nt.n), Direction::WEST, prev_time};
+            cut.a1_edge_time(idx + 4) = EdgeTime{map.get_wait(a1_nt.n), Direction::WAIT, prev_time};
             idx += 5;
         }
     }
-    cut.edge_times_a2(0) = a2_et1;
-    cut.edge_times_a2(1) = a2_et2;
+    cut.a2_edge_time(0) = a2_et1;
+    cut.a2_edge_time(1) = a2_et2;
 
     // Store the cut.
     SCIP_CALL(SCIPprobdataAddTwoAgentRobustCut(scip, probdata, sepa, std::move(cut), 2, result));

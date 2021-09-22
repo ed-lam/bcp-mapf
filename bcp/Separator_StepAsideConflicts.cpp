@@ -82,8 +82,8 @@ SCIP_RETCODE stepaside_conflicts_create_cut(
         , std::move(name)
 #endif
     );
-    std::copy(a1_ets.begin(), a1_ets.end(), cut.edge_times_a1().first);
-    std::copy(a2_ets.begin(), a2_ets.end(), cut.edge_times_a2().first);
+    std::copy(a1_ets.begin(), a1_ets.end(), &cut.a1_edge_time(0));
+    std::copy(a2_ets.begin(), a2_ets.end(), &cut.a2_edge_time(0));
 
     // Store the cut.
     SCIP_CALL(SCIPprobdataAddTwoAgentRobustCut(scip, probdata, sepa, std::move(cut), 3, result));

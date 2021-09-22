@@ -60,8 +60,8 @@ SCIP_RETCODE waitdelay_conflicts_create_cut(
         , std::move(name)
 #endif
     };
-    std::copy(a1_ets.begin(), a1_ets.end(), cut.edge_times_a1().first);
-    cut.edge_times_a2(0) = a2_et;
+    std::copy(a1_ets.begin(), a1_ets.end(), &cut.a1_edge_time(0));
+    cut.a2_edge_time(0) = a2_et;
 
     // Store the cut.
     SCIP_CALL(SCIPprobdataAddTwoAgentRobustCut(scip, probdata, sepa, std::move(cut), 1, result));

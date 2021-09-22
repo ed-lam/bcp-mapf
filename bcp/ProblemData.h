@@ -119,6 +119,11 @@ Vector<TwoAgentRobustCut>& SCIPprobdataGetTwoAgentRobustCuts(
     SCIP_ProbData* probdata    // Problem data
 );
 
+// Get array of agent-specific two-agent robust cuts
+Vector<Vector<AgentRobustCut>>& SCIPprobdataGetAgentRobustCuts(
+    SCIP_ProbData* probdata    // Problem data
+);
+
 // Get separator for rectangle knapsack conflicts
 #ifdef USE_RECTANGLE_KNAPSACK_CONFLICTS
 SCIP_SEPA* SCIPprobdataGetRectangleKnapsackConflictsSepa(

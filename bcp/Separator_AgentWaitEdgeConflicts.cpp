@@ -106,14 +106,14 @@ SCIP_RETCODE agentwaitedge_conflicts_create_cut(
         , std::move(name)
 #endif
     );
-    cut.edge_times_a1(0) = a1_et1;
-    cut.edge_times_a1(1) = a1_et2;
-    cut.edge_times_a2(0) = a2_et1;
-    cut.edge_times_a2(1) = a2_et2;
-    cut.edge_times_a2(2) = a2_et3;
-    cut.edge_times_a2(3) = a2_et4;
-    cut.edge_times_a2(4) = a2_et5;
-    cut.edge_times_a2(5) = a2_et6;
+    cut.a1_edge_time(0) = a1_et1;
+    cut.a1_edge_time(1) = a1_et2;
+    cut.a2_edge_time(0) = a2_et1;
+    cut.a2_edge_time(1) = a2_et2;
+    cut.a2_edge_time(2) = a2_et3;
+    cut.a2_edge_time(3) = a2_et4;
+    cut.a2_edge_time(4) = a2_et5;
+    cut.a2_edge_time(5) = a2_et6;
 
     // Store the cut.
     SCIP_CALL(SCIPprobdataAddTwoAgentRobustCut(scip, probdata, sepa, std::move(cut), 1, result));

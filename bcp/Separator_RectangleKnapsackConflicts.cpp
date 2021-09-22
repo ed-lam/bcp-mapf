@@ -80,7 +80,7 @@ SCIP_RETCODE rectangle_knapsack_conflicts_create_cut(
         , std::move(name)
 #endif
     );
-    std::copy(a1_begin, a2_end, cut.edge_times_a1().first);
+    std::copy(a1_begin, a2_end, &cut.a1_edge_time(0));
 
     // Store the cut.
     Int idx;
