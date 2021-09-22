@@ -28,11 +28,11 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "Constraint_LengthBranching.h"
 
 // Branching rule properties
-#define BRANCHRULE_NAME                           "mapf"
+#define BRANCHRULE_NAME            "mapf"
 #define BRANCHRULE_DESC            "MAPF branching rule"
-#define BRANCHRULE_PRIORITY                        50000
-#define BRANCHRULE_MAXDEPTH                           -1
-#define BRANCHRULE_MAXBOUNDDIST                      1.0
+#define BRANCHRULE_PRIORITY        50000
+#define BRANCHRULE_MAXDEPTH        -1
+#define BRANCHRULE_MAXBOUNDDIST    1.0
 
 // Branching execution method for fractional LP solutions
 #pragma GCC diagnostic push

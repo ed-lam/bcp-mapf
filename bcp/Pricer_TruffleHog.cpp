@@ -36,10 +36,10 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "trufflehog/AStar.h"
 
 // Pricer properties
-#define PRICER_NAME               "trufflehog"
-#define PRICER_DESC       "Truffle Hog pricer"
-#define PRICER_PRIORITY                      0
-#define PRICER_DELAY                      TRUE  // Only call pricer if all problem variables have non-negative reduced costs
+#define PRICER_NAME     "trufflehog"
+#define PRICER_DESC     "Truffle Hog pricer"
+#define PRICER_PRIORITY 0
+#define PRICER_DELAY    TRUE    // Only call pricer if all problem variables have non-negative reduced costs
 
 #define EPS (1e-6)
 #define STALLED_NB_ROUNDS (4)
@@ -55,22 +55,22 @@ struct PricingOrder
 // Pricer data
 struct SCIP_PricerData
 {
-    SCIP_CONSHDLR* vertex_branching_conshdlr;                                      // Constraint handler for vertex branching
-//    SCIP_CONSHDLR* wait_branching_conshdlr;                                      // Constraint handler for wait branching
-    SCIP_CONSHDLR* length_branching_conshdlr;                                      // Constraint handler for length branching
-    Agent N;                                                                       // Number of agents
+    SCIP_CONSHDLR* vertex_branching_conshdlr;           // Constraint handler for vertex branching
+//    SCIP_CONSHDLR* wait_branching_conshdlr;           // Constraint handler for wait branching
+    SCIP_CONSHDLR* length_branching_conshdlr;           // Constraint handler for length branching
+    Agent N;                                            // Number of agents
 
-    SCIP_Real* agent_part_dual;                                                    // Dual variable values of agent set partition constraints
-    SCIP_Real* price_priority;                                                     // Pricing priority of each agent
-    bool* agent_priced;                                                            // Indicates if an agent is priced in the current round
-    PricingOrder* order;                                                           // Order of agents to price
+    SCIP_Real* agent_part_dual;                         // Dual variable values of agent set partition constraints
+    SCIP_Real* price_priority;                          // Pricing priority of each agent
+    bool* agent_priced;                                 // Indicates if an agent is priced in the current round
+    PricingOrder* order;                                // Order of agents to price
 
 #ifdef USE_ASTAR_SOLUTION_CACHING
-    Vector<AStar::Data> previous_data;                                             // Inputs to the previous run for an agent
+    Vector<AStar::Data> previous_data;                  // Inputs to the previous run for an agent
 #endif
 
-    SCIP_Longint last_solved_node;                                                 // Node number of the last node pricing
-    SCIP_Real last_solved_lp_obj[STALLED_NB_ROUNDS];                               // LP objective in the last few rounds of pricing
+    SCIP_Longint last_solved_node;                      // Node number of the last node pricing
+    SCIP_Real last_solved_lp_obj[STALLED_NB_ROUNDS];    // LP objective in the last few rounds of pricing
 };
 
 // Initialize pricer (called after the problem was transformed)

@@ -95,49 +95,49 @@ Author: Edward Lam <ed@ed-lam.com>
 struct SCIP_ProbData
 {
     // Instance data
-    SharedPtr<Instance> instance;                                        // Instance
-    Agent N;                                                             // Number of agents
+    SharedPtr<Instance> instance;                                               // Instance
+    Agent N;                                                                    // Number of agents
 
     // Model data
-    SCIP_PricerData* pricerdata;                                         // Pricer data
-    SharedPtr<AStar> astar;                                              // Pricing solver
+    SCIP_PricerData* pricerdata;                                                // Pricer data
+    SharedPtr<AStar> astar;                                                     // Pricing solver
 
     // Variables
-    Vector<SCIP_VAR*> vars;                                              // Array of variables
-    Vector<SCIP_VAR*> dummy_vars;                                        // Array of dummy variables
-    Vector<Vector<SCIP_VAR*>> agent_vars;                                // Array of variables for each agent
-    Vector<HashTable<NodeTime, SCIP_Real>> fractional_vertices;          // Fractional vertices
-    Vector<HashTable<EdgeTime, SCIP_Real>> fractional_edges;             // Fractional edges
-    Vector<HashTable<EdgeTime, SCIP_Real>> fractional_edges_no_waits;    // Fractional edges without waits
-    HashTable<EdgeTime, Vector<SCIP_Real>> fractional_edges_vec;         // Fractional edges by edge-time
+    Vector<SCIP_VAR*> vars;                                                     // Array of variables
+    Vector<SCIP_VAR*> dummy_vars;                                               // Array of dummy variables
+    Vector<Vector<SCIP_VAR*>> agent_vars;                                       // Array of variables for each agent
+    Vector<HashTable<NodeTime, SCIP_Real>> fractional_vertices;                 // Fractional vertices
+    Vector<HashTable<EdgeTime, SCIP_Real>> fractional_edges;                    // Fractional edges
+    Vector<HashTable<EdgeTime, SCIP_Real>> fractional_edges_no_waits;           // Fractional edges without waits
+    HashTable<EdgeTime, Vector<SCIP_Real>> fractional_edges_vec;                // Fractional edges by edge-time
 
     // Constraints
-    Vector<SCIP_CONS*> agent_part;                                       // Agent partition constraints
-    SCIP_CONS* vertex_conflicts;                                         // Constraint for vertex conflicts
-    SCIP_CONS* edge_conflicts;                                           // Constraint for edge conflicts
-    Vector<TwoAgentRobustCut> two_agent_robust_cuts;                     // Robust cuts over two agents
+    Vector<SCIP_CONS*> agent_part;                                              // Agent partition constraints
+    SCIP_CONS* vertex_conflicts;                                                // Constraint for vertex conflicts
+    SCIP_CONS* edge_conflicts;                                                  // Constraint for edge conflicts
+    Vector<TwoAgentRobustCut> two_agent_robust_cuts;                            // Robust cuts over two agents
 #ifdef USE_RECTANGLE_KNAPSACK_CONFLICTS
-    SCIP_SEPA* rectangle_knapsack_conflicts;                             // Separator for rectangle knapsack conflicts
+    SCIP_SEPA* rectangle_knapsack_conflicts;                                    // Separator for rectangle knapsack conflicts
 #endif
 #ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-    SCIP_SEPA* rectangle_clique_conflicts;                               // Separator for rectangle clique conflicts
+    SCIP_SEPA* rectangle_clique_conflicts;                                      // Separator for rectangle clique conflicts
 #endif
 #ifdef USE_GOAL_CONFLICTS
-    Vector<GoalConflict> goal_conflicts;                                 // Goal conflicts
+    Vector<GoalConflict> goal_conflicts;                                        // Goal conflicts
 #endif
 #ifdef USE_PATH_LENGTH_NOGOODS
-    Vector<PathLengthNogood> path_length_nogoods;                        // Path length nogoods
+    Vector<PathLengthNogood> path_length_nogoods;                               // Path length nogoods
 #endif
 
     // Constraints separated by agent for fast retrieval
-    Vector<Vector<AgentRobustCut>> agent_robust_cuts;                    // Two-agent robust cuts grouped by agent
-    Vector<Vector<Pair<Time, SCIP_ROW*>>> agent_goal_vertex_conflicts;   // Vertex conflicts at the goal of an agent
+    Vector<Vector<AgentRobustCut>> agent_robust_cuts;                           // Two-agent robust cuts grouped by agent
+    Vector<Vector<Pair<Time, SCIP_ROW*>>> agent_goal_vertex_conflicts;          // Vertex conflicts at the goal of an agent
 #ifdef USE_WAITEDGE_CONFLICTS
-    Vector<Vector<Pair<Time, SCIP_ROW*>>> agent_goal_edge_conflicts;     // Edge conflicts at the goal of an agent
+    Vector<Vector<Pair<Time, SCIP_ROW*>>> agent_goal_edge_conflicts;            // Edge conflicts at the goal of an agent
 #endif
 #ifdef USE_GOAL_CONFLICTS
-    Vector<Vector<Pair<Time, SCIP_ROW*>>> goal_agent_goal_conflicts;     // Goal conflicts of an agent whose goal is in conflict
-    Vector<Vector<Pair<NodeTime, SCIP_ROW*>>> crossing_agent_goal_conflicts;  // Goal conflicts of an agent crossing the goal of another agent
+    Vector<Vector<Pair<Time, SCIP_ROW*>>> goal_agent_goal_conflicts;            // Goal conflicts of an agent whose goal is in conflict
+    Vector<Vector<Pair<NodeTime, SCIP_ROW*>>> crossing_agent_goal_conflicts;    // Goal conflicts of an agent crossing the goal of another agent
 #endif
 };
 
