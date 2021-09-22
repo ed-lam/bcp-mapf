@@ -33,6 +33,20 @@ Author: Edward Lam <ed@ed-lam.com>
 #define SEPA_USESSUBSCIP  FALSE    // does the separator use a secondary SCIP instance? */
 #define SEPA_DELAY        FALSE    // should separation method be delayed, if other separators found cuts? */
 
+struct WaitDelayConflictData
+{
+    SCIP_Real lhs;
+    Agent a1;
+    Agent a2;
+    Array<EdgeTime, 9> a1_ets;
+    EdgeTime a2_et;
+#ifdef DEBUG
+    NodeTime nt;
+#endif
+};
+
+#define MATRIX(i,j) (i * N + j)
+
 SCIP_RETCODE waitdelay_conflicts_create_cut(
     SCIP* scip,                          // SCIP
     SCIP_ProbData* probdata,             // Problem data
@@ -101,6 +115,7 @@ SCIP_RETCODE waitdelay_conflicts_separate(
     const auto& agent_edges = SCIPprobdataGetAgentFractionalEdges(probdata);
 
     // Find conflicts.
+    Vector<WaitDelayConflictData> cuts;
     for (Agent a1 = 0; a1 < N; ++a1)
     {
         // Get the edges of agent 1.
@@ -120,23 +135,17 @@ SCIP_RETCODE waitdelay_conflicts_separate(
                         // Store the edges for a1 being at n at time t.
                         const auto nt = a2_et.nt();
                         Array<EdgeTime, 9> a1_ets;
-                        {
-                            const auto prev_time = nt.t - 1;
-                            a1_ets[0] = EdgeTime(map.get_south(nt.n), Direction::NORTH, prev_time);
-                            a1_ets[1] = EdgeTime(map.get_north(nt.n), Direction::SOUTH, prev_time);
-                            a1_ets[2] = EdgeTime(map.get_west(nt.n), Direction::EAST, prev_time);
-                            a1_ets[3] = EdgeTime(map.get_east(nt.n), Direction::WEST, prev_time);
-                            a1_ets[4] = EdgeTime(map.get_wait(nt.n), Direction::WAIT, prev_time);
-                        }
+                        a1_ets[0] = EdgeTime(map.get_south(nt.n), Direction::NORTH, nt.t - 1);
+                        a1_ets[1] = EdgeTime(map.get_north(nt.n), Direction::SOUTH, nt.t - 1);
+                        a1_ets[2] = EdgeTime(map.get_west(nt.n), Direction::EAST, nt.t - 1);
+                        a1_ets[3] = EdgeTime(map.get_east(nt.n), Direction::WEST, nt.t - 1);
+                        a1_ets[4] = EdgeTime(map.get_wait(nt.n), Direction::WAIT, nt.t - 1);
 
                         // Store the edges for a1 being at n at time t+1.
-                        {
-                            const auto prev_time = nt.t;
-                            a1_ets[5] = EdgeTime(map.get_south(nt.n), Direction::NORTH, prev_time);
-                            a1_ets[6] = EdgeTime(map.get_north(nt.n), Direction::SOUTH, prev_time);
-                            a1_ets[7] = EdgeTime(map.get_west(nt.n), Direction::EAST, prev_time);
-                            a1_ets[8] = EdgeTime(map.get_east(nt.n), Direction::WEST, prev_time);
-                        }
+                        a1_ets[5] = EdgeTime(map.get_south(nt.n), Direction::NORTH, nt.t);
+                        a1_ets[6] = EdgeTime(map.get_north(nt.n), Direction::SOUTH, nt.t);
+                        a1_ets[7] = EdgeTime(map.get_west(nt.n), Direction::EAST, nt.t);
+                        a1_ets[8] = EdgeTime(map.get_east(nt.n), Direction::WEST, nt.t);
 
                         // Calculate the LHS.
                         debug_assert(a2_et_val > 0);
@@ -150,34 +159,65 @@ SCIP_RETCODE waitdelay_conflicts_separate(
                             }
                         }
 
-                        // Create a cut if violated.
+                        // Store a cut if violated.
                         if (SCIPisSumGT(scip, lhs, 1.0 + CUT_VIOLATION))
                         {
-                            // Print.
-                            debugln("   Creating wait-delay conflict cut at ({},{}) at time {} "
-                                    "for agents {} and {} with value {} in "
-                                    "branch-and-bound node {}",
-                                    map.get_x(nt.n), map.get_y(nt.n), nt.t, a1, a2,
-                                    lhs, SCIPnodeGetNumber(SCIPgetCurrentNode(scip)));
-
-                            // Create cut.
-                            SCIP_CALL(waitdelay_conflicts_create_cut(scip,
-                                                                     probdata,
-                                                                     sepa,
-                                                                     a1,
-                                                                     a2,
+                            cuts.emplace_back(WaitDelayConflictData{lhs, 
+                                                                    a1, 
+                                                                    a2, 
+                                                                    a1_ets, 
+                                                                    a2_et
 #ifdef DEBUG
-                                                                     nt,
+                                                                  , nt
 #endif
-                                                                     a1_ets,
-                                                                     a2_et,
-                                                                     result));
-                            found_cuts = true;
-                            goto NEXT_AGENT;
+                            });
                         }
                     }
-                NEXT_AGENT:;
             }
+    }
+
+    // Create the most violated cuts.
+    Vector<Int> agent_nb_cuts(N * N);
+    std::sort(cuts.begin(),
+              cuts.end(),
+              [](const WaitDelayConflictData& a, const WaitDelayConflictData& b) { return a.lhs > b.lhs; });
+    for (const auto& cut : cuts)
+    {
+        const auto& [lhs,
+                     a1, 
+                     a2,
+                     a1_ets,
+                     a2_et
+#ifdef DEBUG
+                   , nt
+#endif
+        ] = cut;
+        auto& nb_cuts = agent_nb_cuts[MATRIX(std::min(a1, a2), std::max(a1, a2))];
+        if (nb_cuts < 1)
+        {
+            // Print.
+            debugln("   Creating wait-delay conflict cut at ({},{}) at time {} for agents {} and {} with value {} in "
+                    "branch-and-bound node {}",
+                    map.get_x(nt.n), map.get_y(nt.n), nt.t,
+                    a1, a2,
+                    lhs, 
+                    SCIPnodeGetNumber(SCIPgetCurrentNode(scip)));
+
+            // Create cut.
+            SCIP_CALL(waitdelay_conflicts_create_cut(scip,
+                                                     probdata,
+                                                     sepa,
+                                                     a1,
+                                                     a2,
+#ifdef DEBUG
+                                                     nt,
+#endif
+                                                     a1_ets,
+                                                     a2_et,
+                                                     result));
+            ++nb_cuts;
+            found_cuts = true;
+        }
     }
 
     // Done.

@@ -75,7 +75,11 @@ SCIP_RETCODE rectangle_knapsack_conflicts_create_cut(
     // Create data for the cut.
     const auto [a1_begin, a1_end] = conflict.agent1_edges();
     const auto [a2_begin, a2_end] = conflict.agent2_edges();
-    TwoAgentRobustCut cut(scip, conflict.a1, conflict.a2, a1_end - a1_begin, a2_end - a2_begin
+    TwoAgentRobustCut cut(scip, 
+                          conflict.a1, 
+                          conflict.a2,
+                          a1_end - a1_begin,
+                          a2_end - a2_begin
 #ifdef DEBUG
         , std::move(name)
 #endif
@@ -108,8 +112,7 @@ RectangleConflict find_rectangle(
     SCIP_VAR* var1,                                               // Path of agent 1
     SCIP_VAR* var2                                                // Path of agent 2
 #if defined(DEBUG) or defined(PRINT_DEBUG)
-  , SCIP_ProbData* probdata,                                      // Problem data
-    Time& output_start_t,                                         // Time before entry
+  , Time& output_start_t,                                         // Time before entry
     Time& output_end_t,                                           // Time after exit
     Position& output_start_x1,                                    // Start coordinate of agent 1
     Position& output_start_y1,                                    // Start coordinate of agent 1
@@ -139,20 +142,20 @@ RectangleConflict find_rectangle(
     const auto path2 = SCIPvardataGetPath(vardata2);
 
     // Print.
-#ifdef PRINT_DEBUG
-    {
-        auto probdata = SCIPgetProbData(scip);
-        debugln("---------");
-        fmt::print("                  ");
-        for (Time t = 0; t < std::max(path_length1, path_length2); ++t)
-            fmt::print("{:10d}", t);
-        debugln("");
-        debugln("   agent {:2d}, path {}",
-                a1, format_path_spaced(probdata, path_length1, path1));
-        debugln("   agent {:2d}, path {}",
-                a2, format_path_spaced(probdata, path_length2, path2));
-    }
-#endif
+// #ifdef PRINT_DEBUG
+//     {
+//         auto probdata = SCIPgetProbData(scip);
+//         debugln("---------");
+//         fmt::print("                  ");
+//         for (Time t = 0; t < std::max(path_length1, path_length2); ++t)
+//             fmt::print("{:10d}", t);
+//         debugln("");
+//         debugln("   agent {:2d}, path {}",
+//                 a1, format_path_spaced(probdata, path_length1, path1));
+//         debugln("   agent {:2d}, path {}",
+//                 a2, format_path_spaced(probdata, path_length2, path2));
+//     }
+// #endif
 
     // Get the length of the shorter path.
     const auto min_path_length = std::min(path_length1, path_length2);
@@ -232,8 +235,7 @@ RectangleConflict find_rectangle(
     }
     release_assert(0 <= start_t && end_t > start_t + 2 && end_t < min_path_length);
 
-    // Cannot find a rectangle conflict if the start location of the two agents are the
-    // same.
+    // Cannot find a rectangle conflict if the start location of the two agents are the same.
     if (path1[start_t].n == path2[start_t].n)
     {
         return conflict;
@@ -473,8 +475,7 @@ SCIP_RETCODE rectangle_knapsack_conflicts_separate(
             for (const auto nt : common_vertices)
             {
                 // Print.
-                debugln("Checking conflict at ({},{}) time {}",
-                        map.get_x(nt.n), map.get_y(nt.n), nt.t);
+                // debugln("Checking conflict at ({},{}) time {}", map.get_x(nt.n), map.get_y(nt.n), nt.t);
 
                 // Check every path.
                 for (auto p1 : agent_paths[a1])
@@ -502,8 +503,7 @@ SCIP_RETCODE rectangle_knapsack_conflicts_separate(
                                                        p1,
                                                        p2
 #if defined(DEBUG) or defined(PRINT_DEBUG)
-                                                     , probdata,
-                                                       start_t,
+                                                     , start_t,
                                                        end_t,
                                                        start_x1,
                                                        start_y1,
@@ -517,98 +517,82 @@ SCIP_RETCODE rectangle_knapsack_conflicts_separate(
 #endif
                                                        );
 
-                        // Stop if no rectangle was found.
-                        if (conflict.empty())
-                            continue;
-
-                        // Print.
-#ifdef PRINT_DEBUG
-                        String a1_in_str("{");
-                        for (auto it = conflict.in1_begin(); it != conflict.in1_end(); ++it)
-                        {
-                            const auto& [e, t] = it->et;
-                            a1_in_str += fmt::format("EdgeTime({},{}),",
-                                                     NodeTime(e.n, t).nt,
-                                                     e.d == Direction::NORTH ? "Direction::NORTH" :
-                                                     e.d == Direction::SOUTH ? "Direction::SOUTH" :
-                                                     e.d == Direction::EAST ? "Direction::EAST" :
-                                                     e.d == Direction::WEST ? "Direction::WEST" :
-                                                     e.d == Direction::WAIT ? "Direction::WAIT" : "???");
-                        }
-                        a1_in_str.pop_back();
-                        a1_in_str += "}";
-                        String a1_out_str("{");
-                        for (auto it = conflict.out1_begin(); it != conflict.out1_end(); ++it)
-                        {
-                            const auto& [e, t] = it->et;
-                            a1_out_str += fmt::format("EdgeTime({},{}),",
-                                                     NodeTime(e.n, t).nt,
-                                                     e.d == Direction::NORTH ? "Direction::NORTH" :
-                                                     e.d == Direction::SOUTH ? "Direction::SOUTH" :
-                                                     e.d == Direction::EAST ? "Direction::EAST" :
-                                                     e.d == Direction::WEST ? "Direction::WEST" :
-                                                     e.d == Direction::WAIT ? "Direction::WAIT" : "???");
-                        }
-                        a1_out_str.pop_back();
-                        a1_out_str += "}";
-                        String a2_in_str("{");
-                        for (auto it = conflict.in2_begin(); it != conflict.in2_end(); ++it)
-                        {
-                            const auto& [e, t] = it->et;
-                            a2_in_str += fmt::format("EdgeTime({},{}),",
-                                                     NodeTime(e.n, t).nt,
-                                                     e.d == Direction::NORTH ? "Direction::NORTH" :
-                                                     e.d == Direction::SOUTH ? "Direction::SOUTH" :
-                                                     e.d == Direction::EAST ? "Direction::EAST" :
-                                                     e.d == Direction::WEST ? "Direction::WEST" :
-                                                     e.d == Direction::WAIT ? "Direction::WAIT" : "???");
-                        }
-                        a2_in_str.pop_back();
-                        a2_in_str += "}";
-                        String a2_out_str("{");
-                        for (auto it = conflict.out2_begin(); it != conflict.out2_end(); ++it)
-                        {
-                            const auto& [e, t] = it->et;
-                            a2_out_str += fmt::format("EdgeTime({},{}),",
-                                                      NodeTime(e.n, t).nt,
-                                                      e.d == Direction::NORTH ? "Direction::NORTH" :
-                                                      e.d == Direction::SOUTH ? "Direction::SOUTH" :
-                                                      e.d == Direction::EAST ? "Direction::EAST" :
-                                                      e.d == Direction::WEST ? "Direction::WEST" :
-                                                      e.d == Direction::WAIT ? "Direction::WAIT" : "???");
-                        }
-                        a2_out_str.pop_back();
-                        a2_out_str += "}";
-                        debugln("   Creating rectangle knapsack cut for agent {} in "
-                                "{} out {} and agent {} in {} out {} with value {} in "
-                                "branch-and-bound node {}",
-                                conflict.a1, a1_in_str, a1_out_str,
-                                conflict.a2, a2_in_str, a2_out_str,
-                                lhs,
-                                SCIPnodeGetNumber(SCIPgetCurrentNode(scip)));
-#endif
-
                         // Create cut.
-                        SCIP_CALL(rectangle_knapsack_conflicts_create_cut(scip,
-                                                                          probdata,
-                                                                          sepa,
-                                                                          *sepadata,
-#if defined(DEBUG) or defined(PRINT_DEBUG)
-                                                                          start_t,
-                                                                          start_x1,
-                                                                          start_y1,
-                                                                          start_x2,
-                                                                          start_y2,
-                                                                          end_t,
-                                                                          end_x1,
-                                                                          end_y1,
-                                                                          end_x2,
-                                                                          end_y2,
+                        if (!conflict.empty())
+                        {
+                            // Print.
+#ifdef PRINT_DEBUG
+                            const auto& map = SCIPprobdataGetMap(probdata);
+                            String a1_in_str;
+                            for (auto it = conflict.in1_begin(); it != conflict.in1_end(); ++it)
+                            {
+                                const auto& [e, t] = it->et;
+                                const auto [x1, y1] = map.get_xy(e.n);
+                                const auto [x2, y2] = map.get_destination_xy(e);
+                                a1_in_str += fmt::format("(({},{}),({},{}),{}) ", x1, y1, x2, y2, t);
+                            }
+                            a1_in_str.pop_back();
+                            String a1_out_str;
+                            for (auto it = conflict.out1_begin(); it != conflict.out1_end(); ++it)
+                            {
+                                const auto& [e, t] = it->et;
+                                const auto [x1, y1] = map.get_xy(e.n);
+                                const auto [x2, y2] = map.get_destination_xy(e);
+                                a1_out_str += fmt::format("(({},{}),({},{}),{}) ", x1, y1, x2, y2, t);
+                            }
+                            a1_out_str.pop_back();
+                            String a2_in_str;
+                            for (auto it = conflict.in2_begin(); it != conflict.in2_end(); ++it)
+                            {
+                                const auto& [e, t] = it->et;
+                                const auto [x1, y1] = map.get_xy(e.n);
+                                const auto [x2, y2] = map.get_destination_xy(e);
+                                a2_in_str += fmt::format("(({},{}),({},{}),{}) ", x1, y1, x2, y2, t);
+                            }
+                            a2_in_str.pop_back();
+                            String a2_out_str;
+                            for (auto it = conflict.out2_begin(); it != conflict.out2_end(); ++it)
+                            {
+                                const auto& [e, t] = it->et;
+                                const auto [x1, y1] = map.get_xy(e.n);
+                                const auto [x2, y2] = map.get_destination_xy(e);
+                                a2_out_str += fmt::format("(({},{}),({},{}),{}) ", x1, y1, x2, y2, t);
+                            }
+                            a2_out_str.pop_back();
+                            debugln("   Creating rectangle knapsack cut for agents {} and {} with value {} in "
+                                    "branch-and-bound node {}:",
+                                    conflict.a1,
+                                    conflict.a2,
+                                    lhs,
+                                    SCIPnodeGetNumber(SCIPgetCurrentNode(scip)));
+                                debugln("      Agent {} in: {}", conflict.a1, a1_in_str);
+                                debugln("      Agent {} out: {}", conflict.a1, a1_out_str);
+                                debugln("      Agent {} in: {}", conflict.a2, a2_in_str);
+                                debugln("      Agent {} out: {}", conflict.a2, a2_out_str);
 #endif
-                                                                          conflict,
-                                                                          result));
-                        found_cuts = true;
-                        goto NEXT_AGENT;
+
+                            // Create cut.
+                            SCIP_CALL(rectangle_knapsack_conflicts_create_cut(scip,
+                                                                              probdata,
+                                                                              sepa,
+                                                                              *sepadata,
+#if defined(DEBUG) or defined(PRINT_DEBUG)
+                                                                              start_t,
+                                                                              start_x1,
+                                                                              start_y1,
+                                                                              start_x2,
+                                                                              start_y2,
+                                                                              end_t,
+                                                                              end_x1,
+                                                                              end_y1,
+                                                                              end_x2,
+                                                                              end_y2,
+#endif
+                                                                              conflict,
+                                                                              result));
+                            found_cuts = true;
+                            goto NEXT_AGENT;
+                        }
                     }
             }
         NEXT_AGENT:;

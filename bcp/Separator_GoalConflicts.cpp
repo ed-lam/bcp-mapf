@@ -33,6 +33,16 @@ Author: Edward Lam <ed@ed-lam.com>
 #define SEPA_USESSUBSCIP  FALSE    // does the separator use a secondary SCIP instance? */
 #define SEPA_DELAY        FALSE    // should separation method be delayed, if other separators found cuts? */
 
+struct GoalConflictData
+{
+    SCIP_Real lhs;
+    Agent a1;
+    Agent a2;
+    NodeTime nt;
+};
+
+#define MATRIX(i,j) (i * N + j)
+
 SCIP_RETCODE goal_conflicts_create_cut(
     SCIP* scip,                              // SCIP
     SCIP_SEPA* sepa,                         // Separator
@@ -247,6 +257,7 @@ SCIP_RETCODE goal_conflicts_separate(
         }
 
     // Find conflicts.
+    Vector<GoalConflictData> cuts;
     for (Agent a1 = 0; a1 < N; ++a1)
     {
         const auto conflict_node = agents[a1].goal;
@@ -306,33 +317,49 @@ SCIP_RETCODE goal_conflicts_separate(
                         }
                     }
 
-                    // Create a cut only if violated.
-                    if (SCIPisSumGT(scip, lhs1 + lhs2, 1.0 + CUT_VIOLATION) && lhs2 > 0)
+                    // Store a cut if violated.
+                    const auto lhs = lhs1 + lhs2;
+                    if (SCIPisSumGT(scip, lhs, 1.0 + CUT_VIOLATION) && SCIPisSumGT(scip, lhs2, 0))
                     {
-                        // Print.
-#ifdef PRINT_DEBUG
-                        const auto& map = SCIPprobdataGetMap(probdata);
-                        debugln("   Creating goal conflict cut for goal agent {} and "
-                                "crossing agent {} at ({},{}) at time {} with value {} "
-                                "in branch-and-bound node {}",
-                                a1, a2, map.get_x(nt.n), map.get_y(nt.n), nt.t,
-                                lhs1 + lhs2,
-                                SCIPnodeGetNumber(SCIPgetCurrentNode(scip)));
-#endif
-
-                        // Create cut.
-                        SCIP_CALL(goal_conflicts_create_cut(scip,
-                                                            sepa,
-                                                            goal_conflicts,
-                                                            a1,
-                                                            a2,
-                                                            nt,
-                                                            agent_vars[a1],
-                                                            agent_vars[a2],
-                                                            result));
-                        found_cuts = true;
+                        cuts.emplace_back(GoalConflictData{lhs, a1, a2, nt});
                     }
                 }
+        }
+    }
+
+    // Create the most violated cuts.
+    Vector<Int> agent_nb_cuts(N * N);
+    std::sort(cuts.begin(),
+              cuts.end(),
+              [](const GoalConflictData& a, const GoalConflictData& b) { return a.lhs > b.lhs; });
+    for (const auto& cut : cuts)
+    {
+        const auto& [lhs, a1, a2, nt] = cut;
+        auto& nb_cuts = agent_nb_cuts[MATRIX(std::min(a1, a2), std::max(a1, a2))];
+        if (nb_cuts < 5)
+        {
+            // Print.
+#ifdef PRINT_DEBUG
+            const auto& map = SCIPprobdataGetMap(probdata);
+            debugln("   Creating goal conflict cut for goal agent {} and crossing agent {} at ({},{}) at time {} with "
+                    "value {} in branch-and-bound node {}",
+                    a1, a2, map.get_x(nt.n), map.get_y(nt.n), nt.t,
+                    lhs,
+                    SCIPnodeGetNumber(SCIPgetCurrentNode(scip)));
+#endif
+
+            // Create cut.
+            SCIP_CALL(goal_conflicts_create_cut(scip,
+                                                sepa,
+                                                goal_conflicts,
+                                                a1,
+                                                a2,
+                                                nt,
+                                                agent_vars[a1],
+                                                agent_vars[a2],
+                                                result));
+            ++nb_cuts;
+            found_cuts = true;
         }
     }
 
