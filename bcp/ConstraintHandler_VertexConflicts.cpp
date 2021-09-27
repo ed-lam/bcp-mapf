@@ -160,7 +160,7 @@ SCIP_RETCODE vertex_conflicts_create_cut(
     }
     SCIP_CALL(SCIPflushRowExtensions(scip, row));
 #ifdef DEBUG
-    debug_assert(SCIPisSumGT(scip, lhs, 1.0));
+    debug_assert(SCIPisSumGT(scip, lhs, 1.0 - 1e-6));
 #endif
 
     // Add the row to the LP.
@@ -384,10 +384,17 @@ SCIP_RETCODE vertex_conflicts_separate(
             {
                 // Reactivate the row if it is not in the LP.
                 const auto& [row] = it->second;
-                release_assert(!SCIProwIsInLP(row), "Vertex conflict constraint is violated but is already active");
-                SCIP_Bool infeasible;
-                SCIP_CALL(SCIPaddRow(scip, row, true, &infeasible));
-                *result = SCIP_SEPARATED;
+                if (!SCIProwIsInLP(row))
+                {
+                    SCIP_Bool infeasible;
+                    SCIP_CALL(SCIPaddRow(scip, row, true, &infeasible));
+                    *result = SCIP_SEPARATED;
+                }
+                else
+                {
+                    release_assert(SCIPisSumLE(scip, val, 1.0 + 1e-6),
+                                   "Vertex conflict constraint is violated but is already active");
+                }
             }
             else
             {
