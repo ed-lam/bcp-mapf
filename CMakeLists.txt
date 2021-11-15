@@ -220,7 +220,7 @@ if (NOT LIBM)
 endif ()
 
 # Link to libraries.
-target_link_libraries(bcp-mapf fmt::fmt-header-only cliquer ${SCIP_LIBRARY} ${LIBM})
+target_link_libraries(bcp-mapf fmt::fmt-header-only cliquer stdc++fs ${SCIP_LIBRARY} ${LIBM})
 target_link_libraries(trufflehog fmt::fmt-header-only)
 
 # Set options.
