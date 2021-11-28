@@ -297,7 +297,7 @@ SCIP_DECL_PROBTRANS(probtrans)
         (*targetdata)->crossing_agent_goal_conflicts[a].reserve(5000);
     }
 #endif
-    
+
     // Create a warm-start solution.
     release_assert(SCIPgetProbData(scip) == *targetdata, "Error in transforming problem");
 //    SCIP_CALL(add_initial_solution(scip));
@@ -1583,6 +1583,7 @@ void update_fractional_vertices_and_edges(
         if (!agent_vertices.empty())
         {
             println("   Fractional vertices for agent {}:", a);
+            const auto& map = SCIPprobdataGetMap(probdata);
             for (const auto [nt, val] : agent_vertices)
             {
                 const auto [x, y] = map.get_xy(nt.n);
@@ -1596,6 +1597,7 @@ void update_fractional_vertices_and_edges(
         if (!agent_edges.empty())
         {
             println("   Fractional edges used by agent {}:", a);
+            const auto& map = SCIPprobdataGetMap(probdata);
             for (const auto [et, val] : agent_edges)
             {
                 const auto [x1, y1] = map.get_xy(et.n);
@@ -1610,6 +1612,7 @@ void update_fractional_vertices_and_edges(
         if (!agent_edges_no_waits.empty())
         {
             println("   Fractional non-wait edges used by agent {}:", a);
+            const auto& map = SCIPprobdataGetMap(probdata);
             for (const auto [et, val] : agent_edges_no_waits)
             {
                 const auto [x1, y1] = map.get_xy(et.n);

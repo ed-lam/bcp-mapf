@@ -46,15 +46,12 @@ class AStar
         union
         {
 #ifdef USE_RESERVATION_TABLE
-            struct
-            {
-                uint64_t nt : 63;
-                bool reserved : 1;
-            };
+            uint64_t nt : 63;
             struct
             {
                 Node n : 32;
                 Time t : 31;
+                bool reserved : 1;
             };
 #else
             uint64_t nt;

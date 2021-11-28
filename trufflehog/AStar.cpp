@@ -220,14 +220,14 @@ AStar::Label* AStar::dominated(Label* const new_label)
 void AStar::generate_start()
 {
     // Get data.
-    const auto& [start, 
-                 waypoints, 
-                 goal, 
-                 earliest_goal_time, 
-                 latest_goal_time, 
-                 cost_offset, 
+    const auto& [start,
+                 waypoints,
+                 goal,
+                 earliest_goal_time,
+                 latest_goal_time,
+                 cost_offset,
                  latest_visit_time,
-                 edge_penalties, 
+                 edge_penalties,
                  finish_time_penalties
 #ifdef USE_GOAL_CONFLICTS
                , goal_penalties
@@ -286,14 +286,14 @@ void AStar::generate_start()
 void AStar::generate_end(Label* const current)
 {
     // Get data.
-    const auto& [start, 
-                 waypoints, 
-                 goal, 
-                 earliest_goal_time, 
-                 latest_goal_time, 
-                 cost_offset, 
+    const auto& [start,
+                 waypoints,
+                 goal,
+                 earliest_goal_time,
+                 latest_goal_time,
+                 cost_offset,
                  latest_visit_time,
-                 edge_penalties, 
+                 edge_penalties,
                  finish_time_penalties
 #ifdef USE_GOAL_CONFLICTS
                , goal_penalties
@@ -367,14 +367,14 @@ void AStar::generate(Label* const current,
                      const Time waypoint_time)
 {
     // Get data.
-    const auto& [start, 
-                 waypoints, 
-                 goal, 
-                 earliest_goal_time, 
-                 latest_goal_time, 
-                 cost_offset, 
+    const auto& [start,
+                 waypoints,
+                 goal,
+                 earliest_goal_time,
+                 latest_goal_time,
+                 cost_offset,
                  latest_visit_time,
-                 edge_penalties, 
+                 edge_penalties,
                  finish_time_penalties
 #ifdef USE_GOAL_CONFLICTS
                , goal_penalties
@@ -535,14 +535,14 @@ void AStar::generate_last_segment(Label* const current,
                                   const Cost cost)
 {
     // Get data.
-    const auto& [start, 
-                 waypoints, 
-                 goal, 
-                 earliest_goal_time, 
-                 latest_goal_time, 
-                 cost_offset, 
+    const auto& [start,
+                 waypoints,
+                 goal,
+                 earliest_goal_time,
+                 latest_goal_time,
+                 cost_offset,
                  latest_visit_time,
-                 edge_penalties, 
+                 edge_penalties,
                  finish_time_penalties
 #ifdef USE_GOAL_CONFLICTS
                , goal_penalties
@@ -700,14 +700,14 @@ template<IntCost default_cost>
 void AStar::generate_neighbours(Label* const current, const Waypoint w, const Time waypoint_time)
 {
     // Get data.
-    auto& [start, 
-           waypoints, 
-           goal, 
-           earliest_goal_time, 
-           latest_goal_time, 
-           cost_offset, 
+    auto& [start,
+           waypoints,
+           goal,
+           earliest_goal_time,
+           latest_goal_time,
+           cost_offset,
            latest_visit_time,
-           edge_penalties, 
+           edge_penalties,
            finish_time_penalties
 #ifdef USE_GOAL_CONFLICTS
          , goal_penalties
@@ -780,14 +780,14 @@ template<IntCost default_cost>
 void AStar::generate_neighbours_last_segment(Label* const current)
 {
     // Get data.
-    auto& [start, 
-           waypoints, 
-           goal, 
-           earliest_goal_time, 
-           latest_goal_time, 
-           cost_offset, 
+    auto& [start,
+           waypoints,
+           goal,
+           earliest_goal_time,
+           latest_goal_time,
+           cost_offset,
            latest_visit_time,
-           edge_penalties, 
+           edge_penalties,
            finish_time_penalties
 #ifdef USE_GOAL_CONFLICTS
          , goal_penalties
@@ -855,14 +855,14 @@ void AStar::generate_neighbours_last_segment<1>(Label* const current);
 void AStar::preprocess_input()
 {
     // Get data.
-    auto& [start, 
-           waypoints, 
-           goal, 
-           earliest_goal_time, 
-           latest_goal_time, 
-           cost_offset, 
+    auto& [start,
+           waypoints,
+           goal,
+           earliest_goal_time,
+           latest_goal_time,
+           cost_offset,
            latest_visit_time,
-           edge_penalties, 
+           edge_penalties,
            finish_time_penalties
 #ifdef USE_GOAL_CONFLICTS
          , goal_penalties
@@ -878,14 +878,14 @@ template<bool is_farkas>
 Pair<Vector<NodeTime>, Cost> AStar::solve()
 {
     // Get data.
-    const auto& [start, 
-                 waypoints, 
-                 goal, 
-                 earliest_goal_time, 
-                 latest_goal_time, 
-                 cost_offset, 
+    const auto& [start,
+                 waypoints,
+                 goal,
+                 earliest_goal_time,
+                 latest_goal_time,
+                 cost_offset,
                  latest_visit_time,
-                 edge_penalties, 
+                 edge_penalties,
                  finish_time_penalties
 #ifdef USE_GOAL_CONFLICTS
                , goal_penalties
