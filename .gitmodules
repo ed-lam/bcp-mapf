@@ -7,3 +7,6 @@
 [submodule "robin-hood-hashing"]
 	path = robin-hood-hashing
 	url = https://github.com/martinus/robin-hood-hashing.git
+[submodule "lns2"]
+	path = lns2
+	url = https://github.com/ed-lam/lns2-for-bcp-mapf.git
