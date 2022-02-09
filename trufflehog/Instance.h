@@ -22,19 +22,23 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #include "AgentsData.h"
 #include "Map.h"
+#include <filesystem>
 
 namespace TruffleHog
 {
 
 struct Instance
 {
+    std::filesystem::path scenario_path;
+    std::filesystem::path map_path;
+
     Map map;
     AgentsData agents;
 
   public:
     // Constructors
     Instance() = default;
-    Instance(const char* scenario_path, const Agent nb_agents = std::numeric_limits<Agent>::max());
+    Instance(const std::filesystem::path& scenario_path, const Agent nb_agents = std::numeric_limits<Agent>::max());
     Instance(const Instance&) = default;
     Instance(Instance&&) = default;
     Instance& operator=(const Instance&) = default;

@@ -21,11 +21,12 @@ Author: Edward Lam <ed@ed-lam.com>
 #define MAPF_READER_H
 
 #include "Includes.h"
+#include <filesystem>
 
 // Read instance from file
 SCIP_RETCODE read_instance(
     SCIP* scip,                                                  // SCIP
-    const char* scenario_path,                                   // File path to scenario
+    const std::filesystem::path& scenario_path,                  // File path to scenario
     const Agent nb_agents = std::numeric_limits<Agent>::max()    // Number of agents to read
 );
 

@@ -21,21 +21,19 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "Includes.h"
 #include "ProblemData.h"
 #include <regex>
-#include <filesystem>
 
 #include "trufflehog/Instance.h"
 #include "trufflehog/AStar.h"
 
 // Read instance from file
 SCIP_RETCODE read_instance(
-    SCIP* scip,                   // SCIP
-    const char* scenario_path,    // File path to scenario
-    const Agent nb_agents         // Number of agents to read
+    SCIP* scip,                                    // SCIP
+    const std::filesystem::path& scenario_path,    // File path to scenario
+    const Agent nb_agents                          // Number of agents to read
 )
 {
     // Get instance name.
-    std::filesystem::path path(scenario_path);
-    auto instance_name = path.filename().stem().string();
+    auto instance_name = scenario_path.stem().string();
     if (nb_agents < std::numeric_limits<Agent>::max())
     {
         instance_name += fmt::format("-{}agents", nb_agents);

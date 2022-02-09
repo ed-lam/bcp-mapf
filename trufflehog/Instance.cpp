@@ -30,12 +30,12 @@ struct AgentMapData
     Position map_height;
 };
 
-void read_map(const char* const map_path, Map& map)
+void read_map(const std::filesystem::path& map_path, Map& map)
 {
     // Open map file.
     std::ifstream map_file;
     map_file.open(map_path, std::ios::in);
-    release_assert(map_file.good(), "Invalid map file {}", map_path);
+    release_assert(map_file.good(), "Invalid map file {}", map_path.string());
 
     // Read map.
     {
@@ -126,7 +126,11 @@ void read_map(const char* const map_path, Map& map)
     map_file.close();
 }
 
-Instance::Instance(const char* scenario_path, const Agent nb_agents)
+Instance::Instance(const std::filesystem::path& scenario_path, const Agent nb_agents) :
+    scenario_path(scenario_path),
+    map_path(),
+    map(),
+    agents()
 {
     // Read agents.
     Vector<AgentMapData> agents_map_data;
@@ -134,7 +138,7 @@ Instance::Instance(const char* scenario_path, const Agent nb_agents)
         // Open scenario file.
         std::ifstream scen_file;
         scen_file.open(scenario_path, std::ios::in);
-        release_assert(scen_file.good(), "Cannot find scenario file {}", scenario_path);
+        release_assert(scen_file.good(), "Cannot find scenario file {}", scenario_path.string());
 
         // Check file format.
         {
@@ -170,17 +174,10 @@ Instance::Instance(const char* scenario_path, const Agent nb_agents)
                 if (map.empty())
                 {
                     // Prepend the directory of the scenario file.
-                    String map_path_str;
-                    const String scenario_path_str(scenario_path);
-                    const auto last_slash_idx = scenario_path_str.rfind('/');
-                    if (std::string::npos != last_slash_idx)
-                    {
-                        map_path_str = scenario_path_str.substr(0, last_slash_idx);
-                    }
-                    map_path_str += "/" + agent_map_data.map_path;
+                    map_path = scenario_path.parent_path().append(agent_map_data.map_path);
 
                     // Read map.
-                    read_map(map_path_str.c_str(), map);
+                    read_map(map_path, map);
                 }
 
                 // Store.
@@ -191,7 +188,7 @@ Instance::Instance(const char* scenario_path, const Agent nb_agents)
         release_assert(nb_agents == std::numeric_limits<Int>::max() || agents.size() == nb_agents,
                        "Scenario file contained {} agents. Not enough to read {} agents",
                        agents.size(), nb_agents);
-        release_assert(!agents.empty(), "No agents in scenario file {}", scenario_path);
+        release_assert(!agents.empty(), "No agents in scenario file {}", scenario_path.string());
 
         // Close file.
         scen_file.close();

@@ -1651,6 +1651,24 @@ bool& SCIPprobdataGetFoundCutsIndicator(
     return probdata->found_cuts;
 }
 
+// Get the scenario path
+const std::filesystem::path& SCIPprobdataGetScenarioPath(
+    SCIP_ProbData* probdata    // Problem data
+)
+{
+    debug_assert(probdata);
+    return probdata->instance->scenario_path;
+}
+
+// Get the map path
+const std::filesystem::path& SCIPprobdataGetMapPath(
+    SCIP_ProbData* probdata    // Problem data
+)
+{
+    debug_assert(probdata);
+    return probdata->instance->map_path;
+}
+
 // Get the map
 const Map& SCIPprobdataGetMap(
     SCIP_ProbData* probdata    // Problem data
