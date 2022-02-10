@@ -257,8 +257,7 @@ void check_propagation(
 
         // Check.
         release_assert(!(disable_path_of_same_agent || disable_path_of_diff_agent),
-                       "Branching decision is not propagated correctly for agent {},"
-                       "path {}",
+                       "Branching decision is not propagated correctly for agent {}, path {}",
                        path_a, format_path(probdata, path_length, path));
     }
 }

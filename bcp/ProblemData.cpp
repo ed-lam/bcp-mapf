@@ -301,10 +301,6 @@ SCIP_DECL_PROBTRANS(probtrans)
     }
 #endif
 
-    // Create a warm-start solution.
-    release_assert(SCIPgetProbData(scip) == *targetdata, "Error in transforming problem");
-//    SCIP_CALL(add_initial_solution(scip));
-
     // Done.
     return SCIP_OKAY;
 }
@@ -524,7 +520,7 @@ SCIP_RETCODE SCIPprobdataAddInitialVar(
     SCIP_CALL(SCIPcreateVar(scip,
                             var,
 #ifdef MAKE_NAMES
-        name.c_str(),
+                            name.c_str(),
 #else
                             "",
 #endif

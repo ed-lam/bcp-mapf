@@ -50,7 +50,7 @@ class Heuristic
     // Comparison of labels
     struct LabelCompare
     {
-        inline bool operator()(const Label* const a, const Label* const b)
+        inline bool operator()(const Label* const a, const Label* const b) const
         {
             return a->g < b->g;
         }

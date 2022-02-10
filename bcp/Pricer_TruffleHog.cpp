@@ -904,7 +904,7 @@ SCIP_RETCODE run_trufflehog_pricer(
         std::tie(path_vertices, path_cost) = astar.solve<is_farkas>();
         if (!path_vertices.empty())
         {
-            // Get the solution.
+            // Get the path.
             for (auto it = path_vertices.begin(); it != path_vertices.end(); ++it)
             {
                 const auto d = it != path_vertices.end() - 1 ?
@@ -1058,77 +1058,5 @@ SCIP_RETCODE SCIPpricerTruffleHogActivate(
     SCIP_CALL(SCIPactivatePricer(scip, pricer));
 
     // Done.
-    return SCIP_OKAY;
-}
-
-// Inject a warm-start solution
-SCIP_RETCODE add_initial_solution(
-    SCIP* scip    // SCIP
-)
-{
-    err("Not yet implemented");
-
-//    // Get problem data.
-//    auto probdata = SCIPgetProbData(scip);
-//    const auto N = SCIPprobdataGetN(probdata);
-//    const auto& map = SCIPprobdataGetMap(probdata);
-//    const auto& agents = SCIPprobdataGetAgentsData(probdata);
-//
-//    // Get shortest path solver.
-//    auto& astar = SCIPprobdataGetAStar(probdata);
-//    auto& restab = astar.reservation_table();
-//    restab.clear_reservations();
-//    auto& edge_penalties = astar.edge_penalties();
-//    auto& finish_time_penalties = astar.finish_time_penalties();
-//    release_assert(finish_time_penalties.empty(), "Cannot have time finish penalties in warm-start solution");
-//#ifdef USE_GOAL_CONFLICTS
-//    auto& goal_penalties = astar.goal_penalties();
-//    release_assert(goal_penalties.empty(), "Cannot have goal penalties in warm-start solution");
-//#endif
-//
-//    // Find a path for each agent.
-//    for (Agent a = 0; a < N; ++a)
-//    {
-//        // Set edge costs.
-//        edge_penalties.clear();
-//
-//        // Solve.
-//        const auto start = NodeTime{agents[a].start, 0};
-//        const auto goal = agents[a].goal;
-//        const Time earliest_finish = 0;
-//        const Time latest_finish = astar.max_path_length() - 1;
-//        const auto [segment, path_cost] = astar.solve<false>(start,
-//                                                             goal,
-//                                                             earliest_finish,
-//                                                             latest_finish,
-//                                                             std::numeric_limits<Cost>::max());
-//
-//        // Get the solution.
-//        Vector<Edge> path;
-//        for (auto it = segment.begin(); it != segment.end(); ++it)
-//        {
-//            const auto d = it != segment.end() - 1 ?
-//                           map.get_direction(it->n, (it + 1)->n) :
-//                           Direction::INVALID;
-//            path.push_back(Edge{it->n, d});
-//        }
-//
-//        // Print.
-//        debugln("      Found path with length {}, cost {:.6f} ({})",
-//                path.size(),
-//                path_cost,
-//                format_path(probdata, path.size(), path.data()));
-//
-//        // Add column.
-//        SCIP_VAR* var = nullptr;
-//        SCIP_CALL(SCIPprobdataAddInitialVar(scip,
-//                                            probdata,
-//                                            a,
-//                                            path.size(),
-//                                            path.data(),
-//                                            &var));
-//        debug_assert(var);
-//    }
-
     return SCIP_OKAY;
 }

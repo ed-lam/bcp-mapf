@@ -80,7 +80,7 @@ class AStar
         LabelCompare(const Int map_size) : reservation_table_(map_size) {}
 #endif
 
-        inline bool operator()(const Label* const a, const Label* const b)
+        inline bool operator()(const Label* const a, const Label* const b) const
         {
             // Prefer smallest f (shorter path) and break ties with smallest reserved
             // status (not reserved) and then largest g (near the end).
