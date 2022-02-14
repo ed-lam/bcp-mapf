@@ -33,7 +33,7 @@ SCIP_RETCODE start_solver(
 {
     // Parse program options.
     String instance_file;
-    Agent agents_limit = std::numeric_limits<Agent>::max();
+    Agent agent_limit = std::numeric_limits<Agent>::max();
     SCIP_Real time_limit = 0;
     SCIP_Longint node_limit = 0;
     SCIP_Real gap_limit = 0;
@@ -47,7 +47,7 @@ SCIP_RETCODE start_solver(
         options.add_options()
             ("help", "Print help")
             ("f,file", "Path to instance file", cxxopts::value<Vector<String>>())
-            ("a,agents-limit", "Read first N agents only", cxxopts::value<Agent>())
+            ("a,agent-limit", "Read the first several agents only", cxxopts::value<Agent>())
             ("t,time-limit", "Time limit in seconds", cxxopts::value<SCIP_Real>())
             ("n,node-limit", "Maximum number of branch-and-bound nodes", cxxopts::value<SCIP_Longint>())
             ("g,gap-limit", "Solve to an optimality gap", cxxopts::value<SCIP_Real>())
@@ -70,10 +70,10 @@ SCIP_RETCODE start_solver(
             instance_file = result["file"].as<Vector<String>>().at(0);
         }
 
-        // Get agents limit.
-        if (result.count("agents-limit"))
+        // Get agent limit.
+        if (result.count("agent-limit"))
         {
-            agents_limit = result["agents-limit"].as<Agent>();
+            agent_limit = result["agent-limit"].as<Agent>();
         }
 
         // Get time limit.
@@ -349,8 +349,8 @@ SCIP_RETCODE start_solver(
     }
 
     // Read instance.
-    release_assert(agents_limit > 0, "Cannot limit to {} number of agents", agents_limit);
-    SCIP_CALL(read_instance(scip, instance_file.c_str(), agents_limit));
+    release_assert(agent_limit > 0, "Cannot limit to {} number of agents", agent_limit);
+    SCIP_CALL(read_instance(scip, instance_file.c_str(), agent_limit));
 
     // Set time limit.
     if (time_limit > 0)

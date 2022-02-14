@@ -11,7 +11,7 @@ Please cite these articles if you use this code for the multi-agent path finding
 License
 -------
 
-BCP is released under the GPL version 3. See LICENSE.txt for further details. 
+BCP is released under the GPL version 3. See LICENSE.txt for further details.
 
 Dependencies
 ------------
@@ -78,7 +78,7 @@ Benchmark instances can be found in the `movingai_2018` and `movingai_2019` dire
 
 The 2019 instances are organised differently. There is (usually) a total of 1000 agents in each instance file, and the user can specify how many of the first N agents to run. For example, you can run an instance with only the first 50 agents:
 ```
-./bcp-mapf --time-limit=30 --agents-limit=50 ../instances/movingai_2019/den520d-random-1.scen
+./bcp-mapf --time-limit=30 --agent-limit=50 ../instances/movingai_2019/den520d-random-1.scen
 ```
 
 The optimal solution (or feasible solution if a time limit or gap limit is reached) will be saved into the `outputs` directory.

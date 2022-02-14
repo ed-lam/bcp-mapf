@@ -126,7 +126,7 @@ void read_map(const std::filesystem::path& map_path, Map& map)
     map_file.close();
 }
 
-Instance::Instance(const std::filesystem::path& scenario_path, const Agent nb_agents) :
+Instance::Instance(const std::filesystem::path& scenario_path, const Agent agent_limit) :
     scenario_path(scenario_path),
     map_path(),
     map(),
@@ -155,7 +155,7 @@ Instance::Instance(const std::filesystem::path& scenario_path, const Agent nb_ag
             Position goal_y;
             Float tmp;
             AgentMapData agent_map_data;
-            while (agents.size() < nb_agents &&
+            while (agents.size() < agent_limit &&
                    (scen_file >> tmp >>
                     agent_map_data.map_path >>
                     agent_map_data.map_width >> agent_map_data.map_height >>
@@ -185,9 +185,9 @@ Instance::Instance(const std::filesystem::path& scenario_path, const Agent nb_ag
                 agents_map_data.push_back(agent_map_data);
             }
         }
-        release_assert(nb_agents == std::numeric_limits<Int>::max() || agents.size() == nb_agents,
+        release_assert(agent_limit == std::numeric_limits<Int>::max() || agents.size() == agent_limit,
                        "Scenario file contained {} agents. Not enough to read {} agents",
-                       agents.size(), nb_agents);
+                       agents.size(), agent_limit);
         release_assert(!agents.empty(), "No agents in scenario file {}", scenario_path.string());
 
         // Close file.

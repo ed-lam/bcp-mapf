@@ -38,7 +38,7 @@ struct Instance
   public:
     // Constructors
     Instance() = default;
-    Instance(const std::filesystem::path& scenario_path, const Agent nb_agents = std::numeric_limits<Agent>::max());
+    Instance(const std::filesystem::path& scenario_path, const Agent agent_limit = std::numeric_limits<Agent>::max());
     Instance(const Instance&) = default;
     Instance(Instance&&) = default;
     Instance& operator=(const Instance&) = default;
