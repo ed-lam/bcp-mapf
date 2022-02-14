@@ -35,6 +35,7 @@ SCIP_RETCODE start_solver(
     String instance_file;
     Agent agents_limit = std::numeric_limits<Agent>::max();
     SCIP_Real time_limit = 0;
+    SCIP_Longint node_limit = 0;
     SCIP_Real gap_limit = 0;
     try
     {
@@ -48,6 +49,7 @@ SCIP_RETCODE start_solver(
             ("f,file", "Path to instance file", cxxopts::value<Vector<String>>())
             ("a,agents-limit", "Read first N agents only", cxxopts::value<Agent>())
             ("t,time-limit", "Time limit in seconds", cxxopts::value<SCIP_Real>())
+            ("n,node-limit", "Maximum number of branch-and-bound nodes", cxxopts::value<SCIP_Longint>())
             ("g,gap-limit", "Solve to an optimality gap", cxxopts::value<SCIP_Real>())
         ;
         options.parse_positional({"file"});
@@ -78,6 +80,12 @@ SCIP_RETCODE start_solver(
         if (result.count("time-limit"))
         {
             time_limit = result["time-limit"].as<SCIP_Real>();
+        }
+
+        // Get node limit.
+        if (result.count("node-limit"))
+        {
+            node_limit = result["node-limit"].as<SCIP_Longint>();
         }
 
         // Get optimality gap limit.
@@ -348,6 +356,12 @@ SCIP_RETCODE start_solver(
     if (time_limit > 0)
     {
         SCIP_CALL(SCIPsetRealParam(scip, "limits/time", time_limit));
+    }
+
+    // Set node limit.
+    if (node_limit > 0)
+    {
+        SCIP_CALL(SCIPsetLongintParam(scip, "limits/nodes", node_limit));
     }
 
     // Set optimality gap limit.
