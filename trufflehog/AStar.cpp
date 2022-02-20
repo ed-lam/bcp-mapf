@@ -361,9 +361,9 @@ void AStar::generate_end(Label* const current)
 }
 
 void AStar::generate(Label* const current,
-                     const Waypoint w,
                      const Node next_n,
                      const Cost cost,
+                     const Waypoint w,
                      const Time waypoint_time)
 {
     // Get data.
@@ -744,27 +744,27 @@ void AStar::generate_neighbours(Label* const current, const Waypoint w, const Ti
     if (const auto next_n = map_.get_north(current_n);
         latest_visit_time[next_n] >= current->t + 1 && edge_costs.north < std::numeric_limits<Cost>::infinity())
     {
-        generate(current, w, next_n, edge_costs.north, waypoint_time);
+        generate(current, next_n, edge_costs.north, w, waypoint_time);
     }
     if (const auto next_n = map_.get_south(current_n);
         latest_visit_time[next_n] >= current->t + 1 && edge_costs.south < std::numeric_limits<Cost>::infinity())
     {
-        generate(current, w, next_n, edge_costs.south, waypoint_time);
+        generate(current, next_n, edge_costs.south, w, waypoint_time);
     }
     if (const auto next_n = map_.get_east(current_n);
         latest_visit_time[next_n] >= current->t + 1 && edge_costs.east < std::numeric_limits<Cost>::infinity())
     {
-        generate(current, w, next_n, edge_costs.east, waypoint_time);
+        generate(current, next_n, edge_costs.east, w, waypoint_time);
     }
     if (const auto next_n = map_.get_west(current_n);
         latest_visit_time[next_n] >= current->t + 1 && edge_costs.west < std::numeric_limits<Cost>::infinity())
     {
-        generate(current, w, next_n, edge_costs.west, waypoint_time);
+        generate(current, next_n, edge_costs.west, w, waypoint_time);
     }
     if (const auto next_n = map_.get_wait(current_n);
         latest_visit_time[next_n] >= current->t + 1 && edge_costs.wait < std::numeric_limits<Cost>::infinity())
     {
-        generate(current, w, next_n, edge_costs.wait, waypoint_time);
+        generate(current, next_n, edge_costs.wait, w, waypoint_time);
     }
 }
 template

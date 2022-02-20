@@ -232,9 +232,9 @@ class AStar
     template<IntCost default_cost>
     void generate_neighbours(Label* const current, const Waypoint w, const Time waypoint_time);
     void generate(Label* const current,
-                  const Waypoint w,
                   const Node next_n,
                   const Cost cost,
+                  const Waypoint w,
                   const Time waypoint_time);
     template<IntCost default_cost>
     void generate_neighbours_last_segment(Label* const current);
