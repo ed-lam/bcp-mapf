@@ -33,7 +33,6 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "trufflehog/Includes.h"
 #include <string>
 #include <memory>
-#include <array>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -43,9 +42,6 @@ Author: Edward Lam <ed@ed-lam.com>
 // ---------------------------------------------------------------------------------------
 
 using namespace TruffleHog;
-
-template<class T, Int N>
-using Array = std::array<T, N>;
 
 template<class ...T>
 using Tuple = std::tuple<T...>;

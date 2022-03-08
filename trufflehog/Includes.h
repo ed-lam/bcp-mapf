@@ -21,6 +21,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #define TRUFFLEHOG_INCLUDES_H
 
 #include "Debug.h"
+#include <array>
 #include <vector>
 #include <string>
 #include <memory>
@@ -41,6 +42,9 @@ using IntCost = Int;
 using Waypoint = Int;
 
 using String = std::string;
+
+template<class T, size_t Size>
+using Array = std::array<T, Size>;
 
 template<class T>
 using Vector = std::vector<T>;
