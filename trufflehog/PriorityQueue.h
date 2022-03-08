@@ -20,7 +20,12 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifndef TRUFFLEHOG_PRIORITYQUEUE_H
 #define TRUFFLEHOG_PRIORITYQUEUE_H
 
+// #define CHECK_HEAP
+
 #include "Includes.h"
+
+#define EPS (1e-6)
+#define isLE(x, y) ((x)-(y) <= (EPS))
 
 namespace TruffleHog
 {
@@ -63,6 +68,10 @@ class PriorityQueue
     // Add an element
     void push(Label* label)
     {
+#ifdef CHECK_HEAP
+        check_heap();
+#endif
+
         if (size_ >= capacity_)
         {
             enlarge(capacity_ * 2);
@@ -73,12 +82,20 @@ class PriorityQueue
         update_pqueue_index(elts_[index], index);
         size_++;
         heapify_up(index);
+
+#ifdef CHECK_HEAP
+        check_heap();
+#endif
     }
 
     // Remove the top element
     Label* pop()
     {
         debug_assert(size_ > 0);
+
+#ifdef CHECK_HEAP
+        check_heap();
+#endif
 
         auto label = elts_[0];
         update_pqueue_index(label, -1);
@@ -90,6 +107,10 @@ class PriorityQueue
             update_pqueue_index(elts_[0], 0);
             heapify_down(0);
         }
+
+#ifdef CHECK_HEAP
+        check_heap();
+#endif
 
         return label;
     }
@@ -187,6 +208,23 @@ class PriorityQueue
 
     // Modify the handle in the label pointing to its position in the priority queue
     virtual void update_pqueue_index(Label* label, const Int pqueue_index) = 0;
+
+    // Checks.
+#ifdef DEBUG
+    virtual Cost get_f(const Label* label) const = 0;
+    virtual void check_pqueue_index() const = 0;
+    void check_heap() const
+    {
+        check_pqueue_index();
+
+        for (Int index = 1; index < size_; ++index)
+        {
+            const auto parent = (index - 1) >> 1;
+            release_assert(isLE(get_f(elts_[parent]), get_f(elts_[index])));
+            // release_assert(!cmp_(elts_[index], elts_[parent]));
+        }
+    }
+#endif
 };
 
 }

@@ -85,14 +85,20 @@ class AStar
             // Prefer smallest f (shorter path) and break ties with smallest reserved
             // status (not reserved) and then largest g (near the end).
 #ifdef USE_RESERVATION_TABLE
-            return (a->f <  b->f) ||
-                   (a->f == b->f && a->reserved <  b->reserved) ||
-                   (a->f == b->f && a->reserved == b->reserved && a->g >  b->g) ||
-                   (a->f == b->f && a->reserved == b->reserved && a->g == b->g && static_cast<bool>(rand() % 2));
+            return (a->f <  b->f)
+                || (a->f == b->f && a->reserved <  b->reserved)
+                || (a->f == b->f && a->reserved == b->reserved && a->g >  b->g)
+#ifndef CHECK_HEAP
+                || (a->f == b->f && a->reserved == b->reserved && a->g == b->g && static_cast<bool>(rand() % 2))
+#endif
+                   ;
 #else
-            return (a->f <  b->f) ||
-                   (a->f == b->f && a->g >  b->g) ||
-                   (a->f == b->f && a->g == b->g && static_cast<bool>(rand() % 2));
+            return (a->f <  b->f)
+                || (a->f == b->f && a->g >  b->g)
+#ifndef CHECK_HEAP
+                || (a->f == b->f && a->g == b->g && static_cast<bool>(rand() % 2))
+#endif
+                ;
 #endif
         }
     };
@@ -106,9 +112,13 @@ class AStar
         // Inherit constructors.
         using PriorityQueue::PriorityQueue;
 
-        // Check.
+        // Checks.
 #ifdef DEBUG
-        void check() const
+        Cost get_f(const Label* label) const
+        {
+            return label->f;
+        }
+        void check_pqueue_index() const
         {
             for (Int pqueue_index = 0; pqueue_index < size_; ++pqueue_index)
             {

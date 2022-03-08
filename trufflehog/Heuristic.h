@@ -66,6 +66,12 @@ class Heuristic
       protected:
         // Modify the handle in the label pointing to its position in the priority queue
         inline void update_pqueue_index(Label*, const Int) {}
+
+        // Checks.
+#ifdef DEBUG
+        Cost get_f(const Label* label) const { return label->g; }
+        void check_pqueue_index() const {}
+#endif
     };
 
     // Instance
