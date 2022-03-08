@@ -90,6 +90,9 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "Constraint_VertexBranching.h"
 #include "Constraint_WaitBranching.h"
 #include "Constraint_LengthBranching.h"
+#ifdef USE_LNS2_PRIMAL_HEURISTIC
+#include "Heuristic_LNS2.h"
+#endif
 
 // Problem data
 struct SCIP_ProbData
@@ -1196,6 +1199,11 @@ SCIP_RETCODE SCIPprobdataCreate(
     SCIP_CALL(SCIPincludeConshdlrVertexBranching(scip));
 //    SCIP_CALL(SCIPincludeConshdlrWaitBranching(scip));
     SCIP_CALL(SCIPincludeConshdlrLengthBranching(scip));
+
+    // Include LNS2 primal heuristic.
+#ifdef USE_LNS2_PRIMAL_HEURISTIC
+    SCIP_CALL(SCIPincludeHeurLNS2(scip));
+#endif
 
     // Add callbacks.
     SCIP_CALL(SCIPsetProbTrans(scip, probtrans));
