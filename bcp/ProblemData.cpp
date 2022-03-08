@@ -93,6 +93,9 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifdef USE_LNS2_PRIMAL_HEURISTIC
 #include "Heuristic_LNS2.h"
 #endif
+#ifdef USE_PRIORITIZED_PLANNING_PRIMAL_HEURISTIC
+#include "Heuristic_PrioritizedPlanning.h"
+#endif
 
 // Problem data
 struct SCIP_ProbData
@@ -1199,6 +1202,11 @@ SCIP_RETCODE SCIPprobdataCreate(
     // Include LNS2 primal heuristic.
 #ifdef USE_LNS2_PRIMAL_HEURISTIC
     SCIP_CALL(SCIPincludeHeurLNS2(scip));
+#endif
+
+    // Include prioritized planning primal heuristic.
+#ifdef USE_PRIORITIZED_PLANNING_PRIMAL_HEURISTIC
+    SCIP_CALL(SCIPincludeHeurPrioritizedPlanning(scip));
 #endif
 
     // Add callbacks.

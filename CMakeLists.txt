@@ -103,6 +103,8 @@ set(BCP_MAPF_SOURCE_FILES
     bcp/Constraint_LengthBranching.cpp
     bcp/Heuristic_LNS2.h
     bcp/Heuristic_LNS2.cpp
+    bcp/Heuristic_PrioritizedPlanning.h
+    bcp/Heuristic_PrioritizedPlanning.cpp
     bcp/Output.h
     bcp/Output.cpp
     )
@@ -266,6 +268,7 @@ target_compile_options(trufflehog PRIVATE -DUSE_GOAL_CONFLICTS)
 
 # Set primal heuristics options.
 target_compile_options(bcp-mapf PRIVATE -DUSE_LNS2_PRIMAL_HEURISTIC)
+target_compile_options(bcp-mapf PRIVATE -DUSE_PRIORITIZED_PLANNING_PRIMAL_HEURISTIC)
 
 # Set node selection options.
 target_compile_options(bcp-mapf PRIVATE -DUSE_BEST_FIRST_NODE_SELECTION)
