@@ -156,6 +156,100 @@ AStar::AStar(const Map& map) :
 {
 }
 
+#ifdef USE_GOAL_CONFLICTS
+AStar::Label* AStar::dominated(Label* const new_label)
+{
+    // Get goal crossings.
+    const auto& goal_penalties = data_.goal_penalties;
+
+    // Check dominance.
+    auto& existing_labels = frontier_[new_label->nt];
+    Label* store_in_existing_label = nullptr;
+#ifdef DEBUG
+    bool dominates = false;
+#endif
+    for (size_t idx = 0; idx < existing_labels.size();)
+    {
+        // Check if the new label is dominated by the existing label.
+        auto& existing_label = existing_labels[idx];
+        {
+            // Calculate the maximum cost of the existing label if it incurred the same penalties as the new label.
+            auto existing_label_potential_cost = existing_label->f;
+            for (Int idx = 0; idx < goal_penalties.size(); ++idx)
+                if (get_bitset(new_label->state_, idx) > get_bitset(existing_label->state_, idx))
+                {
+                    existing_label_potential_cost += goal_penalties[idx].cost;
+                }
+            // If the existing label still costs less than or equal to the new label, even after incurring these
+            // penalties, then the new label is dominated.
+            if (isLE(existing_label_potential_cost, new_label->f))
+            {
+                debug_assert(!dominates);
+                return nullptr;
+            }
+        }
+
+        // Check if the existing label is dominated by the new label.
+        {
+            auto new_label_potential_cost = new_label->f;
+            for (Int idx = 0; idx < goal_penalties.size(); ++idx)
+                if (get_bitset(existing_label->state_, idx) > get_bitset(new_label->state_, idx))
+                {
+                    new_label_potential_cost += goal_penalties[idx].cost;
+                }
+            if (isLE(new_label_potential_cost, existing_label->f))
+            {
+                // If the existing label is not yet expanded, use its memory to store the new label.
+                debug_assert(goal_penalties.size() > 0 || existing_label->pqueue_index >= 0);
+                if (existing_label->pqueue_index >= 0)
+                {
+                    if (store_in_existing_label)
+                    {
+                        debug_assert(store_in_existing_label->pqueue_index >= 0);
+                        open_.erase(store_in_existing_label->pqueue_index);
+                    }
+                    store_in_existing_label = existing_label;
+                }
+
+                // Delete the existing label from future dominance checks.
+                existing_label = existing_labels.back();
+                existing_labels.pop_back(); // pop_back() invalidates end()-1 iterator so must use pointer in loop
+#ifdef DEBUG
+                dominates = true;
+#endif
+            }
+            else
+            {
+                ++idx;
+            }
+        }
+    }
+
+    // The new label is not dominated. Store the label.
+    if (store_in_existing_label)
+    {
+        // Replace the existing label with the new label.
+        release_assert(isLE(new_label->f, store_in_existing_label->f), "New label f > existing label f");
+        release_assert(store_in_existing_label->pqueue_index >= 0,
+                        "New label replacing an existing label that is not in the priority queue");
+        open_.update_pqueue_index(new_label, store_in_existing_label->pqueue_index);
+        memcpy(store_in_existing_label, new_label, label_pool_.label_size());
+        open_.decrease_key(store_in_existing_label);
+
+        existing_labels.push_back(store_in_existing_label);
+        return store_in_existing_label;
+    }
+    else
+    {
+        label_pool_.commit_latest_label();
+        open_.push(new_label);
+        debug_assert(new_label->pqueue_index >= 0);
+
+        existing_labels.push_back(new_label);
+        return new_label;
+    }
+}
+#else
 AStar::Label* AStar::dominated(Label* const new_label)
 {
     // Check.
@@ -189,20 +283,21 @@ AStar::Label* AStar::dominated(Label* const new_label)
             debug_assert(it == frontier_.find(new_label->nt));
             debug_assert(!isLE(existing_label->g, new_label->g));
 
-            // If the existing label has already been popped, push the new label. Otherwise, replace
-            // the existing label with the new label.
-            if (existing_label->pqueue_index >= 0)
+            // Replace the existing label with the new label.
+            release_assert(existing_label->pqueue_index >= 0,
+                           "New label replacing an existing label that is not in the priority queue");
+            // if (existing_label->pqueue_index >= 0)
             {
                 open_.update_pqueue_index(new_label, existing_label->pqueue_index);
                 memcpy(existing_label, new_label, label_pool_.label_size());
                 open_.decrease_key(existing_label);
             }
-            else
-            {
-                debug_assert(new_label->pqueue_index == -1);
-                memcpy(existing_label, new_label, label_pool_.label_size());
-                open_.push(existing_label);
-            }
+            // else
+            // {
+            //     debug_assert(existing_label->pqueue_index == -1);
+            //     memcpy(existing_label, new_label, label_pool_.label_size());
+            //     open_.push(existing_label);
+            // }
             return existing_label;
         }
     }
@@ -216,6 +311,7 @@ AStar::Label* AStar::dominated(Label* const new_label)
         return new_label;
     }
 }
+#endif
 
 void AStar::generate_start()
 {

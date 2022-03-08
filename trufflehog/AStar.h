@@ -29,6 +29,12 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "Penalties.h"
 #include "Heuristic.h"
 
+#ifdef USE_GOAL_CONFLICTS
+#include "boost/container/small_vector.hpp"
+template <class T, std::size_t N>
+using SmallVector = boost::container::small_vector<T, N>;
+#endif
+
 namespace TruffleHog
 {
 
@@ -198,7 +204,11 @@ class AStar
     Heuristic heuristic_;
     LabelPool label_pool_;
     AStarPriorityQueue open_;
+#ifdef USE_GOAL_CONFLICTS
+    HashTable<NodeTime, SmallVector<Label*, 4>> frontier_;
+#else
     HashTable<NodeTime, Label*> frontier_;
+#endif
 #ifdef DEBUG
     size_t nb_labels_;
 #endif

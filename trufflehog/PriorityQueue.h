@@ -115,6 +115,41 @@ class PriorityQueue
         return label;
     }
 
+    // Delete an element in the given position
+    void erase(const Int index)
+    {
+        debug_assert(size_ > 0);
+
+#ifdef CHECK_HEAP
+        check_heap();
+#endif
+
+        --size_;
+        if (index == size_)
+        {
+            update_pqueue_index(elts_[size_], -1);
+        }
+        else
+        {
+            std::swap(elts_[index], elts_[size_]);
+            update_pqueue_index(elts_[index], index);
+            update_pqueue_index(elts_[size_], -1);
+
+            if (index == 0 || cmp_(elts_[(index - 1) >> 1], elts_[index]))
+            {
+                heapify_down(index);
+            }
+            else
+            {
+                heapify_up(index);
+            }
+        }
+
+#ifdef CHECK_HEAP
+        check_heap();
+#endif
+    }
+
     // Retrieve the top element without removing it
     inline Label* top() const
     {
