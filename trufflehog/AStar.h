@@ -28,12 +28,10 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "PriorityQueue.h"
 #include "Penalties.h"
 #include "Heuristic.h"
-
-#ifdef USE_GOAL_CONFLICTS
 #include "boost/container/small_vector.hpp"
+
 template <class T, std::size_t N>
 using SmallVector = boost::container::small_vector<T, N>;
-#endif
 
 namespace TruffleHog
 {
@@ -204,11 +202,8 @@ class AStar
     Heuristic heuristic_;
     LabelPool label_pool_;
     AStarPriorityQueue open_;
-#ifdef USE_GOAL_CONFLICTS
-    HashTable<NodeTime, SmallVector<Label*, 4>> frontier_;
-#else
-    HashTable<NodeTime, Label*> frontier_;
-#endif
+    HashTable<NodeTime, Label*> frontier_without_resources_;
+    HashTable<NodeTime, SmallVector<Label*, 4>> frontier_with_resources_;
 #ifdef DEBUG
     size_t nb_labels_;
 #endif
@@ -244,22 +239,33 @@ class AStar
 #endif
 
   private:
-    // Check if a label is dominated by an existing label
-    AStar::Label* dominated(Label* const new_label);
-
     // Solve
+    template<bool is_farkas, bool has_resources>
+    Pair<Vector<NodeTime>, Cost> solve();
+
+    // Create labels
+    template<bool has_resources>
     void generate_start();
-    template<IntCost default_cost>
-    void generate_neighbours(Label* const current, const Waypoint w, const Time waypoint_time);
+
+    template<bool has_resources>
     void generate(Label* const current,
                   const Node next_n,
                   const Cost cost,
                   const Waypoint w,
                   const Time waypoint_time);
-    template<IntCost default_cost>
-    void generate_neighbours_last_segment(Label* const current);
+    template<bool has_resources>
     void generate_last_segment(Label* const current, const Node next_n, const Cost cost);
+
+    template<bool has_resources, IntCost default_cost>
+    void generate_neighbours(Label* const current, const Waypoint w, const Time waypoint_time);
+    template<bool has_resources, IntCost default_cost>
+    void generate_neighbours_last_segment(Label* const current);
+
     void generate_end(Label* const current);
+
+    // Check if a label is dominated by an existing label
+    template<bool has_resources>
+    AStar::Label* dominated(Label* const new_label);
 };
 
 }

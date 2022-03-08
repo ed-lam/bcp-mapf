@@ -149,170 +149,15 @@ AStar::AStar(const Map& map) :
 #else
     open_(),
 #endif
-    frontier_()
+    frontier_without_resources_(),
+    frontier_with_resources_()
 #ifdef DEBUG
   , nb_labels_(0)
 #endif
 {
 }
 
-#ifdef USE_GOAL_CONFLICTS
-AStar::Label* AStar::dominated(Label* const new_label)
-{
-    // Get goal crossings.
-    const auto& goal_penalties = data_.goal_penalties;
-
-    // Check dominance.
-    auto& existing_labels = frontier_[new_label->nt];
-    Label* store_in_existing_label = nullptr;
-#ifdef DEBUG
-    bool dominates = false;
-#endif
-    for (size_t idx = 0; idx < existing_labels.size();)
-    {
-        // Check if the new label is dominated by the existing label.
-        auto& existing_label = existing_labels[idx];
-        {
-            // Calculate the maximum cost of the existing label if it incurred the same penalties as the new label.
-            auto existing_label_potential_cost = existing_label->f;
-            for (Int idx = 0; idx < goal_penalties.size(); ++idx)
-                if (get_bitset(new_label->state_, idx) > get_bitset(existing_label->state_, idx))
-                {
-                    existing_label_potential_cost += goal_penalties[idx].cost;
-                }
-            // If the existing label still costs less than or equal to the new label, even after incurring these
-            // penalties, then the new label is dominated.
-            if (isLE(existing_label_potential_cost, new_label->f))
-            {
-                debug_assert(!dominates);
-                return nullptr;
-            }
-        }
-
-        // Check if the existing label is dominated by the new label.
-        {
-            auto new_label_potential_cost = new_label->f;
-            for (Int idx = 0; idx < goal_penalties.size(); ++idx)
-                if (get_bitset(existing_label->state_, idx) > get_bitset(new_label->state_, idx))
-                {
-                    new_label_potential_cost += goal_penalties[idx].cost;
-                }
-            if (isLE(new_label_potential_cost, existing_label->f))
-            {
-                // If the existing label is not yet expanded, use its memory to store the new label.
-                debug_assert(goal_penalties.size() > 0 || existing_label->pqueue_index >= 0);
-                if (existing_label->pqueue_index >= 0)
-                {
-                    if (store_in_existing_label)
-                    {
-                        debug_assert(store_in_existing_label->pqueue_index >= 0);
-                        open_.erase(store_in_existing_label->pqueue_index);
-                    }
-                    store_in_existing_label = existing_label;
-                }
-
-                // Delete the existing label from future dominance checks.
-                existing_label = existing_labels.back();
-                existing_labels.pop_back(); // pop_back() invalidates end()-1 iterator so must use pointer in loop
-#ifdef DEBUG
-                dominates = true;
-#endif
-            }
-            else
-            {
-                ++idx;
-            }
-        }
-    }
-
-    // The new label is not dominated. Store the label.
-    if (store_in_existing_label)
-    {
-        // Replace the existing label with the new label.
-        release_assert(isLE(new_label->f, store_in_existing_label->f), "New label f > existing label f");
-        release_assert(store_in_existing_label->pqueue_index >= 0,
-                        "New label replacing an existing label that is not in the priority queue");
-        open_.update_pqueue_index(new_label, store_in_existing_label->pqueue_index);
-        memcpy(store_in_existing_label, new_label, label_pool_.label_size());
-        open_.decrease_key(store_in_existing_label);
-
-        existing_labels.push_back(store_in_existing_label);
-        return store_in_existing_label;
-    }
-    else
-    {
-        label_pool_.commit_latest_label();
-        open_.push(new_label);
-        debug_assert(new_label->pqueue_index >= 0);
-
-        existing_labels.push_back(new_label);
-        return new_label;
-    }
-}
-#else
-AStar::Label* AStar::dominated(Label* const new_label)
-{
-    // Check.
-//#ifdef DEBUG
-//    for (auto it = frontier_.begin(); it != frontier_.end(); ++it)
-//    {
-//        auto label = it->second;
-//        open_.check_label(label);
-//    }
-//#endif
-
-    // Try to put in the new label.
-    auto [it, success] = frontier_.try_emplace(NodeTime{new_label->nt}, new_label);
-
-    // Check for dominance if a label already exists.
-    if (!success)
-    {
-        auto existing_label = it->second;
-        debug_assert(existing_label->nt == new_label->nt);
-        if (isLE(existing_label->f, new_label->f))
-        {
-            // Existing label dominates new label.
-            debug_assert(isLE(existing_label->g, new_label->g));
-
-            // Dominated.
-            return nullptr;
-        }
-        else
-        {
-            // New label dominates existing label.
-            debug_assert(it == frontier_.find(new_label->nt));
-            debug_assert(!isLE(existing_label->g, new_label->g));
-
-            // Replace the existing label with the new label.
-            release_assert(existing_label->pqueue_index >= 0,
-                           "New label replacing an existing label that is not in the priority queue");
-            // if (existing_label->pqueue_index >= 0)
-            {
-                open_.update_pqueue_index(new_label, existing_label->pqueue_index);
-                memcpy(existing_label, new_label, label_pool_.label_size());
-                open_.decrease_key(existing_label);
-            }
-            // else
-            // {
-            //     debug_assert(existing_label->pqueue_index == -1);
-            //     memcpy(existing_label, new_label, label_pool_.label_size());
-            //     open_.push(existing_label);
-            // }
-            return existing_label;
-        }
-    }
-    else
-    {
-        // Store the label.
-        label_pool_.commit_latest_label();
-        open_.push(new_label);
-
-        // Not dominated.
-        return new_label;
-    }
-}
-#endif
-
+template<bool has_resources>
 void AStar::generate_start()
 {
     // Get data.
@@ -351,8 +196,9 @@ void AStar::generate_start()
 
     // Store the label.
     debug_assert(open_.empty());
-    debug_assert(frontier_.empty());
-    dominated(new_label);
+    debug_assert(frontier_without_resources_.empty());
+    debug_assert(frontier_with_resources_.empty());
+    dominated<has_resources>(new_label);
 
     // Print.
 #ifdef DEBUG
@@ -379,83 +225,7 @@ void AStar::generate_start()
 #endif
 }
 
-void AStar::generate_end(Label* const current)
-{
-    // Get data.
-    const auto& [start,
-                 waypoints,
-                 goal,
-                 earliest_goal_time,
-                 latest_goal_time,
-                 cost_offset,
-                 latest_visit_time,
-                 edge_penalties,
-                 finish_time_penalties
-#ifdef USE_GOAL_CONFLICTS
-               , goal_penalties
-#endif
-    ] = data_;
-
-    // Create label.
-    auto new_label = reinterpret_cast<Label*>(label_pool_.get_label_buffer());
-    memcpy(new_label, current, label_pool_.label_size());
-#ifdef DEBUG
-    new_label->label_id = nb_labels_++;
-#endif
-    new_label->parent = current;
-    debug_assert((*h_node_to_waypoint_)[current->n] == 0);
-    new_label->g += finish_time_penalties.get_penalty(current->t);
-    new_label->f = new_label->g;
-    new_label->n = -1;
-
-    // Check if cost-infeasible.
-    if (isGE(new_label->f, 0))
-    {
-        // Print.
-#ifdef DEBUG
-        if (verbose)
-        {
-#ifdef USE_GOAL_CONFLICTS
-            const auto nb_goal_penalties = goal_penalties.size();
-#else
-            const auto nb_goal_penalties = 0;
-#endif
-            println("    Cost-infeasible end label {} {} (t {}, g {}{})",
-                    new_label->label_id,
-                    fmt::ptr(new_label),
-                    decltype(new_label->t){new_label->t},
-                    new_label->g,
-                    make_goal_state_string(&new_label->state_[0], nb_goal_penalties));
-        }
-#endif
-
-        // Done.
-        return;
-    }
-
-    // Store the label.
-    label_pool_.commit_latest_label();
-    open_.push(new_label);
-
-    // Print.
-#ifdef DEBUG
-    if (verbose)
-    {
-#ifdef USE_GOAL_CONFLICTS
-        const auto nb_goal_penalties = goal_penalties.size();
-#else
-        const auto nb_goal_penalties = 0;
-#endif
-        println("    Generating end label {} {} (t {}, g {}{})",
-                new_label->label_id,
-                fmt::ptr(new_label),
-                decltype(new_label->t){new_label->t},
-                new_label->g,
-                make_goal_state_string(&new_label->state_[0], nb_goal_penalties));
-    }
-#endif
-}
-
+template<bool has_resources>
 void AStar::generate(Label* const current,
                      const Node next_n,
                      const Cost cost,
@@ -576,7 +346,7 @@ void AStar::generate(Label* const current,
 #ifdef DEBUG
     auto next_label_copy = next_label;
 #endif
-    next_label = dominated(next_label);
+    next_label = dominated<has_resources>(next_label);
 
     // Print.
 #ifdef DEBUG
@@ -626,6 +396,7 @@ void AStar::generate(Label* const current,
 #endif
 }
 
+template<bool has_resources>
 void AStar::generate_last_segment(Label* const current,
                                   const Node next_n,
                                   const Cost cost)
@@ -742,7 +513,7 @@ void AStar::generate_last_segment(Label* const current,
 #ifdef DEBUG
     auto next_label_copy = next_label;
 #endif
-    next_label = dominated(next_label);
+    next_label = dominated<has_resources>(next_label);
 
     // Print.
 #ifdef DEBUG
@@ -792,7 +563,7 @@ void AStar::generate_last_segment(Label* const current,
 #endif
 }
 
-template<IntCost default_cost>
+template<bool has_resources, IntCost default_cost>
 void AStar::generate_neighbours(Label* const current, const Waypoint w, const Time waypoint_time)
 {
     // Get data.
@@ -840,39 +611,47 @@ void AStar::generate_neighbours(Label* const current, const Waypoint w, const Ti
     if (const auto next_n = map_.get_north(current_n);
         latest_visit_time[next_n] >= current->t + 1 && edge_costs.north < std::numeric_limits<Cost>::infinity())
     {
-        generate(current, next_n, edge_costs.north, w, waypoint_time);
+        generate<has_resources>(current, next_n, edge_costs.north, w, waypoint_time);
     }
     if (const auto next_n = map_.get_south(current_n);
         latest_visit_time[next_n] >= current->t + 1 && edge_costs.south < std::numeric_limits<Cost>::infinity())
     {
-        generate(current, next_n, edge_costs.south, w, waypoint_time);
+        generate<has_resources>(current, next_n, edge_costs.south, w, waypoint_time);
     }
     if (const auto next_n = map_.get_east(current_n);
         latest_visit_time[next_n] >= current->t + 1 && edge_costs.east < std::numeric_limits<Cost>::infinity())
     {
-        generate(current, next_n, edge_costs.east, w, waypoint_time);
+        generate<has_resources>(current, next_n, edge_costs.east, w, waypoint_time);
     }
     if (const auto next_n = map_.get_west(current_n);
         latest_visit_time[next_n] >= current->t + 1 && edge_costs.west < std::numeric_limits<Cost>::infinity())
     {
-        generate(current, next_n, edge_costs.west, w, waypoint_time);
+        generate<has_resources>(current, next_n, edge_costs.west, w, waypoint_time);
     }
     if (const auto next_n = map_.get_wait(current_n);
         latest_visit_time[next_n] >= current->t + 1 && edge_costs.wait < std::numeric_limits<Cost>::infinity())
     {
-        generate(current, next_n, edge_costs.wait, w, waypoint_time);
+        generate<has_resources>(current, next_n, edge_costs.wait, w, waypoint_time);
     }
 }
 template
-void AStar::generate_neighbours<0>(Label* const current,
-                                   const Waypoint w,
-                                   const Time waypoint_time);
+void AStar::generate_neighbours<false, 0>(Label* const current,
+                                          const Waypoint w,
+                                          const Time waypoint_time);
 template
-void AStar::generate_neighbours<1>(Label* const current,
-                                   const Waypoint w,
-                                   const Time waypoint_time);
+void AStar::generate_neighbours<false, 1>(Label* const current,
+                                          const Waypoint w,
+                                          const Time waypoint_time);
+template
+void AStar::generate_neighbours<true, 0>(Label* const current,
+                                         const Waypoint w,
+                                         const Time waypoint_time);
+template
+void AStar::generate_neighbours<true, 1>(Label* const current,
+                                         const Waypoint w,
+                                         const Time waypoint_time);
 
-template<IntCost default_cost>
+template<bool has_resources, IntCost default_cost>
 void AStar::generate_neighbours_last_segment(Label* const current)
 {
     // Get data.
@@ -920,33 +699,294 @@ void AStar::generate_neighbours_last_segment(Label* const current)
     if (const auto next_n = map_.get_north(current_n);
         latest_visit_time[next_n] >= current->t + 1 && edge_costs.north < std::numeric_limits<Cost>::infinity())
     {
-        generate_last_segment(current, next_n, edge_costs.north);
+        generate_last_segment<has_resources>(current, next_n, edge_costs.north);
     }
     if (const auto next_n = map_.get_south(current_n);
         latest_visit_time[next_n] >= current->t + 1 && edge_costs.south < std::numeric_limits<Cost>::infinity())
     {
-        generate_last_segment(current, next_n, edge_costs.south);
+        generate_last_segment<has_resources>(current, next_n, edge_costs.south);
     }
     if (const auto next_n = map_.get_east(current_n);
         latest_visit_time[next_n] >= current->t + 1 && edge_costs.east < std::numeric_limits<Cost>::infinity())
     {
-        generate_last_segment(current, next_n, edge_costs.east);
+        generate_last_segment<has_resources>(current, next_n, edge_costs.east);
     }
     if (const auto next_n = map_.get_west(current_n);
         latest_visit_time[next_n] >= current->t + 1 && edge_costs.west < std::numeric_limits<Cost>::infinity())
     {
-        generate_last_segment(current, next_n, edge_costs.west);
+        generate_last_segment<has_resources>(current, next_n, edge_costs.west);
     }
     if (const auto next_n = map_.get_wait(current_n);
         latest_visit_time[next_n] >= current->t + 1 && edge_costs.wait < std::numeric_limits<Cost>::infinity())
     {
-        generate_last_segment(current, next_n, edge_costs.wait);
+        generate_last_segment<has_resources>(current, next_n, edge_costs.wait);
     }
 }
 template
-void AStar::generate_neighbours_last_segment<0>(Label* const current);
+void AStar::generate_neighbours_last_segment<false, 0>(Label* const current);
 template
-void AStar::generate_neighbours_last_segment<1>(Label* const current);
+void AStar::generate_neighbours_last_segment<false, 1>(Label* const current);
+template
+void AStar::generate_neighbours_last_segment<true, 0>(Label* const current);
+template
+void AStar::generate_neighbours_last_segment<true, 1>(Label* const current);
+
+void AStar::generate_end(Label* const current)
+{
+    // Get data.
+    const auto& [start,
+                 waypoints,
+                 goal,
+                 earliest_goal_time,
+                 latest_goal_time,
+                 cost_offset,
+                 latest_visit_time,
+                 edge_penalties,
+                 finish_time_penalties
+#ifdef USE_GOAL_CONFLICTS
+               , goal_penalties
+#endif
+    ] = data_;
+
+    // Create label.
+    auto new_label = reinterpret_cast<Label*>(label_pool_.get_label_buffer());
+    memcpy(new_label, current, label_pool_.label_size());
+#ifdef DEBUG
+    new_label->label_id = nb_labels_++;
+#endif
+    new_label->parent = current;
+    debug_assert((*h_node_to_waypoint_)[current->n] == 0);
+    new_label->g += finish_time_penalties.get_penalty(current->t);
+    new_label->f = new_label->g;
+    new_label->n = -1;
+
+    // Check if cost-infeasible.
+    if (isGE(new_label->f, 0))
+    {
+        // Print.
+#ifdef DEBUG
+        if (verbose)
+        {
+#ifdef USE_GOAL_CONFLICTS
+            const auto nb_goal_penalties = goal_penalties.size();
+#else
+            const auto nb_goal_penalties = 0;
+#endif
+            println("    Cost-infeasible end label {} {} (t {}, g {}{})",
+                    new_label->label_id,
+                    fmt::ptr(new_label),
+                    decltype(new_label->t){new_label->t},
+                    new_label->g,
+                    make_goal_state_string(&new_label->state_[0], nb_goal_penalties));
+        }
+#endif
+
+        // Done.
+        return;
+    }
+
+    // Store the label.
+    label_pool_.commit_latest_label();
+    open_.push(new_label);
+
+    // Print.
+#ifdef DEBUG
+    if (verbose)
+    {
+#ifdef USE_GOAL_CONFLICTS
+        const auto nb_goal_penalties = goal_penalties.size();
+#else
+        const auto nb_goal_penalties = 0;
+#endif
+        println("    Generating end label {} {} (t {}, g {}{})",
+                new_label->label_id,
+                fmt::ptr(new_label),
+                decltype(new_label->t){new_label->t},
+                new_label->g,
+                make_goal_state_string(&new_label->state_[0], nb_goal_penalties));
+    }
+#endif
+}
+
+template<>
+AStar::Label* AStar::dominated<false>(Label* const new_label)
+{
+    // Check.
+//#ifdef DEBUG
+//    for (auto it = frontier_without_resources_.begin(); it != frontier_without_resources_.end(); ++it)
+//    {
+//        auto label = it->second;
+//        open_.check_label(label);
+//    }
+//#endif
+
+    // Check.
+    debug_assert(data_.goal_penalties.empty());
+
+    // Try to put in the new label.
+    auto [it, success] = frontier_without_resources_.try_emplace(NodeTime{new_label->nt}, new_label);
+
+    // Check for dominance if a label already exists.
+    if (!success)
+    {
+        auto existing_label = it->second;
+        debug_assert(existing_label->nt == new_label->nt);
+        if (isLE(existing_label->f, new_label->f))
+        {
+            // Existing label dominates new label.
+            debug_assert(isLE(existing_label->g, new_label->g));
+
+            // Dominated.
+            return nullptr;
+        }
+        else
+        {
+            // New label dominates existing label.
+            debug_assert(it == frontier_without_resources_.find(new_label->nt));
+            debug_assert(!isLE(existing_label->g, new_label->g));
+
+            // Replace the existing label with the new label.
+            release_assert(existing_label->pqueue_index >= 0,
+                           "New label replacing an existing label that is not in the priority queue");
+            // if (existing_label->pqueue_index >= 0)
+            {
+                open_.update_pqueue_index(new_label, existing_label->pqueue_index);
+                memcpy(existing_label, new_label, label_pool_.label_size());
+                open_.decrease_key(existing_label);
+            }
+            // else
+            // {
+            //     debug_assert(existing_label->pqueue_index == -1);
+            //     memcpy(existing_label, new_label, label_pool_.label_size());
+            //     open_.push(existing_label);
+            // }
+            return existing_label;
+        }
+    }
+    else
+    {
+        // Store the label.
+        label_pool_.commit_latest_label();
+        open_.push(new_label);
+
+        // Not dominated.
+        return new_label;
+    }
+}
+
+template<>
+AStar::Label* AStar::dominated<true>(Label* const new_label)
+{
+#ifdef USE_GOAL_CONFLICTS
+    // Get goal crossings.
+    const auto& goal_penalties = data_.goal_penalties;
+    const auto nb_goal_penalties = goal_penalties.size();
+    // debug_assert(nb_goal_penalties > 0);
+
+    // Print.
+    // println("    Checking dominance for new label {} {} (n {}, t {}, nt {}, xy ({},{}), g {}, h {}, f {}{})",
+    //         new_label->label_id,
+    //         fmt::ptr(new_label),
+    //         decltype(new_label->n){new_label->n},
+    //         decltype(new_label->t){new_label->t},
+    //         decltype(new_label->nt){new_label->nt},
+    //         map_.get_x(new_label->n),
+    //         map_.get_y(new_label->n),
+    //         new_label->g,
+    //         new_label->f - new_label->g,
+    //         new_label->f,
+    //         make_goal_state_string(&new_label->state_[0], nb_goal_penalties));
+
+    // Check dominance.
+    auto& existing_labels = frontier_with_resources_[new_label->nt];
+    Label* store_in_existing_label = nullptr;
+#ifdef DEBUG
+    bool dominates = false;
+#endif
+    debug_assert(nb_goal_penalties > 0 || existing_labels.size() <= 1);
+    for (size_t idx = 0; idx < existing_labels.size();)
+    {
+        // Check if the new label is dominated by the existing label.
+        auto& existing_label = existing_labels[idx];
+        {
+            // Calculate the maximum cost of the existing label if it incurred the same penalties as the new label.
+            auto existing_label_potential_cost = existing_label->f;
+            for (Int idx = 0; idx < nb_goal_penalties; ++idx)
+                if (get_bitset(new_label->state_, idx) > get_bitset(existing_label->state_, idx))
+                {
+                    existing_label_potential_cost += goal_penalties[idx].cost;
+                }
+            // If the existing label still costs less than or equal to the new label, even after incurring these
+            // penalties, then the new label is dominated.
+            if (isLE(existing_label_potential_cost, new_label->f))
+            {
+                debug_assert(!dominates);
+                return nullptr;
+            }
+        }
+
+        // Check if the existing label is dominated by the new label.
+        {
+            auto new_label_potential_cost = new_label->f;
+            for (Int idx = 0; idx < nb_goal_penalties; ++idx)
+                if (get_bitset(existing_label->state_, idx) > get_bitset(new_label->state_, idx))
+                {
+                    new_label_potential_cost += goal_penalties[idx].cost;
+                }
+            if (isLE(new_label_potential_cost, existing_label->f))
+            {
+                // If the existing label is not yet expanded, use its memory to store the new label.
+                debug_assert(nb_goal_penalties > 0 || existing_label->pqueue_index >= 0);
+                if (existing_label->pqueue_index >= 0)
+                {
+                    if (store_in_existing_label)
+                    {
+                        debug_assert(store_in_existing_label->pqueue_index >= 0);
+                        open_.erase(store_in_existing_label->pqueue_index);
+                    }
+                    store_in_existing_label = existing_label;
+                }
+
+                // Delete the existing label from future dominance checks.
+                existing_label = existing_labels.back();
+                existing_labels.pop_back(); // pop_back() invalidates end()-1 iterator so must use pointer in loop
+#ifdef DEBUG
+                dominates = true;
+#endif
+            }
+            else
+            {
+                ++idx;
+            }
+        }
+    }
+
+    // The new label is not dominated. Store the label.
+    if (store_in_existing_label)
+    {
+        // Replace the existing label with the new label.
+        debug_assert(isLE(new_label->f, store_in_existing_label->f));
+        debug_assert(store_in_existing_label->pqueue_index >= 0);
+        open_.update_pqueue_index(new_label, store_in_existing_label->pqueue_index);
+        memcpy(store_in_existing_label, new_label, label_pool_.label_size());
+        open_.decrease_key(store_in_existing_label);
+
+        existing_labels.push_back(store_in_existing_label);
+        return store_in_existing_label;
+    }
+    else
+    {
+        label_pool_.commit_latest_label();
+        open_.push(new_label);
+        debug_assert(new_label->pqueue_index >= 0);
+
+        existing_labels.push_back(new_label);
+        return new_label;
+    }
+#else
+    err("Cannot call this dominance checking function without goal conflict constraints");
+#endif
+}
 
 void AStar::preprocess_input()
 {
@@ -971,6 +1011,23 @@ void AStar::preprocess_input()
 }
 
 template<bool is_farkas>
+Pair<Vector<NodeTime>, Cost> AStar::solve()
+{
+#ifdef USE_GOAL_CONFLICTS
+    if (data_.goal_penalties.empty())
+    {
+        return solve<is_farkas, false>();
+    }
+    else
+    {
+        return solve<is_farkas, true>();
+    }
+#else
+    return solve<is_farkas, false>();
+#endif
+}
+
+template<bool is_farkas, bool has_resources>
 Pair<Vector<NodeTime>, Cost> AStar::solve()
 {
     // Get data.
@@ -1038,7 +1095,8 @@ Pair<Vector<NodeTime>, Cost> AStar::solve()
     const auto nb_states = nb_goal_crossings;
     label_pool_.reset(sizeof(Label) + (nb_states + CHAR_BIT - 1) / CHAR_BIT);
     open_.clear();
-    frontier_.clear();
+    frontier_without_resources_.clear();
+    frontier_with_resources_.clear();
 
     // Compute minimum time between each waypoint.
     h_waypoint_to_goal_.resize(waypoints.size());
@@ -1057,7 +1115,7 @@ Pair<Vector<NodeTime>, Cost> AStar::solve()
     // Create the first label.
     Waypoint w = 0;
     h_node_to_waypoint_ = &heuristic_.get_h(waypoints[w].n);
-    generate_start();
+    generate_start<has_resources>();
 
     // Solve up to but not including the last waypoint (goal).
     constexpr IntCost default_cost = is_farkas ? 0 : 1;
@@ -1128,7 +1186,7 @@ Pair<Vector<NodeTime>, Cost> AStar::solve()
             }
 
             // Generate neighbours.
-            generate_neighbours<default_cost>(current, w, waypoints[w].t);
+            generate_neighbours<has_resources, default_cost>(current, w, waypoints[w].t);
         }
     }
 
@@ -1144,7 +1202,7 @@ Pair<Vector<NodeTime>, Cost> AStar::solve()
         if (current->n >= 0)
         {
             // Generate neighbours.
-            generate_neighbours_last_segment<default_cost>(current);
+            generate_neighbours_last_segment<has_resources, default_cost>(current);
 
             // Generate to the end.
             if (current->n == goal && current->t >= earliest_goal_time)
@@ -1219,7 +1277,8 @@ Pair<Vector<NodeTime>, Cost> AStar::calculate_cost(const Vector<Node>& input_pat
 #endif
     iter++;
 
-    constexpr bool is_farkas = 0;
+    constexpr bool has_resources = true;
+    constexpr bool is_farkas = false;
 
     // ------------------------------------
 
@@ -1288,7 +1347,8 @@ Pair<Vector<NodeTime>, Cost> AStar::calculate_cost(const Vector<Node>& input_pat
     const auto nb_states = nb_goal_crossings;
     label_pool_.reset(sizeof(Label) + (nb_states + CHAR_BIT - 1) / CHAR_BIT);
     open_.clear();
-    frontier_.clear();
+    frontier_without_resources_.clear();
+    frontier_with_resources_.clear();
 
     // Compute minimum time between each waypoint.
     h_waypoint_to_goal_.resize(waypoints.size());
@@ -1307,7 +1367,7 @@ Pair<Vector<NodeTime>, Cost> AStar::calculate_cost(const Vector<Node>& input_pat
     // Create the first label.
     Waypoint w = 0;
     h_node_to_waypoint_ = &heuristic_.get_h(waypoints[w].n);
-    generate_start();
+    generate_start<has_resources>();
 
     // Solve up to but not including the last waypoint (goal).
     Int idx = 1;
@@ -1387,31 +1447,31 @@ Pair<Vector<NodeTime>, Cost> AStar::calculate_cost(const Vector<Node>& input_pat
                 idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
                 latest_visit_time[next_n] >= current->t + 1 && edge_costs.north < std::numeric_limits<Cost>::infinity())
             {
-                generate(current, next_n, edge_costs.north, w, waypoint_time);
+                generate<has_resources>(current, next_n, edge_costs.north, w, waypoint_time);
             }
             if (const auto next_n = map_.get_south(current_n);
                 idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
                 latest_visit_time[next_n] >= current->t + 1 && edge_costs.south < std::numeric_limits<Cost>::infinity())
             {
-                generate(current, next_n, edge_costs.south, w, waypoint_time);
+                generate<has_resources>(current, next_n, edge_costs.south, w, waypoint_time);
             }
             if (const auto next_n = map_.get_east(current_n);
                 idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
                 latest_visit_time[next_n] >= current->t + 1 && edge_costs.east < std::numeric_limits<Cost>::infinity())
             {
-                generate(current, next_n, edge_costs.east, w, waypoint_time);
+                generate<has_resources>(current, next_n, edge_costs.east, w, waypoint_time);
             }
             if (const auto next_n = map_.get_west(current_n);
                 idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
                 latest_visit_time[next_n] >= current->t + 1 && edge_costs.west < std::numeric_limits<Cost>::infinity())
             {
-                generate(current, next_n, edge_costs.west, w, waypoint_time);
+                generate<has_resources>(current, next_n, edge_costs.west, w, waypoint_time);
             }
             if (const auto next_n = map_.get_wait(current_n);
                 idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
                 latest_visit_time[next_n] >= current->t + 1 && edge_costs.wait < std::numeric_limits<Cost>::infinity())
             {
-                generate(current, next_n, edge_costs.wait, w, waypoint_time);
+                generate<has_resources>(current, next_n, edge_costs.wait, w, waypoint_time);
             }
 
             // Advance to the next node.
@@ -1437,31 +1497,31 @@ Pair<Vector<NodeTime>, Cost> AStar::calculate_cost(const Vector<Node>& input_pat
                 idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
                 latest_visit_time[next_n] >= current->t + 1 && edge_costs.north < std::numeric_limits<Cost>::infinity())
             {
-                generate_last_segment(current, next_n, edge_costs.north);
+                generate_last_segment<has_resources>(current, next_n, edge_costs.north);
             }
             if (const auto next_n = map_.get_south(current_n);
                 idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
                 latest_visit_time[next_n] >= current->t + 1 && edge_costs.south < std::numeric_limits<Cost>::infinity())
             {
-                generate_last_segment(current, next_n, edge_costs.south);
+                generate_last_segment<has_resources>(current, next_n, edge_costs.south);
             }
             if (const auto next_n = map_.get_east(current_n);
                 idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
                 latest_visit_time[next_n] >= current->t + 1 && edge_costs.east < std::numeric_limits<Cost>::infinity())
             {
-                generate_last_segment(current, next_n, edge_costs.east);
+                generate_last_segment<has_resources>(current, next_n, edge_costs.east);
             }
             if (const auto next_n = map_.get_west(current_n);
                 idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
                 latest_visit_time[next_n] >= current->t + 1 && edge_costs.west < std::numeric_limits<Cost>::infinity())
             {
-                generate_last_segment(current, next_n, edge_costs.west);
+                generate_last_segment<has_resources>(current, next_n, edge_costs.west);
             }
             if (const auto next_n = map_.get_wait(current_n);
                 idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
                 latest_visit_time[next_n] >= current->t + 1 && edge_costs.wait < std::numeric_limits<Cost>::infinity())
             {
-                generate_last_segment(current, next_n, edge_costs.wait);
+                generate_last_segment<has_resources>(current, next_n, edge_costs.wait);
             }
 
             // Generate to the end.
