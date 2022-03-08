@@ -219,7 +219,7 @@ class AStar
 
     // Debug
 #ifdef DEBUG
-    Pair<Vector<NodeTime>, Cost> calculate_cost(const Vector<Edge>& input_path);
+    Pair<Vector<NodeTime>, Cost> calculate_cost(const Vector<Node>& input_path);
     void set_verbose(const bool on = true);
 #endif
 

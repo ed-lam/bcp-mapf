@@ -1098,282 +1098,334 @@ Pair<Vector<NodeTime>, Cost> AStar::solve()
         }
     }
 
-    // Retrieve path.
+    // Done.
 #ifdef DEBUG
     if (verbose)
     {
         println("=======================================");
     }
 #endif
-
-    // Return.
     return output;
 }
 template Pair<Vector<NodeTime>, Cost> AStar::solve<false>();
 template Pair<Vector<NodeTime>, Cost> AStar::solve<true>();
 
 #ifdef DEBUG
-Pair<Vector<NodeTime>, Cost> AStar::calculate_cost(const Vector<Edge>& input_path)
+Pair<Vector<NodeTime>, Cost> AStar::calculate_cost(const Vector<Node>& input_path)
 {
     static Int iter = 0;
 #ifdef DEBUG
     if (verbose)
     {
-        println("=========================================================");
+        println("=======================================");
         println("START DEBUG ITER {}", iter);
     }
 #endif
     iter++;
 
-//    const NodeTime start{input_path.front().n, 0};
-//    const auto goal = input_path.back().n;
-//    const Int goal_earliest = input_path.size() - 1;
-//    const Int goal_latest = input_path.size() - 1;
-//    const bool is_farkas = false;
-//
-//    const auto max_cost = std::numeric_limits<Cost>::max();
+    constexpr bool is_farkas = 0;
 
-//    ------------------------------------
+    // ------------------------------------
+
+    // Get data.
+    auto& [start,
+           waypoints,
+           goal,
+           earliest_goal_time,
+           latest_goal_time,
+           cost_offset,
+           latest_visit_time,
+           edge_penalties,
+           finish_time_penalties
+#ifdef USE_GOAL_CONFLICTS
+         , goal_penalties
+#endif
+    ] = data_;
+
+    // Print.
+#ifdef PRINT_DEBUG
+    {
+        String str;
+        for (auto it = waypoints.begin(); it != waypoints.end() - 1; ++it)
+        {
+            if (it == waypoints.begin())
+            {
+                str += " via " ;
+            }
+            else
+            {
+                str += ", ";
+            }
+            str += fmt::format("(({},{}),{})", map_.get_x(it->n), map_.get_y(it->n), it->t);
+        }
+        println("Solving from ({},{}){} to ({},{}) between times {} and {}",
+                map_.get_x(start),
+                map_.get_y(start),
+                str,
+                map_.get_x(goal),
+                map_.get_y(goal),
+                earliest_goal_time,
+                latest_goal_time);
+    }
+#endif
 
     // Create output.
     Pair<Vector<NodeTime>, Cost> output;
-//    auto& path = output.first;
-//    auto& path_cost = output.second;
-//
-//    // Get h values to the goal node. Compute them if necessary.
-//    debug_assert(heuristic_.max_path_length() >= 1);
-//    h_ = &heuristic_.get_h(goal);
-//
-//    // Calculate the default edge cost.
-//    constexpr IntCost default_cost = is_farkas ? 0 : 1;
-//
-//    // Remove vertices with default outgoing costs.
-//    //    edge_duals_.clean_up(default_cost);
-//
-//    // Get number of resources.
-//#ifdef USE_GOAL_CONFLICTS
-//    const auto nb_goal_crossings = goal_penalties_.size();
-//#else
-//    constexpr Int nb_goal_crossings = 0;
-//#endif
-//#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-//    const auto nb_rect_crossings = static_cast<Int>(rectangle_crossings_.size());
-//#else
-//    constexpr Int nb_rect_crossings = 0;
-//#endif
-//
-//    // Print.
-//    if constexpr (without_resources)
-//    {
-//        debugln("Solving from ({},{}) at time {} to ({},{}) between times {} and {} "
-//                "without resources",
-//                map_.get_x(start.n),
-//                map_.get_y(start.n),
-//                start.t,
-//                map_.get_x(goal),
-//                map_.get_y(goal),
-//                goal_earliest,
-//                goal_latest);
-//    }
-//    else
-//    {
-//        debugln("Solving from ({},{}) at time {} to ({},{}) between times {} and {} with "
-//                "{} rectangle resources",
-//                map_.get_x(start.n),
-//                map_.get_y(start.n),
-//                start.t,
-//                map_.get_x(goal),
-//                map_.get_y(goal),
-//                goal_earliest,
-//                goal_latest,
-//                nb_rect_crossings);
-//    }
-//
-//    // Reset.
-//    const auto nb_states = nb_goal_crossings + 2 * nb_rect_crossings;
-//    label_pool_.reset(sizeof(Label) + (nb_states / CHAR_BIT) + (nb_states % CHAR_BIT != 0));
-//    open_.clear();
-//#ifndef USE_RECTANGLE_CLIQUE_CONFLICTS
-//    static_assert(without_resources);
-//#endif
-//    if constexpr (without_resources)
-//    {
-//        frontier_.clear();
-//    }
-//#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-//    else
-//    {
-//        frontier_with_resources_.clear();
-//    }
-//#endif
-//
-//    // Prepare penalties before solving.
-//    edge_penalties_.before_solve();
-//    goal_penalties_.before_solve();
-//    finish_time_penalties_.before_solve();
-//
-//    // Create label at the start node-time.
-//    generate_start<without_resources>(start);
-//
-//    // Main loop.
-//    Int idx = 1;
-//    while (!open_.empty())
-//    {
-//        // Get a label from priority queue.
-//        const auto current = open_.top();
-//        open_.pop();
-//
-//        // Expand the neighbours of the current label or exit if the goal is reached.
-//        if (current->n != -1)
-//        {
-//            // Generate neighbours.
-//            {
-//                // Get edge costs.
-//                const auto edge_costs = edge_penalties_.get_edge_costs<default_cost>(current->nt);
-//
-//                // Expand in five directions.
-//                const auto current_n = current->n;
-//                debug_assert(edge_costs.north >= 0 && !std::isnan(edge_costs.north));
-//                debug_assert(edge_costs.south >= 0 && !std::isnan(edge_costs.south));
-//                debug_assert(edge_costs.east >= 0 && !std::isnan(edge_costs.east));
-//                debug_assert(edge_costs.west >= 0 && !std::isnan(edge_costs.west));
-//                debug_assert(edge_costs.wait >= 0 && !std::isnan(edge_costs.wait));
-//                if (const auto next_n = map_.get_north(current_n);
-//                    idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx].n &&
-//                    map_[next_n] && edge_costs.north < std::numeric_limits<Cost>::infinity())
-//                {
-//                    generate<without_resources>(current,
-//                                                next_n,
-//#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-//                                                Direction::NORTH,
-//#endif
-//                                                edge_costs.north,
-//                                                goal_latest,
-//                                                max_cost);
-//                }
-//                if (const auto next_n = map_.get_south(current_n);
-//                    idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx].n &&
-//                    map_[next_n] && edge_costs.south < std::numeric_limits<Cost>::infinity())
-//                {
-//                    generate<without_resources>(current,
-//                                                next_n,
-//#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-//                                                Direction::SOUTH,
-//#endif
-//                                                edge_costs.south,
-//                                                goal_latest,
-//                                                max_cost);
-//                }
-//                if (const auto next_n = map_.get_east(current_n);
-//                    idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx].n &&
-//                    map_[next_n] && edge_costs.east < std::numeric_limits<Cost>::infinity())
-//                {
-//                    generate<without_resources>(current,
-//                                                next_n,
-//#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-//                                                Direction::EAST,
-//#endif
-//                                                edge_costs.east,
-//                                                goal_latest,
-//                                                max_cost);
-//                }
-//                if (const auto next_n = map_.get_west(current_n);
-//                    idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx].n &&
-//                    map_[next_n] && edge_costs.west < std::numeric_limits<Cost>::infinity())
-//                {
-//                    generate<without_resources>(current,
-//                                                next_n,
-//#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-//                                                Direction::WEST,
-//#endif
-//                                                edge_costs.west,
-//                                                goal_latest,
-//                                                max_cost);
-//                }
-//                if (const auto next_n = map_.get_wait(current_n);
-//                    idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx].n &&
-//                    map_[next_n] && edge_costs.wait < std::numeric_limits<Cost>::infinity())
-//                {
-//                    generate<without_resources>(current,
-//                                                next_n,
-//#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-//                                                Direction::WAIT,
-//#endif
-//                                                edge_costs.wait,
-//                                                goal_latest,
-//                                                max_cost);
-//                }
-//
-//                // Expand to the end dummy node.
-//                if (current_n == goal && current->t >= goal_earliest)
-//                {
-//                    generate_end(current, max_cost);
-//                }
-//            }
-//        }
-//        else
-//        {
-//            // Get the label of the actual goal cell.
-//            auto parent = current->parent;
-//
-//            // Store the path cost.
-//            path_cost = current->g;
-//
-//            // Store the path.
-//            for (auto l = parent; l; l = l->parent)
-//            {
-//                path.push_back(l->nt);
-//            }
-//            std::reverse(path.begin(), path.end());
-//
-//            // Print.
-//#ifdef DEBUG
-//            if (verbose)
-//            {
-//                println("Reached goal at label {} {} (n {}, t {}, nt {}, position ({},{}), g {}, h {}, f {}{}{})",
-//                        current->label_id,
-//                        fmt::ptr(current),
-//                        decltype(parent->n){parent->n},
-//                        decltype(parent->t){parent->t},
-//                        decltype(parent->nt){parent->nt},
-//                        map_.get_x(parent->n),
-//                        map_.get_y(parent->n),
-//                        current->g,
-//                        current->f - current->g,
-//                        current->f,
-//                        make_goal_state_string(&current->state_[0], nb_goal_crossings),
-//                        make_rectangle_state_string(&current->state_[nb_goal_crossings], nb_rect_crossings));
-//
-//                fmt::print("Found path with cost {}: ", path_cost);
-//                for (const auto nt : path)
-//                {
-//                    fmt::print("({},{}) ", map_.get_x(nt.n), map_.get_y(nt.n));
-//                }
-//                println("");
-//            }
-//#endif
-//
-//            // Check.
-//            debug_assert(path_cost <= max_cost);
-//            debug_assert(goal_earliest <= current->t && current->t <= goal_latest);
-//
-//            // Finish.
-//            break;
-//        }
-//
-//        // Advance to the next node.
-//        ++idx;
-//    }
-//
-//#ifdef DEBUG
-//    if (verbose)
-//    {
-//        println("END DEBUG");
-//        println("=========================================================");
-//    }
-//#endif
+    auto& path = output.first;
+    auto& path_cost = output.second;
 
-    // Return.
+    // Prepare costs.
+    data_.edge_penalties.before_solve();
+    data_.finish_time_penalties.before_solve();
+#ifdef USE_GOAL_CONFLICTS
+    data_.goal_penalties.before_solve();
+#endif
+
+    // Get number of resources.
+#ifdef USE_GOAL_CONFLICTS
+    const auto nb_goal_crossings = goal_penalties.size();
+#else
+    constexpr Int nb_goal_crossings = 0;
+#endif
+
+    // Reset.
+    const auto nb_states = nb_goal_crossings;
+    label_pool_.reset(sizeof(Label) + (nb_states + CHAR_BIT - 1) / CHAR_BIT);
+    open_.clear();
+    frontier_.clear();
+
+    // Compute minimum time between each waypoint.
+    h_waypoint_to_goal_.resize(waypoints.size());
+    h_waypoint_to_goal_.back() = 0;
+    for (Waypoint w = waypoints.size() - 2; w >= 0; --w)
+    {
+        const auto h = heuristic_.get_h(waypoints[w + 1].n)[waypoints[w].n];
+        const auto t_diff = waypoints[w + 1].t - waypoints[w].t;
+        if (w != static_cast<Waypoint>(waypoints.size() - 2) && t_diff < h)
+        {
+            return output;
+        }
+        h_waypoint_to_goal_[w] = std::max(h, t_diff) + h_waypoint_to_goal_[w + 1];
+    }
+
+    // Create the first label.
+    Waypoint w = 0;
+    h_node_to_waypoint_ = &heuristic_.get_h(waypoints[w].n);
+    generate_start();
+
+    // Solve up to but not including the last waypoint (goal).
+    Int idx = 1;
+    constexpr IntCost default_cost = is_farkas ? 0 : 1;
+    if (waypoints.size() > 1)
+    {
+        while (!open_.empty())
+        {
+            // Get a label from priority queue.
+            const auto current = open_.top();
+            open_.pop();
+
+            // Advance to the next waypoint.
+            debug_assert(current->t <= waypoints[w].t);
+            if (current->nt == waypoints[w])
+            {
+                // Print.
+#ifdef DEBUG
+                if (verbose)
+                {
+                    // Store the path.
+                    Vector<NodeTime> path;
+                    for (auto l = current; l; l = l->parent)
+                    {
+                        path.push_back(l->nt);
+                    }
+                    std::reverse(path.begin(), path.end());
+
+                    // Print.
+#ifdef USE_GOAL_CONFLICTS
+                    const auto nb_goal_penalties = goal_penalties.size();
+#else
+                    const auto nb_goal_penalties = 0;
+#endif
+                    fmt::print("Reached waypoint at label {} {} (n {}, t {}, nt {}, xy ({},{}), g {}, h {}, f {}{}) "
+                               "with path",
+                               current->label_id,
+                               fmt::ptr(current),
+                               decltype(current->n){current->n},
+                               decltype(current->t){current->t},
+                               decltype(current->nt){current->nt},
+                               map_.get_x(current->n),
+                               map_.get_y(current->n),
+                               current->g,
+                               current->f - current->g,
+                               current->f,
+                               make_goal_state_string(&current->state_[0], nb_goal_penalties));
+                    for (const auto nt: path)
+                    {
+                        fmt::print(" ({},{})", map_.get_x(nt.n), map_.get_y(nt.n));
+                    }
+                    println("");
+                }
+#endif
+
+                // Advance to the next waypoint.
+                ++w;
+                h_node_to_waypoint_ = &heuristic_.get_h(waypoints[w].n);
+
+                // Clear priority queue.
+                open_.clear();
+
+                // Stop if reached the last waypoint (goal).
+                if (w == static_cast<Waypoint>(waypoints.size() - 1))
+                {
+                    open_.push(current);
+                    break;
+                }
+            }
+
+            const auto waypoint_time = waypoints[w].t;
+
+            // Expand in five directions.
+            const auto edge_costs = edge_penalties.get_edge_costs<default_cost>(current->nt);
+            const auto current_n = current->n;
+            if (const auto next_n = map_.get_north(current_n);
+                idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
+                latest_visit_time[next_n] >= current->t + 1 && edge_costs.north < std::numeric_limits<Cost>::infinity())
+            {
+                generate(current, next_n, edge_costs.north, w, waypoint_time);
+            }
+            if (const auto next_n = map_.get_south(current_n);
+                idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
+                latest_visit_time[next_n] >= current->t + 1 && edge_costs.south < std::numeric_limits<Cost>::infinity())
+            {
+                generate(current, next_n, edge_costs.south, w, waypoint_time);
+            }
+            if (const auto next_n = map_.get_east(current_n);
+                idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
+                latest_visit_time[next_n] >= current->t + 1 && edge_costs.east < std::numeric_limits<Cost>::infinity())
+            {
+                generate(current, next_n, edge_costs.east, w, waypoint_time);
+            }
+            if (const auto next_n = map_.get_west(current_n);
+                idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
+                latest_visit_time[next_n] >= current->t + 1 && edge_costs.west < std::numeric_limits<Cost>::infinity())
+            {
+                generate(current, next_n, edge_costs.west, w, waypoint_time);
+            }
+            if (const auto next_n = map_.get_wait(current_n);
+                idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
+                latest_visit_time[next_n] >= current->t + 1 && edge_costs.wait < std::numeric_limits<Cost>::infinity())
+            {
+                generate(current, next_n, edge_costs.wait, w, waypoint_time);
+            }
+
+            // Advance to the next node.
+            ++idx;
+        }
+    }
+
+    // Solve the last segment.
+    while (!open_.empty())
+    {
+        // Get a label from priority queue.
+        const auto current = open_.top();
+        open_.pop();
+
+        // Expand the neighbours of the current label or exit if the goal is reached.
+        debug_assert(current->t <= latest_goal_time);
+        if (current->n >= 0)
+        {
+            // Expand in five directions.
+            const auto edge_costs = edge_penalties.get_edge_costs<default_cost>(current->nt);
+            const auto current_n = current->n;
+            if (const auto next_n = map_.get_north(current_n);
+                idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
+                latest_visit_time[next_n] >= current->t + 1 && edge_costs.north < std::numeric_limits<Cost>::infinity())
+            {
+                generate_last_segment(current, next_n, edge_costs.north);
+            }
+            if (const auto next_n = map_.get_south(current_n);
+                idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
+                latest_visit_time[next_n] >= current->t + 1 && edge_costs.south < std::numeric_limits<Cost>::infinity())
+            {
+                generate_last_segment(current, next_n, edge_costs.south);
+            }
+            if (const auto next_n = map_.get_east(current_n);
+                idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
+                latest_visit_time[next_n] >= current->t + 1 && edge_costs.east < std::numeric_limits<Cost>::infinity())
+            {
+                generate_last_segment(current, next_n, edge_costs.east);
+            }
+            if (const auto next_n = map_.get_west(current_n);
+                idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
+                latest_visit_time[next_n] >= current->t + 1 && edge_costs.west < std::numeric_limits<Cost>::infinity())
+            {
+                generate_last_segment(current, next_n, edge_costs.west);
+            }
+            if (const auto next_n = map_.get_wait(current_n);
+                idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
+                latest_visit_time[next_n] >= current->t + 1 && edge_costs.wait < std::numeric_limits<Cost>::infinity())
+            {
+                generate_last_segment(current, next_n, edge_costs.wait);
+            }
+
+            // Generate to the end.
+            if (current->n == goal && current->t >= earliest_goal_time)
+            {
+                generate_end(current);
+            }
+        }
+        else
+        {
+            // Store the path cost.
+            path_cost = current->g;
+
+            // Store the path.
+            debug_assert(path.empty());
+            for (auto l = current->parent; l; l = l->parent)
+            {
+                path.push_back(l->nt);
+            }
+            std::reverse(path.begin(), path.end());
+
+            // Print.
+#ifdef DEBUG
+            if (verbose)
+            {
+                println("Reached end at label {} {} (t {}, g {}{})",
+                        current->label_id,
+                        fmt::ptr(current),
+                        decltype(current->t){current->t},
+                        current->g,
+                        make_goal_state_string(&current->state_[0], nb_goal_crossings));
+
+                fmt::print("Found path with cost {}: ", path_cost);
+                for (const auto nt : path)
+                {
+                    fmt::print("({},{}) ", map_.get_x(nt.n), map_.get_y(nt.n));
+                }
+                println("");
+            }
+#endif
+
+            // Check.
+            debug_assert(isLT(path_cost, 0));
+            debug_assert(earliest_goal_time <= current->t && current->t <= latest_goal_time);
+
+            // Finish.
+            break;
+        }
+
+       // Advance to the next node.
+       ++idx;
+    }
+
+    // Done.
+#ifdef DEBUG
+    if (verbose)
+    {
+        println("=======================================");
+    }
+#endif
     return output;
 }
 
