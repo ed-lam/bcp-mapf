@@ -49,30 +49,23 @@ class AStar
         Cost f;
         union
         {
-#ifdef USE_RESERVATION_TABLE
-            uint64_t nt : 63;
-            struct
-            {
-                Node n : 32;
-                Time t : 31;
-                bool reserved : 1;
-            };
-#else
             uint64_t nt;
             struct
             {
                 Node n;
                 Time t;
             };
-#endif
         };
+#ifdef USE_RESERVATION_TABLE
+        Int reserves;
+#endif
         Int pqueue_index;
         std::byte state_[0];
     };
 #ifdef DEBUG
-    static_assert(sizeof(Label) == 5*8 + 1*4 + 4);
+    static_assert(sizeof(Label) == 5*8 + 2*4);
 #else
-    static_assert(sizeof(Label) == 4*8 + 1*4 + 4);
+    static_assert(sizeof(Label) == 4*8 + 2*4);
 #endif
 
     // Comparison of labels
@@ -86,23 +79,15 @@ class AStar
 
         inline bool operator()(const Label* const a, const Label* const b) const
         {
-            // Prefer smallest f (shorter path) and break ties with smallest reserved
-            // status (not reserved) and then largest g (near the end).
+            // Prefer smallest f (shorter path) and break ties with fewest visits to reserved vertices
+            // and then largest g (i.e., smallest h for the given f).
 #ifdef USE_RESERVATION_TABLE
-            return (a->f <  b->f)
-                || (a->f == b->f && a->reserved <  b->reserved)
-                || (a->f == b->f && a->reserved == b->reserved && a->g >  b->g)
-#ifndef CHECK_HEAP
-                || (a->f == b->f && a->reserved == b->reserved && a->g == b->g && static_cast<bool>(rand() % 2))
-#endif
-                   ;
+            return (a->f <  b->f) ||
+                   (a->f == b->f && a->reserves <  b->reserves) ||
+                   (a->f == b->f && a->reserves == b->reserves && a->g > b->g);
 #else
-            return (a->f <  b->f)
-                || (a->f == b->f && a->g >  b->g)
-#ifndef CHECK_HEAP
-                || (a->f == b->f && a->g == b->g && static_cast<bool>(rand() % 2))
-#endif
-                ;
+            return (a->f <  b->f) ||
+                   (a->f == b->f && a->g > b->g);
 #endif
         }
     };

@@ -285,7 +285,7 @@ void AStar::generate(Label* const current,
     next_label->g = current->g + cost;
     next_label->nt = next_nt.nt;
 #ifdef USE_RESERVATION_TABLE
-    next_label->reserved = reservation_table().is_reserved(next_nt);
+    next_label->reserves += reservation_table().is_reserved(next_nt);
 #endif
 
     // Check all goal crossings.
@@ -452,7 +452,7 @@ void AStar::generate_last_segment(Label* const current,
     next_label->g = current->g + cost;
     next_label->nt = next_nt.nt;
 #ifdef USE_RESERVATION_TABLE
-    next_label->reserved = reservation_table().is_reserved(next_nt);
+    next_label->reserves += reservation_table().is_reserved(next_nt);
 #endif
 
     // Check all goal crossings.
