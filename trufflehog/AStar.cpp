@@ -1091,6 +1091,18 @@ Pair<Vector<NodeTime>, Cost> AStar::solve()
     constexpr Int nb_goal_crossings = 0;
 #endif
 
+    // Print goal crossings.
+#ifdef PRINT_DEBUG
+#ifdef USE_GOAL_CONFLICTS
+    for (Int idx = 0; idx < nb_goal_crossings; ++idx)
+    {
+        const auto [goal_nt, goal_cost] = goal_penalties[idx];
+        println("Goal crossing ({},{}) at or after time {} incurs {:.6f}",
+                map_.get_x(goal_nt.n), map_.get_y(goal_nt.n), goal_nt.t, goal_cost);
+    }
+#endif
+#endif
+
     // Reset.
     const auto nb_states = nb_goal_crossings;
     label_pool_.reset(sizeof(Label) + (nb_states + CHAR_BIT - 1) / CHAR_BIT);
