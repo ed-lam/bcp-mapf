@@ -397,9 +397,7 @@ void AStar::generate(Label* const current,
 }
 
 template<bool has_resources>
-void AStar::generate_last_segment(Label* const current,
-                                  const Node next_n,
-                                  const Cost cost)
+void AStar::generate_last_segment(Label* const current, const Node next_n, const Cost cost)
 {
     // Get data.
     const auto& [start,
@@ -635,21 +633,13 @@ void AStar::generate_neighbours(Label* const current, const Waypoint w, const Ti
     }
 }
 template
-void AStar::generate_neighbours<false, 0>(Label* const current,
-                                          const Waypoint w,
-                                          const Time waypoint_time);
+void AStar::generate_neighbours<false, 0>(Label* const current, const Waypoint w, const Time waypoint_time);
 template
-void AStar::generate_neighbours<false, 1>(Label* const current,
-                                          const Waypoint w,
-                                          const Time waypoint_time);
+void AStar::generate_neighbours<false, 1>(Label* const current, const Waypoint w, const Time waypoint_time);
 template
-void AStar::generate_neighbours<true, 0>(Label* const current,
-                                         const Waypoint w,
-                                         const Time waypoint_time);
+void AStar::generate_neighbours<true, 0>(Label* const current, const Waypoint w, const Time waypoint_time);
 template
-void AStar::generate_neighbours<true, 1>(Label* const current,
-                                         const Waypoint w,
-                                         const Time waypoint_time);
+void AStar::generate_neighbours<true, 1>(Label* const current, const Waypoint w, const Time waypoint_time);
 
 template<bool has_resources, IntCost default_cost>
 void AStar::generate_neighbours_last_segment(Label* const current)
@@ -1026,6 +1016,8 @@ Pair<Vector<NodeTime>, Cost> AStar::solve()
     return solve<is_farkas, false>();
 #endif
 }
+template Pair<Vector<NodeTime>, Cost> AStar::solve<false>();
+template Pair<Vector<NodeTime>, Cost> AStar::solve<true>();
 
 template<bool is_farkas, bool has_resources>
 Pair<Vector<NodeTime>, Cost> AStar::solve()
@@ -1235,6 +1227,24 @@ Pair<Vector<NodeTime>, Cost> AStar::solve()
             }
             std::reverse(path.begin(), path.end());
 
+            // Check.
+#ifdef DEBUG
+            for (auto l = current->parent; l; l = l->parent)
+            {
+                debug_assert(path[l->t].nt == l->nt);
+            }
+            for (Time t = 0; t < static_cast<Time>(path.size()); ++t)
+            {
+                debug_assert(path[t].t == t);
+            }
+            for (Time t = 0; t < static_cast<Time>(path.size()) - 1; ++t)
+            {
+                const auto [x1, y1] = map_.get_xy(path[t].n);
+                const auto [x2, y2] = map_.get_xy(path[t + 1].n);
+                debug_assert(std::abs(x2 - x1) + std::abs(y2 - y2) <= 1);
+            }
+#endif
+
             // Print.
 #ifdef DEBUG
             if (verbose)
@@ -1273,8 +1283,6 @@ Pair<Vector<NodeTime>, Cost> AStar::solve()
 #endif
     return output;
 }
-template Pair<Vector<NodeTime>, Cost> AStar::solve<false>();
-template Pair<Vector<NodeTime>, Cost> AStar::solve<true>();
 
 #ifdef DEBUG
 Pair<Vector<NodeTime>, Cost> AStar::calculate_cost(const Vector<Node>& input_path)

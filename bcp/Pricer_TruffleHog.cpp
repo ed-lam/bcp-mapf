@@ -897,6 +897,7 @@ SCIP_RETCODE run_trufflehog_pricer(
 #endif
 
                 // Update reservation table.
+#ifdef USE_RESERVATION_TABLE
                 {
                     Node n;
                     Time t = 0;
@@ -910,6 +911,7 @@ SCIP_RETCODE run_trufflehog_pricer(
                         restab.reserve(NodeTime{n, t});
                     }
                 }
+#endif
 
                 // Advance to the next agent.
                 goto FINISHED_PRICING_AGENT;
