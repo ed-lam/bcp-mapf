@@ -241,7 +241,7 @@ target_link_libraries(trufflehog fmt::fmt-header-only)
 
 # Set options.
 target_compile_options(bcp-mapf PRIVATE -DUSE_RESERVATION_TABLE)
-target_compile_options(bcp-mapf PRIVATE -DUSE_ASTAR_SOLUTION_CACHING)
+#target_compile_options(bcp-mapf PRIVATE -DUSE_ASTAR_SOLUTION_CACHING)
 #target_compile_options(bcp-mapf PRIVATE -DUSE_PATH_LENGTH_NOGOODS)
 
 # Set separator options.

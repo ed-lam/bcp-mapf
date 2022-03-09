@@ -440,7 +440,18 @@ SCIP_DECL_HEUREXEC(heurExecPrioritizedPlanning)
 // #endif
 
         // Solve.
+        astar.before_solve(); // TODO: Merge back in.
+#ifdef USE_SIPP
+        const auto [path_vertices, path_cost] = astar.solve_sipp<false>();
+#ifdef DEBUG
+        {
+            const auto [time_expanded_astar_path_vertices, time_expanded_astar_path_cost] = astar.solve<false>();
+            debug_assert(std::abs(time_expanded_astar_path_cost - path_cost) < 1e-8);
+        }
+#endif
+#else
         const auto [path_vertices, path_cost] = astar.solve<false>();
+#endif
 
         // End timer.
 // #ifdef PRINT_DEBUG
