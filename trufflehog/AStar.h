@@ -238,7 +238,7 @@ class AStar
 
   private:
     // Solve
-    template<bool is_farkas, bool has_resources, bool is_sipp>
+    template<bool is_sipp, bool is_farkas, bool has_resources>
     Pair<Vector<NodeTime>, Cost> solve();
 
     // Create start label
@@ -246,27 +246,49 @@ class AStar
     void generate_start();
 
     // Create intermediate label
-    template<bool has_resources, bool is_sipp>
-    void generate(Label* const current,
-                  const Node next_n,
-                  const Time next_t,
-                  const Cost cost,
-                  const Waypoint w,
-                  const Time waypoint_time);
-    template<bool has_resources, bool is_sipp>
+    template<bool is_sipp, bool has_resources>
+    void generate_early_segment(Label* const current,
+                                const Node next_n,
+                                const Time next_t,
+                                const Cost cost,
+                                const Waypoint w,
+                                const Time waypoint_time);
+    template<bool is_sipp, bool has_resources>
     void generate_last_segment(Label* const current, const Node next_n, const Time next_t, const Cost cost);
+    template<bool is_sipp, bool has_resources, bool is_last_segment, class... WaypointArgs>
+    inline void generate(Label* const current,
+                         const Node next_n,
+                         const Time next_t,
+                         const Cost cost,
+                         WaypointArgs... waypoint_args)
+    {
+        if constexpr (is_last_segment)
+        {
+            generate_last_segment<is_sipp, has_resources>(current, next_n, next_t, cost, waypoint_args...);
+        }
+        else
+        {
+            generate_early_segment<is_sipp, has_resources>(current, next_n, next_t, cost, waypoint_args...);
+        }
+    }
 
     // Expand next - time-expanded A*
-    template<bool has_resources, IntCost default_cost>
-    void generate_neighbours(Label* const current, const Waypoint w, const Time waypoint_time);
-    template<bool has_resources, IntCost default_cost>
-    void generate_neighbours_last_segment(Label* const current);
+    template<IntCost default_cost, bool has_resources, bool is_last_segment, class... WaypointArgs>
+    void generate_neighbours(Label* const current, WaypointArgs... waypoint_args);
 
     // Expand next - SIPP
-    template<bool has_resources, IntCost default_cost>
-    void generate_neighbours_sipp(Label* const current, const Waypoint w, const Time waypoint_time);
-    template<bool has_resources, IntCost default_cost>
-    void generate_neighbours_last_segment_sipp(Label* const current);
+    template<IntCost default_cost, bool has_resources, bool is_last_segment, class... WaypointArgs>
+    void generate_neighbours_sipp(Label* const current, WaypointArgs... waypoint_args);
+    template<IntCost default_cost, bool has_resources, bool is_last_segment, class... WaypointArgs>
+    void generate_neighbours_one_interval_sipp(Label* const current,
+                                               const Time wait_start,
+                                               const Time wait_end,
+                                               const Cost wait_penalty,
+                                               const Node next_n,
+                                               const SIPPInterval& interval,
+                                               const Vector<SIPPInterval>& dest_wait_intervals,
+                                               Vector<SIPPInterval>::const_iterator& wait_interval,
+                                               WaypointArgs... waypoint_args);
 
     // Create end label
     void generate_end(Label* const current);
