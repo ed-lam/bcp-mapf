@@ -33,6 +33,8 @@ set(TRUFFLEHOG_SOURCE_FILES
     trufflehog/Heuristic.h
     trufflehog/Heuristic.cpp
     trufflehog/Penalties.h
+    trufflehog/SIPPIntervals.h
+    trufflehog/SIPPIntervals.cpp
     trufflehog/AStar.h
     trufflehog/AStar.cpp
     trufflehog/ReservationTable.h
@@ -239,10 +241,10 @@ endif ()
 target_link_libraries(bcp-mapf fmt::fmt-header-only cliquer ${SCIP_LIBRARY} ${LIBM})
 target_link_libraries(trufflehog fmt::fmt-header-only)
 
-# Set options.
+# Set pricer options.
+target_compile_options(bcp-mapf PRIVATE -DUSE_SIPP)
 target_compile_options(bcp-mapf PRIVATE -DUSE_RESERVATION_TABLE)
 #target_compile_options(bcp-mapf PRIVATE -DUSE_ASTAR_SOLUTION_CACHING)
-#target_compile_options(bcp-mapf PRIVATE -DUSE_PATH_LENGTH_NOGOODS)
 
 # Set separator options.
 target_compile_options(bcp-mapf PRIVATE -DUSE_WAITEDGE_CONFLICTS)
@@ -276,6 +278,9 @@ target_compile_options(bcp-mapf PRIVATE -DUSE_BEST_FIRST_NODE_SELECTION)
 #target_compile_options(bcp-mapf PRIVATE -DUSE_BEST_ESTIMATE_NODE_SELECTION)
 #target_compile_options(bcp-mapf PRIVATE -DUSE_HYBRID_ESTIMATE_BOUND_NODE_SELECTION)
 #target_compile_options(bcp-mapf PRIVATE -DUSE_RESTART_DEPTH_FIRST_NODE_SELECTION)
+
+# Set other options.
+#target_compile_options(bcp-mapf PRIVATE -DUSE_PATH_LENGTH_NOGOODS)
 
 # Set warnings.
 target_compile_options(bcp-mapf PRIVATE -Wall -Wextra -Wignored-qualifiers -Werror=return-type)

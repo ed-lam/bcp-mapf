@@ -28,6 +28,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "PriorityQueue.h"
 #include "Penalties.h"
 #include "Heuristic.h"
+#include "SIPPIntervals.h"
 #include "boost/container/small_vector.hpp"
 
 template <class T, std::size_t N>
@@ -151,13 +152,6 @@ class AStar
 #endif
     };
 
-    struct SIPPInterval
-    {
-        Time start;
-        Time end;
-        Cost penalty;
-    };
-
   public:
     struct Data
     {
@@ -201,7 +195,7 @@ class AStar
 #endif
 
     // SIPP data structures
-    Vector<Array<Vector<SIPPInterval>, 5>> sipp_intervals_;
+    SIPPIntervals sipp_intervals_;
 
   public:
     // Constructors
@@ -285,9 +279,11 @@ class AStar
                                                const Time wait_end,
                                                const Cost wait_penalty,
                                                const Node next_n,
-                                               const SIPPInterval& interval,
-                                               const Vector<SIPPInterval>& dest_wait_intervals,
-                                               Vector<SIPPInterval>::const_iterator& wait_interval,
+                                               const Time interval_start,
+                                               const Time interval_end,
+                                               const Cost interval_penalty,
+                                               const SIPPInterval* const dest_wait_intervals_end,
+                                               const SIPPInterval* wait_interval,
                                                WaypointArgs... waypoint_args);
 
     // Create end label

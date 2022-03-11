@@ -155,7 +155,7 @@ AStar::AStar(const Map& map) :
     nb_labels_(0),
 #endif
 
-    sipp_intervals_(map_.size())
+    sipp_intervals_(map)
 {
 }
 
@@ -293,6 +293,14 @@ void AStar::generate_early_segment(Label* const current,
     next_label->g = current->g + cost;
     next_label->nt = next_nt.nt;
 #ifdef USE_RESERVATION_TABLE
+    if constexpr (is_sipp)
+    {
+        const auto n = current->n;
+        for (Time t = current->t + 1; t < next_t; ++t)
+        {
+            next_label->reserves += reservation_table().is_reserved(NodeTime{n, t});
+        }
+    }
     next_label->reserves += reservation_table().is_reserved(next_nt);
 #endif
 
@@ -458,6 +466,14 @@ void AStar::generate_last_segment(Label* const current, const Node next_n, const
     next_label->g = current->g + cost;
     next_label->nt = next_nt.nt;
 #ifdef USE_RESERVATION_TABLE
+    if constexpr (is_sipp)
+    {
+        const auto n = current->n;
+        for (Time t = current->t + 1; t < next_t; ++t)
+        {
+            next_label->reserves += reservation_table().is_reserved(NodeTime{n, t});
+        }
+    }
     next_label->reserves += reservation_table().is_reserved(next_nt);
 #endif
 
@@ -701,7 +717,9 @@ void AStar::generate_neighbours_sipp(Label* const current, WaypointArgs... waypo
     Time wait_start = max_time;
     Time wait_end = max_time;
     Cost wait_penalty = 0;
-    for (const auto& interval : sipp_intervals_[n][Direction::WAIT])
+    for (auto [it, end] = sipp_intervals_.get_intervals(n, Direction::WAIT); it != end; ++it)
+    {
+        const auto& interval = *it;
         if (interval.end > t)
         {
             // Store the wait interval.
@@ -723,6 +741,7 @@ void AStar::generate_neighbours_sipp(Label* const current, WaypointArgs... waypo
             // Only expand to the first of the upcoming wait intervals.
             break;
         }
+    }
 
     // Expand in the move directions.
     for (Int d = 0; d < 4; ++d)
@@ -731,29 +750,89 @@ void AStar::generate_neighbours_sipp(Label* const current, WaypointArgs... waypo
         const auto next_n = map_.get_destination(Edge{n, static_cast<Direction>(d)});
 
         // Get the outgoing intervals at the current node and the wait intervals at the destination.
-        const auto& intervals_nd = sipp_intervals_[n][d];
-        const auto& dest_wait_intervals = sipp_intervals_[next_n][Direction::WAIT];
+        auto [interval, intervals_end] = sipp_intervals_.get_intervals(n, static_cast<Direction>(d));
 
-        // Expand departing at the first timestep of the outgoing intervals and expand arriving after the wait intervals
-        // at the destination.
-        debug_assert(!intervals_nd.empty());
-        auto interval = intervals_nd.begin();
-        for (; interval != intervals_nd.end() && interval->end <= t; ++interval);
-        debug_assert(interval != intervals_nd.end() && interval->end > t);
-        auto wait_interval = dest_wait_intervals.begin();
-        for (; wait_interval != dest_wait_intervals.end() && wait_interval->end <= t + 1; ++wait_interval);
-        debug_assert(wait_interval == dest_wait_intervals.end() || wait_interval->end > t + 1);
-        for (; interval != intervals_nd.end() && interval->start < wait_end; ++interval)
+        // Advance to the first wait interval after the curren time.
+        auto [wait_interval, dest_wait_intervals_end] = sipp_intervals_.get_intervals(next_n, Direction::WAIT);
+        for (; wait_interval != dest_wait_intervals_end && wait_interval->end <= t + 1; ++wait_interval)
+        ;
+        debug_assert(wait_interval == dest_wait_intervals_end || wait_interval->end > t + 1);
+
+        // Expand.
+        const auto intervals_empty = interval == intervals_end;
+        if (intervals_empty || interval->start > 0)
         {
-            generate_neighbours_one_interval_sipp<default_cost, has_resources, is_last_segment>(current,
-                                                                                                wait_start,
-                                                                                                wait_end,
-                                                                                                wait_penalty,
-                                                                                                next_n,
-                                                                                                *interval,
-                                                                                                dest_wait_intervals,
-                                                                                                wait_interval,
-                                                                                                waypoint_args...);
+            // Expand before the first interval.
+            const Time interval_start = 0;
+            const Time interval_end = intervals_empty ? max_time : interval->start;
+            const Cost interval_penalty = 0.0;
+            if (interval_end > t)
+            {
+                debug_assert(interval_start < wait_end);
+                generate_neighbours_one_interval_sipp<default_cost, has_resources, is_last_segment>(current,
+                                                                                                    wait_start,
+                                                                                                    wait_end,
+                                                                                                    wait_penalty,
+                                                                                                    next_n,
+                                                                                                    interval_start,
+                                                                                                    interval_end,
+                                                                                                    interval_penalty,
+                                                                                                    dest_wait_intervals_end,
+                                                                                                    wait_interval,
+                                                                                                    waypoint_args...);
+            }
+        }
+        if (!intervals_empty)
+        {
+            // Expand at the intervals.
+            {
+                for (; interval != intervals_end && interval->end <= t; ++interval)
+                ;
+                debug_assert(interval == intervals_end || interval->end > t);
+                for (; interval != intervals_end && interval->start < wait_end; ++interval)
+                {
+                    // Expand at the interval.
+                    {
+                        const auto [interval_start, interval_end, interval_penalty] = *interval;
+                        generate_neighbours_one_interval_sipp<default_cost, has_resources, is_last_segment>(current,
+                                                                                                            wait_start,
+                                                                                                            wait_end,
+                                                                                                            wait_penalty,
+                                                                                                            next_n,
+                                                                                                            interval_start,
+                                                                                                            interval_end,
+                                                                                                            interval_penalty,
+                                                                                                            dest_wait_intervals_end,
+                                                                                                            wait_interval,
+                                                                                                            waypoint_args...);
+                    }
+                }
+            }
+
+            // Expand after the last interval.
+            if (interval == intervals_end)
+            {
+                --interval;
+                debug_assert(interval->end < std::numeric_limits<Time>::max());
+                const Time interval_start = interval->end;
+                const Time interval_end = std::numeric_limits<Time>::max();
+                const Cost interval_penalty = 0.0;
+                debug_assert(interval_end > t);
+                if (interval_start < wait_end)
+                {
+                    generate_neighbours_one_interval_sipp<default_cost, has_resources, is_last_segment>(current,
+                                                                                                        wait_start,
+                                                                                                        wait_end,
+                                                                                                        wait_penalty,
+                                                                                                        next_n,
+                                                                                                        interval_start,
+                                                                                                        interval_end,
+                                                                                                        interval_penalty,
+                                                                                                        dest_wait_intervals_end,
+                                                                                                        wait_interval,
+                                                                                                        waypoint_args...);
+                }
+            }
         }
     }
 }
@@ -764,25 +843,27 @@ void AStar::generate_neighbours_one_interval_sipp(Label* const current,
                                                   const Time wait_end,
                                                   const Cost wait_penalty,
                                                   const Node next_n,
-                                                  const SIPPInterval& interval,
-                                                  const Vector<SIPPInterval>& dest_wait_intervals,
-                                                  Vector<SIPPInterval>::const_iterator& wait_interval,
+                                                  const Time interval_start,
+                                                  const Time interval_end,
+                                                  const Cost interval_penalty,
+                                                  const SIPPInterval* const dest_wait_intervals_end,
+                                                  const SIPPInterval* wait_interval,
                                                   WaypointArgs... waypoint_args)
 {
     constexpr bool is_sipp = true;
 
     // Get data.
-    auto& [start,
-           waypoints,
-           goal,
-           earliest_goal_time,
-           latest_goal_time,
-           cost_offset,
-           latest_visit_time,
-           edge_penalties,
-           finish_time_penalties
+    const auto& [start,
+                 waypoints,
+                 goal,
+                 earliest_goal_time,
+                 latest_goal_time,
+                 cost_offset,
+                 latest_visit_time,
+                 edge_penalties,
+                 finish_time_penalties
 #ifdef USE_GOAL_CONFLICTS
-         , goal_penalties
+               , goal_penalties
 #endif
     ] = data_;
 
@@ -793,22 +874,22 @@ void AStar::generate_neighbours_one_interval_sipp(Label* const current,
     const auto n = current->n;
     const auto t = current->t;
 
-    // Move to the destination at the start of the interval.
+    // Move to the destination departing at the start of the interval.
     {
-        const auto next_t = std::max(interval.start, t) + 1;
+        const auto next_t = std::max(interval_start, t) + 1;
         Cost cost;
-        if (interval.start <= wait_start)
+        if (interval_start <= wait_start)
         {
-            cost = (default_cost)                     * std::max(interval.start - t, 0) +
-                   (default_cost + interval.penalty) * 1;
-            debug_assert(next_t == t + std::max(interval.start - t, 0) + 1);
+            cost = (default_cost)                    * std::max(interval_start - t, 0) +
+                   (default_cost + interval_penalty) * 1;
+            debug_assert(next_t == t + std::max(interval_start - t, 0) + 1);
         }
         else
         {
-            cost = (default_cost)                     * std::max(wait_start - t, 0) +
-                   (default_cost + wait_penalty)      * (interval.start - wait_start) +
-                   (default_cost + interval.penalty) * 1;
-            debug_assert(next_t == t + std::max(wait_start - t, 0) + (interval.start - wait_start) + 1);
+            cost = (default_cost)                    * std::max(wait_start - t, 0) +
+                   (default_cost + wait_penalty)     * (interval_start - wait_start) +
+                   (default_cost + interval_penalty) * 1;
+            debug_assert(next_t == t + std::max(wait_start - t, 0) + (interval_start - wait_start) + 1);
         }
         if (cost < inf_cost && latest_visit_time[n] >= next_t - 1 && latest_visit_time[next_n] >= next_t)
         {
@@ -817,27 +898,27 @@ void AStar::generate_neighbours_one_interval_sipp(Label* const current,
     }
 
     // Move to the destination (within the interval) to arrive after a wait interval at the destination.
-    for (const auto latest_wait_end = std::min(interval.end, wait_end);
-         wait_interval != dest_wait_intervals.end() && wait_interval->end <= latest_wait_end;
+    for (const auto latest_wait_end = std::min(interval_end, wait_end);
+         wait_interval != dest_wait_intervals_end && wait_interval->end <= latest_wait_end;
          ++wait_interval)
     {
         const auto depart = wait_interval->end - 1;
-        debug_assert(depart < interval.end);
-        if (depart > interval.start)
+        debug_assert(depart < interval_end);
+        if (depart > interval_start)
         {
             const auto next_t = wait_interval->end;
             Cost cost;
             if (depart <= wait_start)
             {
-                cost = (default_cost)                     * std::max(depart - t, 0) +
-                       (default_cost + interval.penalty) * 1;
+                cost = (default_cost)                    * std::max(depart - t, 0) +
+                       (default_cost + interval_penalty) * 1;
                 debug_assert(next_t == t + std::max(depart - t, 0) + 1);
             }
             else
             {
-                cost = (default_cost)                     * std::max(wait_start - t, 0) +
-                       (default_cost + wait_penalty)      * (depart - wait_start) +
-                       (default_cost + interval.penalty) * 1;
+                cost = (default_cost)                    * std::max(wait_start - t, 0) +
+                       (default_cost + wait_penalty)     * (depart - wait_start) +
+                       (default_cost + interval_penalty) * 1;
                 debug_assert(next_t == t + std::max(wait_start - t, 0) + (depart - wait_start) + 1);
             }
             if (cost < inf_cost && latest_visit_time[n] >= next_t - 1 && latest_visit_time[next_n] >= next_t)
@@ -1280,166 +1361,7 @@ Pair<Vector<NodeTime>, Cost> AStar::solve()
     // Create SIPP intervals.
     if constexpr (is_sipp)
     {
-        // Clear previous intervals.
-        for (Node n = 0; n < map_.size(); ++n)
-            for (Int d = 0; d < 5; ++d)
-                sipp_intervals_[n][d].clear();
-
-        // Add intervals from edge costs.
-        for (const auto& [nt, edge_penalty] : edge_penalties)
-            for (Int d = 0; d < 5; ++d)
-                if (edge_penalty.d[d] != 0)
-                {
-                    sipp_intervals_[nt.n][d].push_back({nt.t, nt.t + 1, edge_penalty.d[d]});
-                }
-
-        // Add extra intervals to correctly expand to the waypoints (which includes the goal).
-        for (const auto nt : waypoints)
-        {
-            auto& wait_intervals = sipp_intervals_[nt.n][Direction::WAIT];
-            if (const Time t = nt.t;
-                t > 0 &&
-                std::find_if(wait_intervals.begin(),
-                             wait_intervals.end(),
-                             [t](const SIPPInterval& interval) { return interval.end == t; }) ==
-                wait_intervals.end())
-            {
-                wait_intervals.push_back({t - 1, t, 0});
-            }
-        }
-
-        // Add extra intervals to correctly expand to the dummy end node.
-        {
-            auto& wait_intervals = sipp_intervals_[goal][Direction::WAIT];
-            for (Time t = 1; t < static_cast<Time>(finish_time_penalties.size()); ++t)
-                if (finish_time_penalties[t] != finish_time_penalties[t - 1] &&
-                    std::find_if(wait_intervals.begin(),
-                                 wait_intervals.end(),
-                                 [t](const SIPPInterval& interval) { return interval.end == t; }) ==
-                    wait_intervals.end())
-                {
-                    wait_intervals.push_back({t - 1, t, 0});
-                }
-            if (const Time t = finish_time_penalties.size();
-                t > 0 &&
-                std::find_if(wait_intervals.begin(),
-                             wait_intervals.end(),
-                             [t](const SIPPInterval& interval) { return interval.end == t; }) ==
-                wait_intervals.end())
-            {
-                wait_intervals.push_back({t - 1, t, 0});
-            }
-        }
-
-        // Process intervals at each node.
-        for (Node n = 0; n < map_.size(); ++n)
-        {
-            // Process move intervals.
-            auto& intervals_n = sipp_intervals_[n];
-            for (Int d = 0; d < Direction::WAIT; ++d)
-            {
-                // Sort intervals.
-                auto& intervals_nd = intervals_n[d];
-                std::sort(intervals_nd.begin(),
-                          intervals_nd.end(),
-                          [](const SIPPInterval& a, const SIPPInterval& b) { return a.start < b.start; });
-
-                // Merge consecutive intervals.
-                for (Int idx = 0; idx < static_cast<Int>(intervals_nd.size()) - 1;)
-                {
-                    debug_assert(intervals_nd[idx].end <= intervals_nd[idx + 1].start);
-
-                    if (intervals_nd[idx].end == intervals_nd[idx + 1].start &&
-                        intervals_nd[idx].penalty == intervals_nd[idx + 1].penalty)
-                    {
-                        intervals_nd[idx].end = intervals_nd[idx + 1].end;
-                        intervals_nd.erase(intervals_nd.begin() + idx + 1);
-                    }
-                    else
-                    {
-                        ++idx;
-                    }
-                }
-
-                // Insert dummy intervals spanning the entire time horizon.
-                if (intervals_nd.empty())
-                {
-                    intervals_nd.push_back({0, std::numeric_limits<Time>::max(), 0});
-                }
-                else
-                {
-                    // Insert an interval starting at the beginning of the planning period.
-                    if (intervals_nd.front().start > 0)
-                    {
-                        intervals_nd.insert(intervals_nd.begin(), {0, intervals_nd.front().start, 0});
-                    }
-
-                    // Insert an interval end at the end of the planning period.
-                    debug_assert(intervals_nd.back().end < std::numeric_limits<Time>::max());
-                    intervals_nd.push_back({intervals_nd.back().end, std::numeric_limits<Time>::max(), 0});
-
-                    // Insert dummy intervals between existing intervals.
-                    for (Int idx = 1; idx < static_cast<Int>(intervals_nd.size()); ++idx)
-                        if (intervals_nd[idx - 1].end != intervals_nd[idx].start)
-                        {
-                            intervals_nd.insert(intervals_nd.begin() + idx,
-                                                {intervals_nd[idx - 1].end, intervals_nd[idx].start, 0});
-                        }
-                }
-
-                // Print.
-#ifdef PRINT_DEBUG
-                if (intervals_nd.size() > 1)
-                {
-                    println("({},{}) ({},{}) {} intervals:",
-                            map_.get_x(n),
-                            map_.get_y(n),
-                            map_.get_destination_xy(Edge{n, Direction(d)}).first,
-                            map_.get_destination_xy(Edge{n, Direction(d)}).second,
-                            static_cast<Direction>(d));
-                    for (const auto& interval : intervals_nd)
-                    {
-                        println("    start {}, end {}, penalty {:.6f}", interval.start, interval.end, interval.penalty);
-                    }
-                }
-#endif
-            }
-
-            // Process wait intervals.
-            {
-                // Sort intervals.
-                constexpr auto d = Direction::WAIT;
-                auto& intervals_nd = intervals_n[d];
-                std::sort(intervals_nd.begin(),
-                          intervals_nd.end(),
-                          [](const SIPPInterval& a, const SIPPInterval& b) { return a.start < b.start; });
-
-                // Check.
-#ifdef DEBUG
-                for (Int idx = 1; idx < static_cast<Int>(intervals_nd.size()); ++idx)
-                {
-                    debug_assert(intervals_nd[idx - 1].end <= intervals_nd[idx].start);
-                }
-#endif
-
-                // Print.
-#ifdef PRINT_DEBUG
-                if (intervals_nd.size() > 1)
-                {
-                    println("({},{}) ({},{}) {} intervals:",
-                            map_.get_x(n),
-                            map_.get_y(n),
-                            map_.get_destination_xy(Edge{n, Direction(d)}).first,
-                            map_.get_destination_xy(Edge{n, Direction(d)}).second,
-                            static_cast<Direction>(d));
-                    for (const auto& interval : intervals_nd)
-                    {
-                        println("    start {}, end {}, penalty {:.6f}", interval.start, interval.end, interval.penalty);
-                    }
-                }
-#endif
-            }
-        }
+        sipp_intervals_.create_intervals(waypoints, goal, edge_penalties, finish_time_penalties);
     }
 
     // Solve up to but not including the last waypoint (goal).
