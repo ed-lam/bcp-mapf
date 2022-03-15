@@ -214,7 +214,7 @@ get_lp_branch_candidates(
 
     // Find the earliest and latest time an agent reaches its goal.
     goal_time_bounds.resize(N, {0, std::numeric_limits<Time>::max(), 0});
-    for (auto var : vars)
+    for (const auto& [var, var_val] : vars)
     {
         // Get the path.
         debug_assert(var);
@@ -223,16 +223,14 @@ get_lp_branch_candidates(
         const auto path_length = SCIPvardataGetPathLength(vardata);
         const auto path = SCIPvardataGetPath(vardata);
 
-        // Get the variable value.
-        const auto var_val = SCIPgetSolVal(scip, nullptr, var);
-
         // Store goal.
         goal_time_bounds[a].n = path[path_length - 1].n;
 
         // Sum.
-        const auto t = path_length - 1;
+        debug_assert(var_val == SCIPgetSolVal(scip, nullptr, var));
         if (SCIPisPositive(scip, var_val))
         {
+            const auto t = path_length - 1;
             if (t < goal_time_bounds[a].first)
             {
                 goal_time_bounds[a].first = t;
@@ -281,15 +279,14 @@ Pair<AgentNodeTime, bool> find_decision_early_goal(
             // Check.
 #ifdef DEBUG
             SCIP_Real tmp = 0.0;
-            for (auto var :  agent_vars[conflict.a1])
+            for (const auto& [var, var_val] :  agent_vars[conflict.a1])
             {
                 debug_assert(var);
                 auto vardata = SCIPvarGetData(var);
                 const auto a = SCIPvardataGetAgent(vardata);
                 const auto path_length = SCIPvardataGetPathLength(vardata);
                 const auto path = SCIPvardataGetPath(vardata);
-
-                const auto var_val = SCIPgetSolVal(scip, nullptr, var);
+                debug_assert(var_val == SCIPgetSolVal(scip, nullptr, var));
 
                 SCIP_Real count = 0;
                 for (auto [it, end] = conflict.agent_edges(a); it != end; ++it)
@@ -307,7 +304,7 @@ Pair<AgentNodeTime, bool> find_decision_early_goal(
                     tmp += var_val;
                 }
             }
-            for (auto var : agent_vars[conflict.a2])
+            for (const auto& [var, var_val] : agent_vars[conflict.a2])
             {
                 debug_assert(var);
                 auto var = agent_vars[conflict.a2][v];
@@ -315,8 +312,7 @@ Pair<AgentNodeTime, bool> find_decision_early_goal(
                 const auto a = SCIPvardataGetAgent(vardata);
                 const auto path_length = SCIPvardataGetPathLength(vardata);
                 const auto path = SCIPvardataGetPath(vardata);
-
-                const auto var_val = SCIPgetSolVal(scip, nullptr, var);
+                debug_assert(var_val == SCIPgetSolVal(scip, nullptr, var));
 
                 SCIP_Real count = 0.0;
                 for (auto [it, end] = conflict.agent_edges(a); it != end; ++it)
@@ -415,14 +411,13 @@ Pair<AgentNodeTime, bool> find_decision_early_goal(
 #ifdef DEBUG
             SCIP_Real tmp = 0.0;
             for (const auto& [a, ets_begin, ets_end] : cut.iterators())
-                for (auto var : agent_vars[a])
+                for (const auto& [var, var_val] : agent_vars[a])
                 {
                     debug_assert(var);
                     auto vardata = SCIPvarGetData(var);
                     const auto path_length = SCIPvardataGetPathLength(vardata);
                     const auto path = SCIPvardataGetPath(vardata);
-
-                    const auto var_val = SCIPgetSolVal(scip, nullptr, var);
+                    debug_assert(var_val == SCIPgetSolVal(scip, nullptr, var));
 
                     SCIP_Real coeff = 0;
                     for (auto it = ets_begin; it != ets_end; ++it)
@@ -559,7 +554,6 @@ Pair<AgentNodeTime, bool> find_decision_early_goal(
 //            const auto a = SCIPvardataGetAgent(vardata);
 //            const auto path_length = SCIPvardataGetPathLength(vardata);
 //            const auto path = SCIPvardataGetPath(vardata);
-//
 //            const auto var_val = SCIPgetSolVal(scip, nullptr, var);
 //
 //            SCIP_Real coeff = 0.0;
@@ -580,7 +574,6 @@ Pair<AgentNodeTime, bool> find_decision_early_goal(
 //            const auto a = SCIPvardataGetAgent(vardata);
 //            const auto path_length = SCIPvardataGetPathLength(vardata);
 //            const auto path = SCIPvardataGetPath(vardata);
-//
 //            const auto var_val = SCIPgetSolVal(scip, nullptr, var);
 //
 //            SCIP_Real coeff = 0.0;
@@ -719,15 +712,14 @@ Pair<AgentNodeTime, bool> find_decision_vertex(
             // Check.
 #ifdef DEBUG
             SCIP_Real tmp = 0.0;
-            for (auto var : agent_vars[conflict.a1])
+            for (const auto& [var, var_val] : agent_vars[conflict.a1])
             {
                 debug_assert(var);
                 auto vardata = SCIPvarGetData(var);
                 const auto a = SCIPvardataGetAgent(vardata);
                 const auto path_length = SCIPvardataGetPathLength(vardata);
                 const auto path = SCIPvardataGetPath(vardata);
-
-                const auto var_val = SCIPgetSolVal(scip, nullptr, var);
+                debug_assert(var_val == SCIPgetSolVal(scip, nullptr, var));
 
                 SCIP_Real count = 0.0;
                 for (auto [it, end] = conflict.agent_edges(a); it != end; ++it)
@@ -745,15 +737,14 @@ Pair<AgentNodeTime, bool> find_decision_vertex(
                     tmp += var_val;
                 }
             }
-            for (auto var : agent_vars[conflict.a2])
+            for (const auto& [var, var_val] : agent_vars[conflict.a2])
             {
                 debug_assert(var);
                 auto vardata = SCIPvarGetData(var);
                 const auto a = SCIPvardataGetAgent(vardata);
                 const auto path_length = SCIPvardataGetPathLength(vardata);
                 const auto path = SCIPvardataGetPath(vardata);
-
-                const auto var_val = SCIPgetSolVal(scip, nullptr, var);
+                debug_assert(var_val == SCIPgetSolVal(scip, nullptr, var));
 
                 SCIP_Real count = 0.0;
                 for (auto [it, end] = conflict.agent_edges(a); it != end; ++it)
@@ -891,14 +882,13 @@ Pair<AgentNodeTime, bool> find_decision_vertex(
 #ifdef DEBUG
             SCIP_Real tmp = 0.0;
             for (const auto& [a, ets_begin, ets_end] : cut.iterators())
-                for (auto var : agent_vars[a])
+                for (const auto& [var, var_val] : agent_vars[a])
                 {
                     debug_assert(var);
                     auto vardata = SCIPvarGetData(var);
                     const auto path_length = SCIPvardataGetPathLength(vardata);
                     const auto path = SCIPvardataGetPath(vardata);
-
-                    const auto var_val = SCIPgetSolVal(scip, nullptr, var);
+                    debug_assert(var_val == SCIPgetSolVal(scip, nullptr, var));
 
                     SCIP_Real coeff = 0;
                     for (auto it = ets_begin; it != ets_end; ++it)
@@ -1089,6 +1079,9 @@ SCIP_RETCODE branch_lp(
 #ifdef PRINT_DEBUG
     print_used_paths(scip);
 #endif
+
+    // Update variable values.
+    update_variable_values(scip);
 
     // Get branching candidates.
     const auto [candidates, succ_dirs, nb_paths, goal_time_bounds] = get_lp_branch_candidates(scip, probdata, N);

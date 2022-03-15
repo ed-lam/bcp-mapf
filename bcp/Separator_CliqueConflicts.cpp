@@ -434,7 +434,7 @@ SCIP_RETCODE clique_conflicts_separate(
     HashTable<AgentEdgeTime, SCIP_Real> edge_val;
     HashTable<NodeTime, Vector<bool>> vertex_agents;
     HashTable<EdgeTime, Vector<bool>> edge_agents;
-    for (auto var : vars)
+    for (const auto& [var, var_val] : vars)
     {
         // Get the path.
         debug_assert(var);
@@ -443,10 +443,8 @@ SCIP_RETCODE clique_conflicts_separate(
         const auto path_length = SCIPvardataGetPathLength(vardata);
         const auto path = SCIPvardataGetPath(vardata);
 
-        // Get the variable value.
-        const auto var_val = SCIPgetSolVal(scip, nullptr, var);
-
         // Sum variable values.
+        debug_assert(var_val == SCIPgetSolVal(scip, nullptr, var));
         if (!SCIPisIntegral(scip, var_val))
         {
             for (Time t = 1; t < path_length; ++t)

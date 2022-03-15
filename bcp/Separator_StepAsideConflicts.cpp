@@ -138,7 +138,7 @@ SCIP_RETCODE stepaside_conflicts_separate(
     for (Agent a = 0; a < N; ++a)
     {
         // Calculate the number of times an edge is used by summing the columns.
-        for (auto var : agent_vars[a])
+        for (const auto& [var, var_val] : agent_vars[a])
         {
             // Get the path.
             debug_assert(var);
@@ -146,10 +146,8 @@ SCIP_RETCODE stepaside_conflicts_separate(
             const auto path_length = SCIPvardataGetPathLength(vardata);
             const auto path = SCIPvardataGetPath(vardata);
 
-            // Get the variable value.
-            const auto var_val = SCIPgetSolVal(scip, nullptr, var);
-
             // Store the edge.
+            debug_assert(var_val == SCIPgetSolVal(scip, nullptr, var));
             if (!SCIPisIntegral(scip, var_val))
             {
                 for (Time t = 0; t < path_length - 1; ++t)

@@ -84,18 +84,18 @@ SCIP_RETCODE SCIPprobdataAddTwoAgentRobustCut(
     Int* idx = nullptr          // Output index of the cut
 );
 
-// Get array of variables
-Vector<SCIP_VAR*>& SCIPprobdataGetVars(
-    SCIP_ProbData* probdata    // Problem data
-);
-
 // Get array of dummy variables
 Vector<SCIP_VAR*>& SCIPprobdataGetDummyVars(
     SCIP_ProbData* probdata    // Problem data
 );
 
+// Get array of variables for all agents
+Vector<Pair<SCIP_VAR*, SCIP_Real>>& SCIPprobdataGetVars(
+    SCIP_ProbData* probdata    // Problem data
+);
+
 // Get array of variables for each agent
-Vector<Vector<SCIP_VAR*>>& SCIPprobdataGetAgentVars(
+Vector<Vector<Pair<SCIP_VAR*, SCIP_Real>>>& SCIPprobdataGetAgentVars(
     SCIP_ProbData* probdata    // Problem data
 );
 
@@ -200,6 +200,11 @@ const HashTable<EdgeTime, Vector<SCIP_Real>>& SCIPprobdataGetAgentFractionalEdge
 
 // Update the database of fractional vertices and edges
 void update_fractional_vertices_and_edges(
+    SCIP* scip    // SCIP
+);
+
+// Update the arrays of variable values
+void update_variable_values(
     SCIP* scip    // SCIP
 );
 

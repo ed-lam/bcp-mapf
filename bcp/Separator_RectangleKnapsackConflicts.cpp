@@ -75,8 +75,8 @@ SCIP_RETCODE rectangle_knapsack_conflicts_create_cut(
     // Create data for the cut.
     const auto [a1_begin, a1_end] = conflict.agent1_edges();
     const auto [a2_begin, a2_end] = conflict.agent2_edges();
-    TwoAgentRobustCut cut(scip, 
-                          conflict.a1, 
+    TwoAgentRobustCut cut(scip,
+                          conflict.a1,
                           conflict.a2,
                           a1_end - a1_begin,
                           a2_end - a2_begin
@@ -392,7 +392,7 @@ SCIP_RETCODE rectangle_knapsack_conflicts_separate(
         auto& agent_edges_a = agent_edges[a];
 
         // Calculate the number of times a vertex is used by summing the columns.
-        for (auto var : agent_vars[a])
+        for (const auto& [var, var_val] : agent_vars[a])
         {
             // Get the path.
             debug_assert(var);
@@ -400,10 +400,8 @@ SCIP_RETCODE rectangle_knapsack_conflicts_separate(
             const auto path_length = SCIPvardataGetPathLength(vardata);
             const auto path = SCIPvardataGetPath(vardata);
 
-            // Get the variable value.
-            const auto var_val = SCIPgetSolVal(scip, nullptr, var);
-
             // Append the path.
+            debug_assert(var_val == SCIPgetSolVal(scip, nullptr, var));
             if (SCIPisPositive(scip, var_val))
             {
                 agent_paths_a.push_back(var);

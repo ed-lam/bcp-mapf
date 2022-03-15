@@ -78,10 +78,8 @@ SCIP_RETCODE write_best_solution(
         debug_assert(var);
         debug_assert(!SCIPvarGetData(var));
 
-        // Get the variable value.
+        // Check.
         const auto var_val = SCIPgetSolVal(scip, sol, var);
-
-        // Check
         if (SCIPisPositive(scip, var_val))
         {
             fmt::print(f, "-\n");
@@ -96,13 +94,12 @@ SCIP_RETCODE write_best_solution(
     for (Agent a = 0; a < N; ++a)
     {
         bool found = false;
-        for (auto var : agent_vars[a])
+        for (const auto& [var, _] : agent_vars[a])
         {
-            // Get the variable value.
             debug_assert(var);
-            const auto var_val = SCIPgetSolVal(scip, sol, var);
 
             // Write the path.
+            const auto var_val = SCIPgetSolVal(scip, sol, var);
             if (SCIPisPositive(scip, var_val))
             {
                 // Get the path.

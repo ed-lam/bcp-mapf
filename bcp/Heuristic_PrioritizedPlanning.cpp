@@ -231,6 +231,9 @@ SCIP_DECL_HEUREXEC(heurExecPrioritizedPlanning)
     const auto& map = SCIPprobdataGetMap(probdata);
     const auto& agents = SCIPprobdataGetAgentsData(probdata);
 
+    // Update variable values.
+    update_variable_values(scip);
+
     // Get heuristic data.
     auto heurdata = reinterpret_cast<PrioritizedPlanningData*>(SCIPheurGetData(heur));
     debug_assert(heurdata);
@@ -279,9 +282,9 @@ SCIP_DECL_HEUREXEC(heurExecPrioritizedPlanning)
     HashTable<Node, Time> node_latest_visit_time;
     for (Agent a = 0; a < N; ++a)
     {
-        for (auto var : agent_vars[a])
+        for (const auto& [var, var_val] : agent_vars[a])
         {
-            const auto var_val = SCIPgetSolVal(scip, nullptr, var);
+            debug_assert(var_val == SCIPgetSolVal(scip, nullptr, var));
             if (SCIPisEQ(scip, var_val, 1.0))
             {
                 // Use this variable in the solution.
@@ -570,7 +573,7 @@ SCIP_DECL_HEUREXEC(heurExecPrioritizedPlanning)
 #endif
 
             // Find the path if it already exists.
-            for (auto var : agent_vars[a])
+            for (const auto& [var, _] : agent_vars[a])
             {
                 debug_assert(var);
                 auto vardata = SCIPvarGetData(var);

@@ -76,7 +76,7 @@ SCIP_RETCODE path_length_nogoods_create_cut(
     // Add variables to the constraint.
     SCIP_CALL(SCIPcacheRowExtensions(scip, row));
     for (const auto& [a, t] : latest_finish_times)
-        for (const auto var : agent_vars[a])
+        for (const auto& [var, _] : agent_vars[a])
         {
             // Get the path length.
             debug_assert(var);
@@ -175,17 +175,18 @@ SCIP_RETCODE path_length_nogoods_separate(
                 }
                 SCIP_Real lhs = 0;
                 for (const auto [a, t] : latest_finish_times)
-                    for (auto var: agent_vars[a])
+                    for (const auto& [var, var_val] : agent_vars[a])
                     {
-                        // Get the path length.
                         debug_assert(var);
+                        debug_assert(var_val == SCIPgetSolVal(scip, nullptr, var));
+
+                        // Get the path length.
                         auto vardata = SCIPvarGetData(var);
                         const auto path_length = SCIPvardataGetPathLength(vardata);
 
                         // Sum the LHS.
                         if (path_length - 1 <= t)
                         {
-                            const auto var_val = SCIPgetSolVal(scip, nullptr, var);
                             lhs += var_val;
                         }
                     }

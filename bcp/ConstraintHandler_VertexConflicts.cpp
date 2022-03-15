@@ -91,12 +91,12 @@ SCIP_RETCODE SCIPcreateConsVertexConflicts(
 }
 
 SCIP_RETCODE vertex_conflicts_create_cut(
-    SCIP* scip,                           // SCIP
-    SCIP_CONS* cons,                      // Constraint
-    VertexConflictsConsData* consdata,    // Constraint data
-    const NodeTime nt,                    // Node-time of the conflict
-    const Vector<SCIP_VAR*>& vars,        // Variables
-    SCIP_Result* result                   // Output result
+    SCIP* scip,                                        // SCIP
+    SCIP_CONS* cons,                                   // Constraint
+    VertexConflictsConsData* consdata,                 // Constraint data
+    const NodeTime nt,                                 // Node-time of the conflict
+    const Vector<Pair<SCIP_VAR*, SCIP_Real>>& vars,    // Variables
+    SCIP_Result* result                                // Output result
 )
 {
     // Get problem data.
@@ -133,13 +133,14 @@ SCIP_RETCODE vertex_conflicts_create_cut(
 #ifdef DEBUG
     SCIP_Real lhs = 0.0;
 #endif
-    for (auto var : vars)
+    for (const auto& [var, var_val] : vars)
     {
         // Get the path.
         debug_assert(var);
         auto vardata = SCIPvarGetData(var);
         const auto path_length = SCIPvardataGetPathLength(vardata);
         const auto path = SCIPvardataGetPath(vardata);
+        debug_assert(var_val == SCIPgetSolVal(scip, nullptr, var));
 
         // Add coefficients.
         if ((nt.t < path_length && path[nt.t].n == nt.n) ||
@@ -148,13 +149,13 @@ SCIP_RETCODE vertex_conflicts_create_cut(
             // Print.
             debugln("      Agent: {:2d}, Val: {:7.4f}, Path: {}",
                     SCIPvardataGetAgent(vardata),
-                    SCIPgetSolVal(scip, nullptr, var),
+                    var_val,
                     format_path_spaced(SCIPgetProbData(scip), path_length, path));
 
             // Add the coefficient.
             SCIP_CALL(SCIPaddVarToRow(scip, row, var, 1.0));
 #ifdef DEBUG
-            lhs += SCIPgetSolVal(scip, nullptr, var);
+            lhs += var_val;
 #endif
         }
     }
@@ -216,7 +217,7 @@ SCIP_RETCODE vertex_conflicts_check(
 
     // Find the makespan.
     Time makespan = 0;
-    for (auto var : vars)
+    for (const auto& [var, _] : vars)
     {
         // Get the path length.
         debug_assert(var);
@@ -235,7 +236,7 @@ SCIP_RETCODE vertex_conflicts_check(
 
     // Calculate the number of times a vertex is used by summing the columns.
     HashTable<NodeTime, SCIP_Real> vertex_times_used;
-    for (auto var : vars)
+    for (const auto& [var, _] : vars)
     {
         // Get the path.
         debug_assert(var);
@@ -312,22 +313,23 @@ SCIP_RETCODE vertex_conflicts_separate(
     // Get problem data.
     auto probdata = SCIPgetProbData(scip);
 
+    // Update variable values.
+    update_variable_values(scip);
+
     // Get variables.
     const auto& vars = SCIPprobdataGetVars(probdata);
 
     // Find the makespan.
     Time makespan = 0;
-    for (auto var : vars)
+    for (const auto& [var, var_val] : vars)
     {
         // Get the path length.
         debug_assert(var);
         auto vardata = SCIPvarGetData(var);
         const auto path_length = SCIPvardataGetPathLength(vardata);
 
-        // Get the variable value.
-        const auto var_val = SCIPgetSolVal(scip, sol, var);
-
         // Store the length of the longest path.
+        debug_assert(var_val == SCIPgetSolVal(scip, sol, var));
         if (path_length > makespan && SCIPisPositive(scip, var_val))
         {
             makespan = path_length;
@@ -336,7 +338,7 @@ SCIP_RETCODE vertex_conflicts_separate(
 
     // Calculate the number of times a vertex is used by summing the columns.
     HashTable<NodeTime, SCIP_Real> vertex_used;
-    for (auto var : vars)
+    for (const auto& [var, var_val] : vars)
     {
         // Get the path.
         debug_assert(var);
@@ -344,10 +346,8 @@ SCIP_RETCODE vertex_conflicts_separate(
         const auto path_length = SCIPvardataGetPathLength(vardata);
         const auto path = SCIPvardataGetPath(vardata);
 
-        // Get the variable value.
-        const auto var_val = SCIPgetSolVal(scip, sol, var);
-
         // Sum vertex value.
+        debug_assert(var_val == SCIPgetSolVal(scip, sol, var));
         if (SCIPisPositive(scip, var_val))
         {
             Time t = 1;
@@ -694,7 +694,7 @@ SCIP_DECL_CONSLOCK(consLockVertexConflicts)
 
     // Lock rounding of variables. (Round up may invalidate the constraint.)
     const auto& vars = SCIPprobdataGetVars(probdata);
-    for (auto var : vars)
+    for (const auto& [var, _] : vars)
     {
         debug_assert(var);
         SCIP_CALL(SCIPaddVarLocksType(scip, var, locktype, nlocksneg, nlockspos));

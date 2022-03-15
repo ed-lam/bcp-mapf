@@ -44,15 +44,15 @@ struct GoalConflictData
 #define MATRIX(i,j) (i * N + j)
 
 SCIP_RETCODE goal_conflicts_create_cut(
-    SCIP* scip,                              // SCIP
-    SCIP_SEPA* sepa,                         // Separator
-    Vector<GoalConflict>& goal_conflicts,    // Goal conflicts
-    const Agent a1,                          // Agent of the goal
-    const Agent a2,                          // Agent trying to use the goal vertex
-    const NodeTime nt,                       // Node-time of the conflict
-    const Vector<SCIP_VAR*>& a1_vars,        // Array of variables for agent 1
-    const Vector<SCIP_VAR*>& a2_vars,        // Array of variables for agent 2
-    SCIP_Result* result                      // Output result
+    SCIP* scip,                                           // SCIP
+    SCIP_SEPA* sepa,                                      // Separator
+    Vector<GoalConflict>& goal_conflicts,                 // Goal conflicts
+    const Agent a1,                                       // Agent of the goal
+    const Agent a2,                                       // Agent trying to use the goal vertex
+    const NodeTime nt,                                    // Node-time of the conflict
+    const Vector<Pair<SCIP_VAR*, SCIP_Real>>& a1_vars,    // Array of variables for agent 1
+    const Vector<Pair<SCIP_VAR*, SCIP_Real>>& a2_vars,    // Array of variables for agent 2
+    SCIP_Result* result                                   // Output result
 )
 {
     // Get problem data.
@@ -84,7 +84,7 @@ SCIP_RETCODE goal_conflicts_create_cut(
 
     // Add variables to the constraint.
     SCIP_CALL(SCIPcacheRowExtensions(scip, row));
-    for (auto var : a1_vars)
+    for (const auto& [var, _] : a1_vars)
     {
         // Get the path length.
         debug_assert(var);
@@ -110,7 +110,7 @@ SCIP_RETCODE goal_conflicts_create_cut(
             SCIP_CALL(SCIPaddVarToRow(scip, row, var, 1.0));
         }
     }
-    for (auto var : a2_vars)
+    for (const auto& [var, _] : a2_vars)
     {
         // Get the path.
         debug_assert(var);
@@ -234,17 +234,15 @@ SCIP_RETCODE goal_conflicts_separate(
     // Get the times that each agent finishes.
     Vector<Vector<Time>> finish_times(N);
     for (Agent a = 0; a < N; ++a)
-        for (auto var : agent_vars[a])
+        for (const auto& [var, var_val] : agent_vars[a])
         {
             // Get the path length.
             debug_assert(var);
             auto vardata = SCIPvarGetData(var);
             const auto path_length = SCIPvardataGetPathLength(vardata);
 
-            // Get the variable value.
-            const auto var_val = SCIPgetSolVal(scip, nullptr, var);
-
             // Store unique finish times.
+            debug_assert(var_val == SCIPgetSolVal(scip, nullptr, var));
             if (SCIPisPositive(scip, var_val))
             {
                 const auto t = path_length - 1;
@@ -268,7 +266,7 @@ SCIP_RETCODE goal_conflicts_separate(
 
             // Sum paths belonging to the agent of the conflicting goal.
             SCIP_Real lhs1 = 0.0;
-            for (auto var : agent_vars[a1])
+            for (const auto& [var, var_val] : agent_vars[a1])
             {
                 // Get the path length.
                 debug_assert(var);
@@ -280,10 +278,10 @@ SCIP_RETCODE goal_conflicts_separate(
 #endif
 
                 // Check for conflicts.
+                debug_assert(var_val == SCIPgetSolVal(scip, nullptr, var));
                 const auto t = path_length - 1;
                 if (t <= nt.t)
                 {
-                    const auto var_val = SCIPgetSolVal(scip, nullptr, var);
                     lhs1 += var_val;
                 }
             }
@@ -294,11 +292,11 @@ SCIP_RETCODE goal_conflicts_separate(
                 {
                     // Sum paths belonging to the agent trying to cross the goal.
                     SCIP_Real lhs2 = 0.0;
-                    for (auto var : agent_vars[a2])
+                    for (const auto& [var, var_val] : agent_vars[a2])
                     {
                         // Only check paths in use.
                         debug_assert(var);
-                        const auto var_val = SCIPgetSolVal(scip, nullptr, var);
+                        debug_assert(var_val == SCIPgetSolVal(scip, nullptr, var));
                         if (SCIPisPositive(scip, var_val))
                         {
                             // Get the path.

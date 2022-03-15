@@ -93,7 +93,7 @@ SCIP_RETCODE rectangle_clique_conflicts_create_cut(
     SCIP_Real lhs = 0.0;
 #endif
     SCIP_CALL(SCIPcacheRowExtensions(scip, row));
-    for (auto var : a1_vars)
+    for (const auto& [var, var_val] : a1_vars)
     {
         // Get the path.
         debug_assert(var);
@@ -101,6 +101,7 @@ SCIP_RETCODE rectangle_clique_conflicts_create_cut(
         debug_assert(conflict.a1 == SCIPvardataGetAgent(vardata));
         const auto path_length = SCIPvardataGetPathLength(vardata);
         const auto path = SCIPvardataGetPath(vardata);
+        debug_assert(var_val == SCIPgetSolVal(scip, nullptr, var));
 
         // Determine if the rectangle is used.
         Int count = 0;
@@ -123,7 +124,6 @@ SCIP_RETCODE rectangle_clique_conflicts_create_cut(
 
         // Print.
 #ifdef PRINT_DEBUG
-        const auto var_val = SCIPgetSolVal(scip, nullptr, var);
         if (SCIPisPositive(scip, var_val))
         {
             auto probdata = SCIPgetProbData(scip);
@@ -133,7 +133,7 @@ SCIP_RETCODE rectangle_clique_conflicts_create_cut(
         }
 #endif
     }
-    for (auto var : a2_vars)
+    for (const auto& [var, var_val] : a2_vars)
     {
         // Get the path.
         debug_assert(var);
@@ -141,6 +141,7 @@ SCIP_RETCODE rectangle_clique_conflicts_create_cut(
         debug_assert(conflict.a2 == SCIPvardataGetAgent(vardata));
         const auto path_length = SCIPvardataGetPathLength(vardata);
         const auto path = SCIPvardataGetPath(vardata);
+        debug_assert(var_val == SCIPgetSolVal(scip, nullptr, var));
 
         // Determine if the rectangle is used.
         Int count = 0;
@@ -163,7 +164,6 @@ SCIP_RETCODE rectangle_clique_conflicts_create_cut(
 
         // Print.
 #ifdef PRINT_DEBUG
-        const auto var_val = SCIPgetSolVal(scip, nullptr, var);
         if (SCIPisPositive(scip, var_val))
         {
             auto probdata = SCIPgetProbData(scip);
@@ -505,7 +505,7 @@ SCIP_RETCODE rectangle_clique_conflicts_separate(
         auto& agent_edges_a = agent_edges[a];
 
         // Calculate the number of times a vertex is used by summing the columns.
-        for (auto var : agent_vars[a])
+        for (const auto& [var, var_val] : agent_vars[a])
         {
             // Get the path.
             debug_assert(var);
@@ -513,10 +513,8 @@ SCIP_RETCODE rectangle_clique_conflicts_separate(
             const auto path_length = SCIPvardataGetPathLength(vardata);
             const auto path = SCIPvardataGetPath(vardata);
 
-            // Get the variable value.
-            const auto var_val = SCIPgetSolVal(scip, nullptr, var);
-
             // Append the path.
+            debug_assert(var_val == SCIPgetSolVal(scip, nullptr, var));
             if (SCIPisPositive(scip, var_val))
             {
                 agent_paths_a.push_back(var);

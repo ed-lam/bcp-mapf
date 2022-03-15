@@ -196,13 +196,10 @@ MasterProblemStatus calculate_agents_order(
         // Must price an agent if it is fractional.
         if (!must_price_agent)
         {
-            for (auto var : agent_vars[a])
+            for (const auto& [var, var_val] : agent_vars[a])
             {
-                // Get the variable value.
                 debug_assert(var);
-                const auto var_val = SCIPgetSolVal(scip, nullptr, var);
-
-                // Set.
+                debug_assert(var_val == SCIPgetSolVal(scip, nullptr, var));
                 if (!SCIPisIntegral(scip, var_val))
                 {
                     master_lp_status = std::min(master_lp_status, MasterProblemStatus::Fractional);
@@ -286,6 +283,9 @@ SCIP_RETCODE run_trufflehog_pricer(
     const auto& map = SCIPprobdataGetMap(probdata);
     const auto& agents = SCIPprobdataGetAgentsData(probdata);
 
+    // Update variable values.
+    update_variable_values(scip);
+
     // Create order of agents to solve.
     auto order = pricerdata->order;
     const auto master_lp_status = calculate_agents_order(scip, probdata, pricerdata);
@@ -342,7 +342,7 @@ SCIP_RETCODE run_trufflehog_pricer(
     }
 
     // Get variables.
-    auto& vars = SCIPprobdataGetVars(probdata);
+    const auto& vars = SCIPprobdataGetVars(probdata);
 
     // Get constraints.
     const auto& agent_part = SCIPprobdataGetAgentPartConss(probdata);
@@ -484,7 +484,7 @@ SCIP_RETCODE run_trufflehog_pricer(
 
     // Find the makespan.
     Time makespan = 0;
-    for (auto var : vars)
+    for (const auto& [var, _] : vars)
     {
         // Get the path length.
         debug_assert(var);
@@ -516,10 +516,10 @@ SCIP_RETCODE run_trufflehog_pricer(
 #ifdef USE_RESERVATION_TABLE
     auto& restab = astar.reservation_table();
     restab.clear_reservations();
-    for (auto var : vars)
+    for (const auto& [var, var_val] : vars)
     {
         debug_assert(var);
-        const auto var_val = SCIPgetSolVal(scip, nullptr, var);
+        debug_assert(var_val == SCIPgetSolVal(scip, nullptr, var));
         if (var_val >= 0.5)
         {
             // Get the path.

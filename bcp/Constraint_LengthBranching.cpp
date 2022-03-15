@@ -158,10 +158,10 @@ SCIP_RETCODE check_variable(
 // Fix variables to zero if its path is not valid for this constraint/branching
 static
 SCIP_RETCODE fix_variables(
-    SCIP* scip,                           // SCIP
-    LengthBranchingConsData* consdata,    // Constraint data
-    const Vector<SCIP_VAR*>& vars,        // Array of variables
-    SCIP_RESULT* result                   // Pointer to store the result of the fixing
+    SCIP* scip,                                        // SCIP
+    LengthBranchingConsData* consdata,                 // Constraint data
+    const Vector<Pair<SCIP_VAR*, SCIP_Real>>& vars,    // Array of variables
+    SCIP_RESULT* result                                // Pointer to store the result of the fixing
 )
 {
     // Print.
@@ -181,7 +181,7 @@ SCIP_RETCODE fix_variables(
                                  consdata->dir,
                                  consdata->a,
                                  consdata->nt,
-                                 vars[v],
+                                 vars[v].first,
                                  nfixedvars,
                                  &cutoff));
     }
@@ -225,7 +225,7 @@ void check_propagation(
     {
         // Get variable.
         debug_assert(v < static_cast<Int>(vars.size()));
-        auto var = vars[v];
+        const auto var = vars[v].first;
         debug_assert(var);
 
         // If the variable is locally fixed to zero, continue.

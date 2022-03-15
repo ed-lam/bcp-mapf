@@ -110,9 +110,9 @@ struct SCIP_ProbData
     bool found_cuts;                                                            // Indicates whether a cut is found in the current separation round
 
     // Variables
-    Vector<SCIP_VAR*> vars;                                                     // Array of variables
     Vector<SCIP_VAR*> dummy_vars;                                               // Array of dummy variables
-    Vector<Vector<SCIP_VAR*>> agent_vars;                                       // Array of variables for each agent
+    Vector<Pair<SCIP_VAR*, SCIP_Real>> vars;                                    // Array of variables for all agents
+    Vector<Vector<Pair<SCIP_VAR*, SCIP_Real>>> agent_vars;                      // Array of variables for each agent
     Vector<HashTable<NodeTime, SCIP_Real>> fractional_vertices;                 // Fractional vertices
     Vector<HashTable<EdgeTime, SCIP_Real>> fractional_edges;                    // Fractional edges
     Vector<HashTable<EdgeTime, SCIP_Real>> fractional_edges_no_waits;           // Fractional edges without waits
@@ -175,24 +175,21 @@ SCIP_DECL_PROBTRANS(probtrans)
     (*targetdata)->found_cuts = false;
 
     // Copy agent path variables.
-    (*targetdata)->vars.resize(sourcedata->vars.size());
+    (*targetdata)->vars = sourcedata->vars;
     (*targetdata)->vars.reserve(N * 5000);
     (*targetdata)->agent_vars.resize(N);
     for (Agent a = 0; a < N; ++a)
     {
         (*targetdata)->agent_vars[a].reserve(5000);
     }
-    SCIP_CALL(SCIPtransformVars(scip,
-                                sourcedata->vars.size(),
-                                sourcedata->vars.data(),
-                                (*targetdata)->vars.data()));
-    for (auto var : (*targetdata)->vars)
+    for (auto& [var, _] : (*targetdata)->vars)
     {
         debug_assert(var);
+        SCIP_CALL(SCIPtransformVar(scip, var, &var));
         auto vardata = SCIPvarGetData(var);
         const auto a = SCIPvardataGetAgent(vardata);
 
-        (*targetdata)->agent_vars[a].push_back(var);
+        (*targetdata)->agent_vars[a].emplace_back(var, 0);
     }
 
     // Copy dummy variables.
@@ -320,7 +317,7 @@ SCIP_RETCODE probdataFree(
     debug_assert(probdata);
 
     // Release variables.
-    for (auto& var : (*probdata)->vars)
+    for (auto& [var, _] : (*probdata)->vars)
     {
         SCIP_CALL(SCIPreleaseVar(scip, &var));
     }
@@ -333,7 +330,7 @@ SCIP_RETCODE probdataFree(
 
     // Release variables for agents.
     for (auto& vars : (*probdata)->agent_vars)
-        for (auto& var : vars)
+        for (auto& [var, _] : vars)
         {
             SCIP_CALL(SCIPreleaseVar(scip, &var));
         }
@@ -490,9 +487,11 @@ SCIP_RETCODE SCIPprobdataAddInitialVar(
 
     // Check that the path doesn't already exist.
 #ifdef DEBUG
-    for (auto var : probdata->agent_vars.at(a))
+    for (const auto& [var, var_val] : probdata->agent_vars.at(a))
     {
         debug_assert(var);
+        debug_assert(var_val == SCIPgetSolVal(scip, nullptr, var));
+
         auto vardata = SCIPvarGetData(var);
         const auto existing_path_length = SCIPvardataGetPathLength(vardata);
         const auto existing_path = SCIPvardataGetPath(vardata);
@@ -503,7 +502,7 @@ SCIP_RETCODE SCIPprobdataAddInitialVar(
                        "Path {} already exists for agent {} with value {}",
                        format_path(probdata, path_length, path),
                        a,
-                       SCIPgetSolVal(scip, nullptr, var));
+                       var_val);
     }
 #endif
 
@@ -600,11 +599,11 @@ SCIP_RETCODE SCIPprobdataAddInitialVar(
 #endif
 
     // Store variable in array of all variables.
-    probdata->vars.push_back(*var);
+    probdata->vars.emplace_back(*var, 0);
 
     // Store variable in agent variables array.
     debug_assert(a < static_cast<Agent>(probdata->agent_vars.size()));
-    probdata->agent_vars[a].push_back(*var);
+    probdata->agent_vars[a].emplace_back(*var, 0);
 
     // Capture variable again. Previously captured in addVar.
     SCIP_CALL(SCIPcaptureVar(scip, *var));
@@ -629,9 +628,11 @@ SCIP_RETCODE SCIPprobdataAddPricedVar(
 
     // Check that the path doesn't already exist.
 #ifdef DEBUG
-    for (auto var : probdata->agent_vars.at(a))
+    for (const auto& [var, var_val] : probdata->agent_vars.at(a))
     {
         debug_assert(var);
+        debug_assert(var_val == SCIPgetSolVal(scip, nullptr, var));
+
         auto vardata = SCIPvarGetData(var);
         const auto existing_path_length = SCIPvardataGetPathLength(vardata);
         const auto existing_path = SCIPvardataGetPath(vardata);
@@ -642,7 +643,7 @@ SCIP_RETCODE SCIPprobdataAddPricedVar(
                        "Path {} already exists for agent {} with value {}",
                        format_path(probdata, path_length, path),
                        a,
-                       SCIPgetSolVal(scip, nullptr, var));
+                       var_val);
     }
 #endif
 
@@ -749,11 +750,11 @@ SCIP_RETCODE SCIPprobdataAddPricedVar(
 #endif
 
     // Store variable in array of all variables.
-    probdata->vars.push_back(*var);
+    probdata->vars.emplace_back(*var, 0);
 
     // Store variable in agent variables array.
     debug_assert(a < static_cast<Agent>(probdata->agent_vars.size()));
-    probdata->agent_vars[a].push_back(*var);
+    probdata->agent_vars[a].emplace_back(*var, 0);
 
     // Capture variable again. Previously captured in addVar.
     SCIP_CALL(SCIPcaptureVar(scip, *var));
@@ -801,10 +802,12 @@ SCIP_RETCODE SCIPprobdataAddTwoAgentRobustCut(
     SCIP_CALL(SCIPcacheRowExtensions(scip, row));
     const auto iterators = cut.iterators();
     for (const auto& [a, ets_begin, ets_end] : iterators)
-        for (auto var : agent_vars[a])
+        for (const auto& [var, var_val] : agent_vars[a])
         {
-            // Get the path.
             debug_assert(var);
+            debug_assert(var_val == SCIPgetSolVal(scip, nullptr, var));
+
+            // Get the path.
             auto vardata = SCIPvarGetData(var);
             debug_assert(a == SCIPvardataGetAgent(vardata));
             const auto path_length = SCIPvardataGetPathLength(vardata);
@@ -825,12 +828,12 @@ SCIP_RETCODE SCIPprobdataAddTwoAgentRobustCut(
                 // Add coefficient.
                 SCIP_CALL(SCIPaddVarToRow(scip, row, var, coeff));
 #ifdef DEBUG
-                lhs += SCIPgetSolVal(scip, nullptr, var) * coeff;
+                lhs += var_val * coeff;
 #endif
 
                 // Print.
                 debugln("      Val: {:7.4f}:, Agent: {:3d}, Coeff: {:1.0f}, Path: {}",
-                        SCIPgetSolVal(scip, nullptr, var),
+                        var_val,
                         a,
                         coeff,
                         format_path_spaced(SCIPgetProbData(scip), path_length, path));
@@ -1219,15 +1222,6 @@ SCIP_RETCODE SCIPprobdataCreate(
     return SCIP_OKAY;
 }
 
-// Get array of variables
-Vector<SCIP_VAR*>& SCIPprobdataGetVars(
-    SCIP_ProbData* probdata    // Problem data
-)
-{
-    debug_assert(probdata);
-    return probdata->vars;
-}
-
 // Get array of dummy variables
 Vector<SCIP_VAR*>& SCIPprobdataGetDummyVars(
     SCIP_ProbData* probdata    // Problem data
@@ -1237,8 +1231,17 @@ Vector<SCIP_VAR*>& SCIPprobdataGetDummyVars(
     return probdata->dummy_vars;
 }
 
-// Get array of variables for an agent
-Vector<Vector<SCIP_VAR*>>& SCIPprobdataGetAgentVars(
+// Get array of variables for all agnts
+Vector<Pair<SCIP_VAR*, SCIP_Real>>& SCIPprobdataGetVars(
+    SCIP_ProbData* probdata    // Problem data
+)
+{
+    debug_assert(probdata);
+    return probdata->vars;
+}
+
+// Get array of variables for each agent
+Vector<Vector<Pair<SCIP_VAR*, SCIP_Real>>>& SCIPprobdataGetAgentVars(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1429,12 +1432,12 @@ void update_fractional_vertices_and_edges(
     const auto N = SCIPprobdataGetN(probdata);
 
     // Get variables.
-    const auto& vars = SCIPprobdataGetVars(probdata);
-    const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
+    auto& vars = SCIPprobdataGetVars(probdata);
+    auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
 
     // Find the makespan.
     Time makespan = 0;
-    for (auto var : vars)
+    for (auto& [var, var_val] : vars)
     {
         // Get the path length.
         debug_assert(var);
@@ -1442,7 +1445,7 @@ void update_fractional_vertices_and_edges(
         const auto path_length = SCIPvardataGetPathLength(vardata);
 
         // Get the variable value.
-        const auto var_val = SCIPgetSolVal(scip, nullptr, var);
+        var_val = SCIPgetSolVal(scip, nullptr, var);
 
         // Store the length of the longest path.
         if (path_length > makespan && SCIPisPositive(scip, var_val))
@@ -1475,7 +1478,7 @@ void update_fractional_vertices_and_edges(
         // agent_edges_no_waits.reserve(sqrt(map.width() * map.height()) * 20);
 
         // Calculate the number of times a vertex is used by summing the columns.
-        for (auto var : agent_vars[a])
+        for (auto& [var, var_val] : agent_vars[a])
         {
             // Get the path.
             debug_assert(var);
@@ -1484,7 +1487,7 @@ void update_fractional_vertices_and_edges(
             const auto path = SCIPvardataGetPath(vardata);
 
             // Get the variable value.
-            const auto var_val = SCIPgetSolVal(scip, nullptr, var);
+            var_val = SCIPgetSolVal(scip, nullptr, var);
 
             // Store the vertices and edges of the path.
             if (!SCIPisIntegral(scip, var_val))
@@ -1634,6 +1637,27 @@ void update_fractional_vertices_and_edges(
         }
 #endif
     }
+}
+
+// Update the arrays of variable values
+void update_variable_values(
+    SCIP* scip    // SCIP
+)
+{
+    auto probdata = SCIPgetProbData(scip);
+
+    auto& vars = SCIPprobdataGetVars(probdata);
+    for (auto& [var, var_val] : vars)
+    {
+        var_val = SCIPgetSolVal(scip, nullptr, var);
+    }
+
+    auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
+    for (auto& vars : agent_vars)
+        for (auto& [var, var_val] : vars)
+        {
+            var_val = SCIPgetSolVal(scip, nullptr, var);
+        }
 }
 
 // Get pricer data
@@ -1826,7 +1850,7 @@ void print_used_paths(
     // Calculate makespan.
     Time makespan = 0;
     for (Agent a = 0; a < N; ++a)
-        for (auto var : agent_vars[a])
+        for (const auto& [var, _] : agent_vars[a])
         {
             // Get the path length.
             debug_assert(var);
@@ -1848,7 +1872,7 @@ void print_used_paths(
         SCIPgetLPSolstat(scip) == SCIP_LPSOLSTAT_OPTIMAL)
     {
         // Calculate the number of times a vertex or edge is used by summing the columns.
-        for (auto var : vars)
+        for (const auto& [var, _] : vars)
         {
             // Get the path.
             debug_assert(var);
@@ -1913,7 +1937,7 @@ void print_used_paths(
     // Determine if the solution is fractional.
     bool is_fractional = false;
     for (Agent a = 0; a < N; ++a)
-        for (auto var : agent_vars[a])
+        for (const auto& [var, _] : agent_vars[a])
         {
             // Get the variable value.
             debug_assert(var);
@@ -1952,7 +1976,7 @@ void print_used_paths(
 
         // Print.
         bool printed = false;
-        for (auto var : agent_vars[a])
+        for (const auto& [var, _] : agent_vars[a])
         {
             // Get the path.
             debug_assert(var);
