@@ -117,20 +117,24 @@ class Map
         else if (n2 == get_west(n1)) { return Direction::WEST; }
         else { return Direction::WAIT; }
     }
+    inline Node get_destination(const Node n, const Direction d) const
+    {
+        debug_assert(d == Direction::NORTH ||
+                     d == Direction::SOUTH ||
+                     d == Direction::EAST ||
+                     d == Direction::WEST ||
+                     d == Direction::WAIT);
+        return n +
+               width_ * (static_cast<Node>(d == Direction::SOUTH) - static_cast<Node>(d == Direction::NORTH)) +
+                        (static_cast<Node>(d == Direction::EAST)  - static_cast<Node>(d == Direction::WEST));
+    }
     inline Node get_destination(const Edge e) const
     {
-        switch (e.d) 
-        {
-            case (Direction::NORTH): { return get_north(e.n); }
-            case (Direction::SOUTH): { return get_south(e.n); }
-            case (Direction::EAST): { return get_east(e.n); }
-            case (Direction::WEST): { return get_west(e.n); }
-            default: { return get_wait(e.n); }
-        }
+        return get_destination(e.n, e.d);
     }
     inline Node get_destination(const EdgeTime et) const
     {
-        return get_destination(et.et.e);
+        return get_destination(et.n, et.d);
     }
     inline Pair<Position, Position> get_destination_xy(const Edge e) const
     {

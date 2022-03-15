@@ -747,7 +747,7 @@ void AStar::generate_neighbours_sipp(Label* const current, WaypointArgs... waypo
     for (Int d = 0; d < 4; ++d)
     {
         // Get the destination node.
-        const auto next_n = map_.get_destination(Edge{n, static_cast<Direction>(d)});
+        const auto next_n = map_.get_destination(n, static_cast<Direction>(d));
 
         // Get the outgoing intervals at the current node and the wait intervals at the destination.
         auto [interval, intervals_end] = sipp_intervals_.get_intervals(n, static_cast<Direction>(d));
