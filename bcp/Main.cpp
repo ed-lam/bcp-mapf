@@ -46,7 +46,7 @@ SCIP_RETCODE start_solver(
         options.positional_help("instance_file").show_positional_help();
         options.add_options()
             ("help", "Print help")
-            ("f,file", "Path to instance file", cxxopts::value<Vector<String>>())
+            ("f,file", "Path to instance file", cxxopts::value<String>())
             ("a,agent-limit", "Read the first several agents only", cxxopts::value<Agent>())
             ("t,time-limit", "Time limit in seconds", cxxopts::value<SCIP_Real>())
             ("n,node-limit", "Maximum number of branch-and-bound nodes", cxxopts::value<SCIP_Longint>())
@@ -67,7 +67,7 @@ SCIP_RETCODE start_solver(
         // Get path to instance.
         if (result.count("file"))
         {
-            instance_file = result["file"].as<Vector<String>>().at(0);
+            instance_file = result["file"].as<String>();
         }
 
         // Get agent limit.
