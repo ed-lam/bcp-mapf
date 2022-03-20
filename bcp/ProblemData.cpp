@@ -484,6 +484,8 @@ SCIP_RETCODE SCIPprobdataAddInitialVar(
     // Check.
     debug_assert(var);
     debug_assert(path);
+    debug_assert(path[0].n == SCIPprobdataGetAgentsData(probdata)[a].start);
+    debug_assert(path[path_length - 1].n == SCIPprobdataGetAgentsData(probdata)[a].goal);
 
     // Check that the path doesn't already exist.
 #ifdef DEBUG
@@ -625,6 +627,8 @@ SCIP_RETCODE SCIPprobdataAddPricedVar(
     // Check.
     debug_assert(var);
     debug_assert(path);
+    debug_assert(path[0].n == SCIPprobdataGetAgentsData(probdata)[a].start);
+    debug_assert(path[path_length - 1].n == SCIPprobdataGetAgentsData(probdata)[a].goal);
 
     // Check that the path doesn't already exist.
 #ifdef DEBUG
