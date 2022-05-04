@@ -17,17 +17,17 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#ifdef USE_LNS2_PRIMAL_HEURISTIC
+#ifdef USE_LNS2_REPAIR_PRIMAL_HEURISTIC
 
-#ifndef MAPF_HEURISTIC_LNS2_H
-#define MAPF_HEURISTIC_LNS2_H
+#ifndef MAPF_HEURISTIC_LNS2REPAIR_H
+#define MAPF_HEURISTIC_LNS2REPAIR_H
 
 #include "scip/def.h"
 #include "scip/type_retcode.h"
 #include "scip/type_scip.h"
 
-// Create the LNS2 primal heuristic and include it in SCIP
-SCIP_RETCODE SCIPincludeHeurLNS2(
+// Create the LNS2 repair primal heuristic and include it in SCIP
+SCIP_RETCODE SCIPincludeHeurLNS2Repair(
     SCIP* scip
 );
 

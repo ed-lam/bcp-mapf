@@ -43,6 +43,7 @@ set(BCP_MAPF_SOURCE_FILES
     bcp/Main.cpp
     bcp/Includes.h
     bcp/Debug.h
+    bcp/Clock.h
     bcp/Coordinates.h
     bcp/Reader.h
     bcp/Reader.cpp
@@ -103,12 +104,15 @@ set(BCP_MAPF_SOURCE_FILES
     bcp/Constraint_VertexBranching.cpp
     bcp/Constraint_LengthBranching.h
     bcp/Constraint_LengthBranching.cpp
-    bcp/Heuristic_LNS2.h
-    bcp/Heuristic_LNS2.cpp
+    bcp/Heuristic_LNS2Init.h
+    bcp/Heuristic_LNS2Init.cpp
+    bcp/Heuristic_LNS2Repair.h
+    bcp/Heuristic_LNS2Repair.cpp
     bcp/Heuristic_PrioritizedPlanning.h
     bcp/Heuristic_PrioritizedPlanning.cpp
     bcp/Output.h
     bcp/Output.cpp
+    scipoptsuite-7.0.3/scip/src/scip/clock.c
     )
 
 # Find LNS2.
@@ -116,11 +120,15 @@ file(GLOB LNS2_SOURCE_FILES "lns2/src/*.cpp" "lns2/src/CBS/*.cpp" "lns2/src/PIBT
 set_source_files_properties(${LNS2_SOURCE_FILES} PROPERTIES COMPILE_FLAGS "-w")
 
 # Create target.
-add_executable(bcp-mapf ${BCP_MAPF_SOURCE_FILES} ${TRUFFLEHOG_SOURCE_FILES} ${CLIQUER_SOURCE_FILES} ${LNS2_SOURCE_FILES})
+add_executable(bcp-mapf
+               ${BCP_MAPF_SOURCE_FILES}
+               ${TRUFFLEHOG_SOURCE_FILES}
+               ${CLIQUER_SOURCE_FILES}
+               ${LNS2_SOURCE_FILES}
+               )
 add_executable(trufflehog EXCLUDE_FROM_ALL ${TRUFFLEHOG_SOURCE_FILES} trufflehog/Main.cpp)
 target_include_directories(bcp-mapf PUBLIC ./ bcp/)
 target_include_directories(trufflehog PUBLIC ./ bcp/)
-target_include_directories(bcp-mapf PUBLIC "lns2/inc" "lns2/inc/CBS" "lns2/inc/PIBT")
 
 # Include SCIP binaries.
 find_path(SCIP_INCLUDE_DIR
@@ -224,9 +232,6 @@ set(CLIQUER_SOURCE_FILES
     )
 add_library(cliquer STATIC ${CLIQUER_SOURCE_FILES})
 
-# Include eigen - used by LNS2.
-target_include_directories(bcp-mapf PUBLIC ${EIGEN_ROOT} $ENV{EIGEN_ROOT})
-
 # Include boost - used by LNS2.
 find_package(Boost REQUIRED)
 target_include_directories(bcp-mapf PUBLIC ${Boost_INCLUDE_DIR})
@@ -269,7 +274,8 @@ target_compile_options(bcp-mapf PRIVATE -DUSE_GOAL_CONFLICTS)
 target_compile_options(trufflehog PRIVATE -DUSE_GOAL_CONFLICTS)
 
 # Set primal heuristics options.
-target_compile_options(bcp-mapf PRIVATE -DUSE_LNS2_PRIMAL_HEURISTIC)
+target_compile_options(bcp-mapf PRIVATE -DUSE_LNS2_INIT_PRIMAL_HEURISTIC -DLNS2_INIT_TIME_LIMIT=10.0)
+target_compile_options(bcp-mapf PRIVATE -DUSE_LNS2_REPAIR_PRIMAL_HEURISTIC -DLNS2_REPAIR_TIME_LIMIT=0.2)
 # target_compile_options(bcp-mapf PRIVATE -DUSE_PRIORITIZED_PLANNING_PRIMAL_HEURISTIC)
 
 # Set node selection options.

@@ -353,8 +353,7 @@ SCIP_DECL_CONSPROP(consPropVertexBranching)
     for (Int c = 0; c < nconss; ++c)
     {
         // Get constraint data.
-        auto consdata =
-            reinterpret_cast<VertexBranchingConsData*>(SCIPconsGetData(conss[c]));
+        auto consdata = reinterpret_cast<VertexBranchingConsData*>(SCIPconsGetData(conss[c]));
         debug_assert(consdata);
 
         // Check if all variables are valid for this constraint.
@@ -363,7 +362,9 @@ SCIP_DECL_CONSPROP(consPropVertexBranching)
 #endif
 
         // Propagate.
+#ifndef USE_LNS2_REPAIR_PRIMAL_HEURISTIC
         if (!consdata->propagated)
+#endif
         {
             // Print.
 #ifdef PRINT_DEBUG
@@ -477,9 +478,6 @@ SCIP_DECL_CONSDEACTIVE(consDeactiveVertexBranching)
     // Get problem data.
     auto probdata = SCIPgetProbData(scip);
 
-    // Get variables.
-    const auto& vars = SCIPprobdataGetVars(probdata);
-
     // Get constraint data.
     auto consdata = reinterpret_cast<VertexBranchingConsData*>(SCIPconsGetData(cons));
     debug_assert(consdata);
@@ -498,8 +496,13 @@ SCIP_DECL_CONSDEACTIVE(consDeactiveVertexBranching)
     }
 #endif
 
-    // Set the number of propagated variables to the current number of variables.
+    // Set the number of propagated variables to the current number of variables because the new variables always
+    // respect the constraint (branching decision) unless using the LNS2 primal heuristic which can add variables that
+    // ignore the branching decisions.
+#ifndef USE_LNS2_REPAIR_PRIMAL_HEURISTIC
+    const auto& vars = SCIPprobdataGetVars(probdata);
     consdata->npropagatedvars = vars.size();
+#endif
 
     // Done.
     return SCIP_OKAY;

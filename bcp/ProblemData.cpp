@@ -90,8 +90,11 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "Constraint_VertexBranching.h"
 #include "Constraint_WaitBranching.h"
 #include "Constraint_LengthBranching.h"
-#ifdef USE_LNS2_PRIMAL_HEURISTIC
-#include "Heuristic_LNS2.h"
+#ifdef USE_LNS2_INIT_PRIMAL_HEURISTIC
+#include "Heuristic_LNS2Init.h"
+#endif
+#ifdef USE_LNS2_REPAIR_PRIMAL_HEURISTIC
+#include "Heuristic_LNS2Repair.h"
 #endif
 #ifdef USE_PRIORITIZED_PLANNING_PRIMAL_HEURISTIC
 #include "Heuristic_PrioritizedPlanning.h"
@@ -466,6 +469,161 @@ SCIP_RETCODE SCIPprobdataAddDummyVar(
     // Store variable in dummy variables array.
     debug_assert(a < static_cast<Agent>(probdata->dummy_vars.size()));
     probdata->dummy_vars[a] = *var;
+
+    // Done.
+    return SCIP_OKAY;
+}
+
+// Add a new variable from a primal heuristic
+SCIP_RETCODE SCIPprobdataAddHeuristicVar(
+    SCIP* scip,                 // SCIP
+    SCIP_ProbData* probdata,    // Problem data
+    const Agent a,              // Agent
+    const Time path_length,     // Path length
+    const Edge* const path,     // Path
+    SCIP_VAR** var              // Output new variable
+)
+{
+    // Check.
+    debug_assert(var);
+    debug_assert(path);
+    debug_assert(path[0].n == SCIPprobdataGetAgentsData(probdata)[a].start);
+    debug_assert(path[path_length - 1].n == SCIPprobdataGetAgentsData(probdata)[a].goal);
+
+    // Retrieve the existing variable if it exists.
+    for (const auto& [existing_var, var_val] : probdata->agent_vars.at(a))
+    {
+        debug_assert(existing_var);
+        debug_assert(var_val == SCIPgetSolVal(scip, nullptr, existing_var));
+
+        auto vardata = SCIPvarGetData(existing_var);
+        const auto existing_path_length = SCIPvardataGetPathLength(vardata);
+        const auto existing_path = SCIPvardataGetPath(vardata);
+        if (std::equal(path, path + path_length, existing_path, existing_path + existing_path_length))
+        {
+            *var = existing_var;
+            return SCIP_OKAY;
+        }
+    }
+
+    // Create variable data.
+    SCIP_VarData* vardata = nullptr;
+    SCIP_CALL(SCIPvardataCreate(scip, a, path_length, path, &vardata));
+    debug_assert(vardata);
+
+    // Calculate column cost.
+    const SCIP_Real obj = path_length - 1;
+
+    // Create and add variable.
+#ifdef MAKE_NAMES
+    const auto name = fmt::format("path({},({}))",
+                                  a, format_path(probdata, path_length, path)).substr(0, 255);
+#endif
+    SCIP_CALL(SCIPcreateVar(scip,
+                            var,
+#ifdef MAKE_NAMES
+                            name.c_str(),
+#else
+                            "",
+#endif
+                            obj,
+                            vardata));
+    debug_assert(*var);
+    SCIP_CALL(SCIPaddVar(scip, *var));
+
+    // Print.
+    debugln("      Adding column with obj {:4.0f}, agent {:2d}, path {}",
+            obj, a, format_path_spaced(probdata, path_length, path));
+
+    // Change the upper bound of the binary variable to lazy since the upper bound is
+    // already enforced due to the objective function the set covering constraint. The
+    // reason for doing is that, is to avoid the bound of x <= 1 in the LP relaxation
+    // since this bound constraint would produce a dual variable which might have a
+    // positive reduced cost.
+    SCIP_CALL(SCIPchgVarUbLazy(scip, *var, 1.0));
+
+    // Add coefficient to agent partition constraint.
+//    debug_assert(SCIPconsIsEnabled(probdata->agent_part[a]));
+    SCIP_CALL(SCIPaddCoefSetppc(scip, probdata->agent_part[a], *var));
+
+    // Add coefficient to vertex conflicts constraints.
+    SCIP_CALL(vertex_conflicts_add_var(scip,
+                                       probdata->vertex_conflicts,
+                                       *var,
+                                       path_length,
+                                       path));
+
+    // Add coefficient to edge conflicts constraints.
+    SCIP_CALL(edge_conflicts_add_var(scip,
+                                     probdata->edge_conflicts,
+                                     *var,
+                                     path_length,
+                                     path));
+
+    // Add coefficients to two-agent robust cuts.
+    for (const auto& [row, ets_begin, ets_end] : probdata->agent_robust_cuts[a])
+    {
+        // Calculate the coefficient.
+        SCIP_Real coeff = 0.0;
+        for (auto it = ets_begin; it != ets_end; ++it)
+        {
+            const auto [e, t] = it->et;
+            coeff += (t < path_length - 1 && e == path[t]) ||
+                     (t >= path_length - 1 && e.n == path[path_length - 1].n && e.d == Direction::WAIT);
+        }
+
+        // Add variable to the cut.
+        if (coeff)
+        {
+            SCIP_CALL(SCIPaddVarToRow(scip, row, *var, coeff));
+        }
+    }
+
+    // Add coefficient to goal conflicts constraints.
+#ifdef USE_GOAL_CONFLICTS
+    SCIP_CALL(goal_conflicts_add_var(scip,
+                                     probdata->goal_conflicts,
+                                     *var,
+                                     a,
+                                     path_length,
+                                     path));
+#endif
+
+    // Add coefficient to path length nogoods.
+#ifdef USE_PATH_LENGTH_NOGOODS
+    SCIP_CALL(path_length_nogoods_add_var(scip,
+                                          probdata->path_length_nogoods,
+                                          *var,
+                                          a,
+                                          path_length));
+#endif
+
+    // Store variable in array of all variables.
+    probdata->vars.emplace_back(*var, 0);
+
+    // Store variable in agent variables array.
+    debug_assert(a < static_cast<Agent>(probdata->agent_vars.size()));
+    probdata->agent_vars[a].emplace_back(*var, 0);
+
+    // Capture variable again. Previously captured in addVar.
+    SCIP_CALL(SCIPcaptureVar(scip, *var));
+
+    // Mark constraints enforcing branching decisions to be repropagated.
+#ifdef USE_LNS2_REPAIR_PRIMAL_HEURISTIC
+    {
+        Vector<SCIP_NODE*> nodes;
+        for (auto node = SCIPgetCurrentNode(scip); node; node = SCIPnodeGetParent(node))
+        {
+            nodes.push_back(node);
+        }
+        for (auto it = nodes.rbegin(); it != nodes.rend(); ++it)
+        {
+            auto node = *it;
+            // println("Need to repropagate node {}", SCIPnodeGetNumber(node));
+            SCIP_CALL(SCIPrepropagateNode(scip, node));
+        }
+    }
+#endif
 
     // Done.
     return SCIP_OKAY;
@@ -1207,8 +1365,11 @@ SCIP_RETCODE SCIPprobdataCreate(
     SCIP_CALL(SCIPincludeConshdlrLengthBranching(scip));
 
     // Include LNS2 primal heuristic.
-#ifdef USE_LNS2_PRIMAL_HEURISTIC
-    SCIP_CALL(SCIPincludeHeurLNS2(scip));
+#ifdef USE_LNS2_INIT_PRIMAL_HEURISTIC
+    SCIP_CALL(SCIPincludeHeurLNS2Init(scip));
+#endif
+#ifdef USE_LNS2_REPAIR_PRIMAL_HEURISTIC
+    SCIP_CALL(SCIPincludeHeurLNS2Repair(scip));
 #endif
 
     // Include prioritized planning primal heuristic.
