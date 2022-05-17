@@ -29,7 +29,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #define HEUR_FREQ             0
 #define HEUR_FREQOFS          0
 #define HEUR_MAXDEPTH         -1
-#define HEUR_TIMING           SCIP_HEURTIMING_DURINGLPLOOP | SCIP_HEURTIMING_AFTERLPNODE
+#define HEUR_TIMING           SCIP_HEURTIMING_BEFORENODE
 #define HEUR_USESSUBSCIP      FALSE    // Does the heuristic use a secondary SCIP instance?
 
 #include "Heuristic_LNS2Init.h"
@@ -137,9 +137,7 @@ SCIP_DECL_HEUREXEC(heurExecLNS2Init)
 {
     // Skip if previously called.
     auto lns_data = reinterpret_cast<LNS2InitData*>(SCIPheurGetData(heur));
-    if (!lns_data->called &&
-        ((SCIPgetNLPCols(scip) >= 500) || (SCIPgetNLPRows(scip) >= 500) ||
-         (heurtiming & SCIP_HEURTIMING_AFTERLPNODE) || (get_time_remaining(scip) <= LNS2_INIT_TIME_LIMIT + 10.0)))
+    if (!lns_data->called)
     {
         // Print.
         debugln("Starting LNS2 initialization primal heuristic at node {}, depth {}, node LB {}:",
