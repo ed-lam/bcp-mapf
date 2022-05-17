@@ -53,7 +53,7 @@ static_assert(sizeof(Edge) == 4);
 static_assert(std::is_trivial<Edge>::value);
 inline bool operator==(const Edge a, const Edge b)
 {
-    return a.n == b.n && a.d == b.d;
+    return a.id == b.id;
 }
 inline bool operator!=(const Edge a, const Edge b)
 {
