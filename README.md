@@ -1,12 +1,11 @@
-BCP
-===
+BCP-MAPF
+========
 
-BCP is an implementation of a branch-and-cut-and-price model of the multi-agent path finding problem. It is described in the following papers:
+BCP-MAPF is an implementation of a branch-and-cut-and-price algorithm for the multi-agent path finding problem. It is described in the paper:
 
-- Branch-and-Cut-and-Price for Multi-Agent Pathfinding. E. Lam, P. Le Bodic, D. Harabor, P. J. Stuckey. IJCAI 2019.
-- New Valid Inequalities in Branch-and-Cut-and-Price for Multi-Agent Path Finding. E. Lam, P. Le Bodic. ICAPS 2020.
+*Branch-and-Cut-and-Price for Multi-Agent Path Finding*. Edward Lam, Pierre Le Bodic, Daniel Harabor and Peter J. Stuckey. Computers & Operations Research, vol. 144, pp. 105809. 2022.
 
-Please cite these articles if you use this code for the multi-agent path finding problem or as a template for other branch-and-cut-and-price codes.
+Please cite this article if you use this code for the multi-agent path finding problem or as a template for other branch-and-cut-and-price codes.
 
 License
 -------
@@ -16,42 +15,47 @@ BCP is released under the GPL version 3. See LICENSE.txt for further details.
 Dependencies
 ------------
 
-BCP is implemented in C++17 and is compiled using CMake, so you will need a recent compiler and a recent version of CMake. It is tested with Clang 11 on Mac and GCC 10 on Linux. It has not been tested on Windows.
+BCP is implemented in C++17 and is compiled using CMake, so you will need a recent compiler and a recent version of CMake. It is tested to run on Mac and Linux. It has not been tested on Windows.
 
-BCP calls SCIP for branch-and-bound and calls CPLEX for solving the linear relaxation.
-
-Source code to SCIP is available free (as in beer) strictly for academic use. BCP is tested with SCIP 7.0.3. Download the [SCIP Optimization Suite 7.0.3](https://scip.zib.de) and extract it into the root of this repository. You should find the subdirectory `scipoptsuite-7.0.3/scip/src`.
-
-CPLEX is commercial software but has binaries available free under an [academic license](https://community.ibm.com/community/user/datascience/blogs/xavier-nodet1/2020/07/09/cplex-free-for-students). BCP is tested with CPLEX 12.10. You should find the subdirectory `cplex`.
-
-If CPLEX is not available, SoPlex from the SCIP Optimization Suite can be used instead but this option is not supported.
+BCP uses SCIP 7.0.3 for branch-and-bound. Source code to SCIP is available free (as in 🍺) for academic use. BCP calls Gurobi or CPLEX for solving the linear relaxation. [Gurobi](https://www.gurobi.com/downloads/end-user-license-agreement-academic/) and [CPLEX](https://community.ibm.com/community/user/datascience/blogs/xavier-nodet1/2020/07/09/cplex-free-for-students) are commercial software but provide free binaries under an academic license. BCP is tested with Gurobi 9.5.1 and CPLEX 20.1.0.
 
 Compiling
 ---------
 
-Download the source code by cloning this Git repository and all its submodules:
+1. Download the source code to BCP-MAPF by cloning this repository and all its submodules.
 ```
 git clone --recurse-submodules https://github.com/ed-lam/bcp-mapf.git
-```
-
-Locate the `cplex` subdirectory inside wherever you downloaded the CPLEX binaries. Compile BCP using CMake:
-```
 cd bcp-mapf
-mkdir build
-cd build
-cmake -DCPLEX_DIR={PATH TO cplex SUBDIRECTORY} ..
-cmake --build .
 ```
 
-If you use a custom compiler, you will need to tell CMake where the compiler is:
+2. Download the [SCIP Optimization Suite 7.0.3](https://www.scipopt.org/index.php#download) into the `bcp-mapf` directory and extract it. You should find the subdirectory `scipoptsuite-7.0.3/scip/src`.
 ```
-cmake -DCPLEX_DIR={PATH TO cplex SUBDIRECTORY} -DCMAKE_C_COMPILER={PATH TO C COMPILER} -DCMAKE_CXX_COMPILER={PATH TO C++ COMPILER} ..
+tar xf scipoptsuite-7.0.3.tgz
 ```
 
-If you have a multi-core CPU with N cores, you can perform a parallel compile by running the following command instead, replacing N with the number of cores:
+3. Download the [Boost C++ libraries](https://www.boost.org/users/download/) if not already provided by your system.
 ```
-cmake --build . -j N
+wget https://boostorg.jfrog.io/artifactory/main/release/1.79.0/source/boost_1_79_0.tar.gz
+tar xf boost_1_79_0.tar.gz
 ```
+
+4. Compile BCP-MAPF.
+
+    1. If using Gurobi, locate its directory, which should contain the `include` and `lib` subdirectories. Copy the main directory into the command below.
+    ```
+    cmake -DGUROBI_DIR={PATH TO GUROBI DIRECTORY} .
+    cmake --build .
+    ```
+
+    2. If using CPLEX, locate the subdirectory `cplex` and copy this directory into the command below.
+    ```
+    cmake -DCPLEX_DIR={PATH TO cplex SUBDIRECTORY} .
+    cmake --build .
+    ```
+
+    If Boost is missing, download Boost in step 3 and append `-DBOOST_ROOT={PATH TO BOOST DIRECTORY}` to the first `cmake` command above.
+
+    To compile with a multi-core CPU with N cores, append `-j N` to the second `cmake` command above.
 
 Usage
 -----
@@ -66,12 +70,12 @@ You can also set a time limit in seconds:
 ./bcp-mapf —-time-limit={TIME LIMIT} {PATH TO INSTANCE}
 ```
 
-BCP can be run as a bounded suboptimal algorithm by setting an optimality gap, calculated as (upper bound - lower bound) / lower bound. For example, enter `0.1` for a 10% optimality gap.
+BCP can be run as a bounded suboptimal algorithm by setting an optimality gap. For example, enter `0.1` for a 10% optimality gap.
 ```
 ./bcp-mapf —-gap-limit={OPTIMALITY GAP} {PATH TO INSTANCE}
 ```
 
-The Moving AI benchmarks can be found in the `movingai` directory. There is (usually) a total of 1000 agents in each instance file, and the user can specify how many of the first N agents to run. For example, you can run an instance with only the first 50 agents:
+The Moving AI benchmarks can be found in the `instances/movingai` directory. There is (usually) a total of 1000 agents in each instance file, and the user can specify how many of the first N agents to run. For example, you can run an instance with only the first 50 agents:
 ```
 ./bcp-mapf --time-limit=30 --agent-limit=50 ../instances/movingai/Berlin_1_256-random-1.scen
 ```
