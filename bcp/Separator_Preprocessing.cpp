@@ -17,7 +17,7 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-//#define PRINT_DEBUG
+// #define PRINT_DEBUG
 
 #include "Separator_Preprocessing.h"
 #include "ProblemData.h"
@@ -76,7 +76,7 @@ SCIP_DECL_SEPAEXECLP(sepaExeclpPreprocessing)
 
     // Update database of fractional vertices and edges before separators start.
     update_fractional_vertices_and_edges(scip);
-    
+
     // Reset found cuts indicator.
     auto probdata = SCIPgetProbData(scip);
     auto& found_cuts = SCIPprobdataGetFoundCutsIndicator(probdata);

@@ -19,7 +19,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #ifdef USE_STEPASIDE_CONFLICTS
 
-//#define PRINT_DEBUG
+// #define PRINT_DEBUG
 
 #include "Separator_StepAsideConflicts.h"
 #include "ProblemData.h"
@@ -124,7 +124,9 @@ SCIP_RETCODE stepaside_conflicts_separate(
     // Skip this separator if an earlier separator found cuts.
     auto& found_cuts = SCIPprobdataGetFoundCutsIndicator(probdata);
     if (found_cuts)
+    {
         return SCIP_OKAY;
+    }
 
     // Get variables.
     const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
@@ -219,7 +221,7 @@ SCIP_RETCODE stepaside_conflicts_separate(
             const auto& a1_dir_edges = agent_dir_edges[d1][a1];
 
             // Loop through the first edge of agent 1.
-            for (const auto [a1_et1, a1_et1_val] : a1_dir_edges)
+            for (const auto& [a1_et1, a1_et1_val] : a1_dir_edges)
             {
                 // Get the second edge of agent 1.
                 const EdgeTime a1_et2{a1_et1.et.e, a1_et1.t + 1};
@@ -234,7 +236,7 @@ SCIP_RETCODE stepaside_conflicts_separate(
                     const auto& a2_dir_edges = agent_dir_edges[d2][a2];
 
                     // Loop through the third edge of agent 2.
-                    for (const auto [a2_et3, a2_et3_val] : a2_dir_edges)
+                    for (const auto& [a2_et3, a2_et3_val] : a2_dir_edges)
                         if (a2_et3.n == a2_et3_orig && a2_et3.t > a1_et1.t)
                         {
                             // Get the fourth edge of agent 2.

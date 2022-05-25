@@ -19,7 +19,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #ifdef USE_THREEVERTEX_CONFLICTS
 
-//#define PRINT_DEBUG
+// #define PRINT_DEBUG
 
 #include "Separator_ThreeVertexConflicts.h"
 #include "ProblemData.h"
@@ -112,7 +112,7 @@ SCIP_RETCODE threevertex_conflicts_create_cut(
         cut.a2_edge_time(12) = EdgeTime{map.get_west(a2_v3.n), Direction::EAST, prev_time};
         cut.a2_edge_time(13) = EdgeTime{map.get_east(a2_v3.n), Direction::WEST, prev_time};
         cut.a2_edge_time(14) = EdgeTime{map.get_wait(a2_v3.n), Direction::WAIT, prev_time};
-    }    
+    }
 
     // Store the cut.
     SCIP_CALL(SCIPprobdataAddTwoAgentRobustCut(scip, probdata, sepa, std::move(cut), 2, result));
@@ -146,20 +146,22 @@ SCIP_RETCODE threevertex_conflicts_separate(
     // Skip this separator if an earlier separator found cuts.
     auto& found_cuts = SCIPprobdataGetFoundCutsIndicator(probdata);
     if (found_cuts)
+    {
         return SCIP_OKAY;
+    }
 
     // Get the vertices and edges fractionally used by each agent.
-    const auto& agent_vertices = SCIPprobdataGetAgentFractionalVertices(probdata);
-    const auto& agent_edges = SCIPprobdataGetAgentFractionalEdgesNoWaits(probdata);
+    const auto& fractional_vertices = SCIPprobdataGetFractionalVertices(probdata);
+    const auto& fractional_move_edges = SCIPprobdataGetFractionalMoveEdges(probdata);
 
     // Find conflicts.
     for (Agent a1 = 0; a1 < N; ++a1)
     {
         // Get the edges of agent 1.
-        const auto& agent_edges_a1 = agent_edges[a1];
+        const auto& fractional_move_edges_a1 = fractional_move_edges[a1];
 
         // Loop through the first edge of agent 1.
-        for (const auto [a1_et1, a1_et1_val] : agent_edges_a1)
+        for (const auto& [a1_et1, a1_et1_val] : fractional_move_edges_a1)
         {
             // Get the vertices of the edge.
             const auto a1_et1_orig = a1_et1.n;
@@ -167,7 +169,7 @@ SCIP_RETCODE threevertex_conflicts_separate(
             const auto a1_et1_dest = map.get_destination(a1_et1);
 
             // Loop through the second edge of agent 1.
-            for (const auto [a1_et2, a1_et2_val] : agent_edges_a1)
+            for (const auto& [a1_et2, a1_et2_val] : fractional_move_edges_a1)
             {
                 // Get the vertices of the edge.
                 const auto a1_et2_orig = a1_et2.n;
@@ -182,14 +184,14 @@ SCIP_RETCODE threevertex_conflicts_separate(
                         if (a1 != a2)
                         {
                             // Get the vertices of agent 2.
-                            const auto& agent_vertices_a2 = agent_vertices[a2];
+                            const auto& fractional_vertices_a2 = fractional_vertices[a2];
 
                             // Check if agent 2 uses the two vertices of agent 1.
                             const NodeTime a2_v1{a1_et1_orig, a1_et1.t};
                             const NodeTime a2_v2{a1_et2_dest, a1_et2.t + 1};
-                            const auto a2_v1_it = agent_vertices_a2.find(a2_v1);
-                            const auto a2_v2_it = agent_vertices_a2.find(a2_v2);
-                            if (a2_v1_it != agent_vertices_a2.end() && a2_v2_it != agent_vertices_a2.end())
+                            const auto a2_v1_it = fractional_vertices_a2.find(a2_v1);
+                            const auto a2_v2_it = fractional_vertices_a2.find(a2_v2);
+                            if (a2_v1_it != fractional_vertices_a2.end() && a2_v2_it != fractional_vertices_a2.end())
                             {
                                 // Get the values of the vertices.
                                 const auto a2_v1_val = a2_v1_it->second;
@@ -200,7 +202,7 @@ SCIP_RETCODE threevertex_conflicts_separate(
 #ifdef PRINT_DEBUG
                                 Float final_lhs = std::numeric_limits<Float>::quiet_NaN();
 #endif
-                                for (const auto [a2_v3, a2_v3_val] : agent_vertices_a2)
+                                for (const auto& [a2_v3, a2_v3_val] : fractional_vertices_a2)
                                     if (a2_v3.t <= a2_v1.t && a2_v3.t < final_a2_v3.t)
                                     {
                                         const auto [a2_v3_x, a2_v3_y] = map.get_xy(a2_v3.n);
@@ -216,7 +218,7 @@ SCIP_RETCODE threevertex_conflicts_separate(
                                                                abs(a1_et2_dest_y - a2_v3_y);
 
                                         // Store the third edge if the cut is violated.
-                                        const auto lhs = a1_et1_val + a1_et2_val + 
+                                        const auto lhs = a1_et1_val + a1_et2_val +
                                                          a2_v1_val + a2_v2_val + a2_v3_val;
                                         if (distance1 > time1 && distance2 > time2 &&
                                             SCIPisSumGT(scip, lhs, 2 + CUT_VIOLATION))

@@ -143,7 +143,9 @@ SCIP_RETCODE path_length_nogoods_separate(
     // Skip this separator if an earlier separator found cuts.
     auto& found_cuts = SCIPprobdataGetFoundCutsIndicator(probdata);
     if (found_cuts)
+    {
         return SCIP_OKAY;
+    }
 
     // Get variables.
     const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);

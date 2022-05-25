@@ -19,7 +19,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #ifdef USE_TWOVERTEX_CONFLICTS
 
-//#define PRINT_DEBUG
+// #define PRINT_DEBUG
 
 #include "Separator_TwoVertexConflicts.h"
 #include "ProblemData.h"
@@ -124,75 +124,77 @@ SCIP_RETCODE twovertex_conflicts_separate(
     // Skip this separator if an earlier separator found cuts.
     auto& found_cuts = SCIPprobdataGetFoundCutsIndicator(probdata);
     if (found_cuts)
+    {
         return SCIP_OKAY;
+    }
 
     // Get the edges fractionally used by each agent.
-    const auto& agent_edges_no_waits = SCIPprobdataGetAgentFractionalEdgesNoWaits(probdata);
-    const auto& agent_edges_vec = SCIPprobdataGetAgentFractionalEdgesVec(probdata);
+    const auto& fractional_move_edges = SCIPprobdataGetFractionalEdges(probdata);
+    const auto& fractional_edges_vec = SCIPprobdataGetFractionalEdgesVec(probdata);
 
     // Find conflicts.
     Vector<TwoVertexConflictData> cuts;
     for (Agent a1 = 0; a1 < N; ++a1)
     {
         // Get the edges of agent 1.
-        const auto& agent_edges_a1 = agent_edges_no_waits[a1];
+        const auto& fractional_move_edges_a1 = fractional_move_edges[a1];
 
         // Loop through the edge of agent 1.
-        for (const auto [a1_et, a1_et_val] : agent_edges_a1)
+        for (const auto& [a1_et, a1_et_val] : fractional_move_edges_a1)
         {
             // Get all potential first edge of agent 2.
             Array<EdgeTime, 5> a2_et1s;
-            Array<const Vector<SCIP_Real>*, 5> a2_et1_vals;
+            Array<SCIP_Real*, 5> a2_et1_vals;
             Int a2_et1_size = 0;
             {
                 const EdgeTime et{a1_et.n, Direction::NORTH, a1_et.t};
-                if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
+                if (const auto it = fractional_edges_vec.find(et); it != fractional_edges_vec.end())
                 {
                     a2_et1s[a2_et1_size] = et;
-                    a2_et1_vals[a2_et1_size] = &it->second;
+                    a2_et1_vals[a2_et1_size] = it->second;
                     ++a2_et1_size;
                 }
             }
             {
                 const EdgeTime et{a1_et.n, Direction::SOUTH, a1_et.t};
-                if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
+                if (const auto it = fractional_edges_vec.find(et); it != fractional_edges_vec.end())
                 {
                     a2_et1s[a2_et1_size] = et;
-                    a2_et1_vals[a2_et1_size] = &it->second;
+                    a2_et1_vals[a2_et1_size] = it->second;
                     ++a2_et1_size;
                 }
             }
             {
                 const EdgeTime et{a1_et.n, Direction::EAST, a1_et.t};
-                if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
+                if (const auto it = fractional_edges_vec.find(et); it != fractional_edges_vec.end())
                 {
                     a2_et1s[a2_et1_size] = et;
-                    a2_et1_vals[a2_et1_size] = &it->second;
+                    a2_et1_vals[a2_et1_size] = it->second;
                     ++a2_et1_size;
                 }
             }
             {
                 const EdgeTime et{a1_et.n, Direction::WEST, a1_et.t};
-                if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
+                if (const auto it = fractional_edges_vec.find(et); it != fractional_edges_vec.end())
                 {
                     a2_et1s[a2_et1_size] = et;
-                    a2_et1_vals[a2_et1_size] = &it->second;
+                    a2_et1_vals[a2_et1_size] = it->second;
                     ++a2_et1_size;
                 }
             }
             {
                 const EdgeTime et{a1_et.n, Direction::WAIT, a1_et.t};
-                if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
+                if (const auto it = fractional_edges_vec.find(et); it != fractional_edges_vec.end())
                 {
                     a2_et1s[a2_et1_size] = et;
-                    a2_et1_vals[a2_et1_size] = &it->second;
+                    a2_et1_vals[a2_et1_size] = it->second;
                     ++a2_et1_size;
                 }
             }
 
             // Get all potential second edge of agent 2.
             Array<EdgeTime, 5> a2_et2s;
-            Array<const Vector<SCIP_Real>*, 5> a2_et2_vals;
+            Array<SCIP_Real*, 5> a2_et2_vals;
             Int a2_et2_size = 0;
             {
                 const auto a2_et2_dest = map.get_destination(a1_et);
@@ -200,50 +202,50 @@ SCIP_RETCODE twovertex_conflicts_separate(
                 {
                     const EdgeTime et{map.get_south(a2_et2_dest), Direction::NORTH, a1_et.t};
                     if (std::find(a2_et1s.begin(), a2_et1s_end, et) == a2_et1s_end)
-                        if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
+                        if (const auto it = fractional_edges_vec.find(et); it != fractional_edges_vec.end())
                         {
                             a2_et2s[a2_et2_size] = et;
-                            a2_et2_vals[a2_et2_size] = &it->second;
+                            a2_et2_vals[a2_et2_size] = it->second;
                             ++a2_et2_size;
                         }
                 }
                 {
                     const EdgeTime et{map.get_north(a2_et2_dest), Direction::SOUTH, a1_et.t};
                     if (std::find(a2_et1s.begin(), a2_et1s_end, et) == a2_et1s_end)
-                        if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
+                        if (const auto it = fractional_edges_vec.find(et); it != fractional_edges_vec.end())
                         {
                             a2_et2s[a2_et2_size] = et;
-                            a2_et2_vals[a2_et2_size] = &it->second;
+                            a2_et2_vals[a2_et2_size] = it->second;
                             ++a2_et2_size;
                         }
                 }
                 {
                     const EdgeTime et{map.get_west(a2_et2_dest), Direction::EAST, a1_et.t};
                     if (std::find(a2_et1s.begin(), a2_et1s_end, et) == a2_et1s_end)
-                        if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
+                        if (const auto it = fractional_edges_vec.find(et); it != fractional_edges_vec.end())
                         {
                             a2_et2s[a2_et2_size] = et;
-                            a2_et2_vals[a2_et2_size] = &it->second;
+                            a2_et2_vals[a2_et2_size] = it->second;
                             ++a2_et2_size;
                         }
                 }
                 {
                     const EdgeTime et{map.get_east(a2_et2_dest), Direction::WEST, a1_et.t};
                     if (std::find(a2_et1s.begin(), a2_et1s_end, et) == a2_et1s_end)
-                        if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
+                        if (const auto it = fractional_edges_vec.find(et); it != fractional_edges_vec.end())
                         {
                             a2_et2s[a2_et2_size] = et;
-                            a2_et2_vals[a2_et2_size] = &it->second;
+                            a2_et2_vals[a2_et2_size] = it->second;
                             ++a2_et2_size;
                         }
                 }
                 {
                     const EdgeTime et{map.get_wait(a2_et2_dest), Direction::WAIT, a1_et.t};
                     if (std::find(a2_et1s.begin(), a2_et1s_end, et) == a2_et1s_end)
-                        if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
+                        if (const auto it = fractional_edges_vec.find(et); it != fractional_edges_vec.end())
                         {
                             a2_et2s[a2_et2_size] = et;
-                            a2_et2_vals[a2_et2_size] = &it->second;
+                            a2_et2_vals[a2_et2_size] = it->second;
                             ++a2_et2_size;
                         }
                 }
@@ -264,9 +266,9 @@ SCIP_RETCODE twovertex_conflicts_separate(
                         {
                             // Get the edges of agent 2.
                             const auto a2_et1 = a2_et1s[a2_et1_idx];
-                            const auto a2_et1_val = (*(a2_et1_vals[a2_et1_idx]))[a2];
+                            const auto a2_et1_val = a2_et1_vals[a2_et1_idx][a2];
                             const auto a2_et2 = a2_et2s[a2_et2_idx];
-                            const auto a2_et2_val = (*(a2_et2_vals[a2_et2_idx]))[a2];
+                            const auto a2_et2_val = a2_et2_vals[a2_et2_idx][a2];
 
                             // Check.
                             debug_assert(a1_et.n == a2_et1.n);

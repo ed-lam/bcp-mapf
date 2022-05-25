@@ -17,35 +17,35 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-
-#ifndef MAPF_SEPARATOR_RECTANGLECLIQUECONFLICTS_H
-#define MAPF_SEPARATOR_RECTANGLECLIQUECONFLICTS_H
-
-#include "Includes.h"
-#include "Coordinates.h"
-#include "ProblemData.h"
-#include "Separator_RectangleConflicts.h"
-
-// Create separator for rectangle clique conflicts and include it
-SCIP_RETCODE SCIPincludeSepaRectangleCliqueConflicts(
-    SCIP* scip,         // SCIP
-    SCIP_SEPA** sepa    // Output pointer to separator
-);
-
-SCIP_RETCODE rectangle_clique_conflicts_add_var(
-    SCIP* scip,                // SCIP
-    SCIP_SEPA* sepa,           // Separator for rectangle clique conflicts
-    SCIP_VAR* var,             // Variable
-    const Agent a,             // Agent
-    const Time path_length,    // Path length
-    const Edge* const path     // Path
-);
-
-const Vector<RectangleConflict>& rectangle_clique_conflicts_get_constraints(
-    SCIP_ProbData* probdata    // Problem data
-);
-
-#endif
-
-#endif
+// #ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+//
+// #ifndef MAPF_SEPARATOR_RECTANGLECLIQUECONFLICTS_H
+// #define MAPF_SEPARATOR_RECTANGLECLIQUECONFLICTS_H
+//
+// #include "Includes.h"
+// #include "Coordinates.h"
+// #include "ProblemData.h"
+// #include "Separator_RectangleConflicts.h"
+//
+// // Create separator for rectangle clique conflicts and include it
+// SCIP_RETCODE SCIPincludeSepaRectangleCliqueConflicts(
+//     SCIP* scip,         // SCIP
+//     SCIP_SEPA** sepa    // Output pointer to separator
+// );
+//
+// SCIP_RETCODE rectangle_clique_conflicts_add_var(
+//     SCIP* scip,                // SCIP
+//     SCIP_SEPA* sepa,           // Separator for rectangle clique conflicts
+//     SCIP_VAR* var,             // Variable
+//     const Agent a,             // Agent
+//     const Time path_length,    // Path length
+//     const Edge* const path     // Path
+// );
+//
+// const Vector<RectangleConflict>& rectangle_clique_conflicts_get_constraints(
+//     SCIP_ProbData* probdata    // Problem data
+// );
+//
+// #endif
+//
+// #endif

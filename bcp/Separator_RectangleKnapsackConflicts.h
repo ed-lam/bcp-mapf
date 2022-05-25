@@ -26,10 +26,10 @@ Author: Edward Lam <ed@ed-lam.com>
 
 struct RectangleKnapsackCut
 {
-    Int idx;                // Index of the cut
-    uint16_t out1_begin;    // Index of the first out edge for agent 1
-    uint16_t in2_begin;     // Index of the first in edge for agent 2
-    uint16_t out2_begin;    // Index of the first out edge for agent 2
+    Int idx;           // Index of the cut
+    Int out1_begin;    // Index of the first out edge for agent 1
+    Int in2_begin;     // Index of the first in edge for agent 2
+    Int out2_begin;    // Index of the first out edge for agent 2
 };
 
 // Create separator for rectangle knapsack conflicts and include it

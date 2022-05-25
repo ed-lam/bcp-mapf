@@ -19,13 +19,13 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #if defined(USE_TWOEDGE_CONFLICTS) || defined(USE_WAITTWOEDGE_CONFLICTS)
 
-//#define PRINT_DEBUG
+// #define PRINT_DEBUG
 
 #include "Separator_TwoEdgeConflicts.h"
 #include "ProblemData.h"
 #include "VariableData.h"
 
-#ifdef USE_WAITTWOEDGE_CONFLICTS 
+#ifdef USE_WAITTWOEDGE_CONFLICTS
 #define SEPA_NAME         "wait_two_edge"
 #else
 #define SEPA_NAME         "two_edge"
@@ -151,29 +151,31 @@ SCIP_RETCODE twoedge_conflicts_separate(
     // Skip this separator if an earlier separator found cuts.
     auto& found_cuts = SCIPprobdataGetFoundCutsIndicator(probdata);
     if (found_cuts)
+    {
         return SCIP_OKAY;
+    }
 
     // Get the edges fractionally used by each agent.
-    const auto& agent_edges_no_waits = SCIPprobdataGetAgentFractionalEdgesNoWaits(probdata);
-    const auto& agent_edges_vec = SCIPprobdataGetAgentFractionalEdgesVec(probdata);
+    const auto& fractional_move_edges = SCIPprobdataGetFractionalMoveEdges(probdata);
+    const auto& fractional_edges_vec = SCIPprobdataGetFractionalEdgesVec(probdata);
 
     // Find conflicts.
     Vector<TwoEdgeConflictData> cuts;
-    Vector<SCIP_Real> zeros(N, 0.0);
+    auto zeros = std::make_unique<SCIP_Real[]>(N);
     for (Agent a1 = 0; a1 < N - 1; ++a1)
     {
         // Get the edges of agent 1.
-        const auto& agent_edges_a1 = agent_edges_no_waits[a1];
+        const auto& fractional_move_edges_a1 = fractional_move_edges[a1];
 
         // Loop through the first edge of agent 1.
-        for (const auto [a1_et1, a1_et1_val] : agent_edges_a1)
+        for (const auto& [a1_et1, a1_et1_val] : fractional_move_edges_a1)
         {
             const auto t = a1_et1.t;
 
             // Get the first edge of agent 2.
             const EdgeTime a2_et1{map.get_opposite_edge(a1_et1.et.e), t};
-            const auto a2_et1_it = agent_edges_vec.find(a2_et1);
-            const auto& a2_et1_vals = a2_et1_it != agent_edges_vec.end() ? a2_et1_it->second : zeros;
+            const auto a2_et1_it = fractional_edges_vec.find(a2_et1);
+            const auto a2_et1_vals = a2_et1_it != fractional_edges_vec.end() ? a2_et1_it->second : zeros.get();
 
             // Get the second edge of agent 1.
             const auto a1_e2_orig = map.get_destination(a1_et1);
@@ -203,8 +205,8 @@ SCIP_RETCODE twoedge_conflicts_separate(
             // Get the wait edge of both agents.
 #ifdef USE_WAITTWOEDGE_CONFLICTS
             const EdgeTime a12_et3{a1_e2_orig, Direction::WAIT, t};
-            const auto a12_et3_it = agent_edges_vec.find(a12_et3);
-            const auto& a12_et3_vals = a12_et3_it != agent_edges_vec.end() ? a12_et3_it->second : zeros;
+            const auto a12_et3_it = fractional_edges_vec.find(a12_et3);
+            const auto a12_et3_vals = a12_et3_it != fractional_edges_vec.end() ? a12_et3_it->second : zeros.get();
 #endif
 
             // Loop through the second edge of agent 1.
@@ -212,13 +214,13 @@ SCIP_RETCODE twoedge_conflicts_separate(
             {
                 // Get the second edge of agent 1.
                 const auto a1_et2 = EdgeTime{a1_e2s[idx], t};
-                const auto a1_et2_it = agent_edges_a1.find(a1_et2);
-                const auto a1_et2_val = a1_et2_it != agent_edges_a1.end() ? a1_et2_it->second : 0;
+                const auto a1_et2_it = fractional_move_edges_a1.find(a1_et2);
+                const auto a1_et2_val = a1_et2_it != fractional_move_edges_a1.end() ? a1_et2_it->second : 0;
 
                 // Get the second edge of agent 2.
                 const EdgeTime a2_et2{map.get_opposite_edge(a1_et2.et.e), t};
-                const auto a2_et2_it = agent_edges_vec.find(a2_et2);
-                const auto& a2_et2_vals = a2_et2_it != agent_edges_vec.end() ? a2_et2_it->second : zeros;
+                const auto a2_et2_it = fractional_edges_vec.find(a2_et2);
+                const auto a2_et2_vals = a2_et2_it != fractional_edges_vec.end() ? a2_et2_it->second : zeros.get();
 
                 // Loop through the second agent.
                 for (Agent a2 = a1 + 1; a2 < N; ++a2)

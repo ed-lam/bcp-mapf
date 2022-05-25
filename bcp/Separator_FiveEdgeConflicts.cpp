@@ -50,7 +50,7 @@ SCIP_RETCODE fiveedge_conflicts_create_cut(
     // Create constraint name.
 #ifdef DEBUG
     const auto& map = SCIPprobdataGetMap(probdata);
-    
+
     const auto [a1_et1_x1, a1_et1_y1] = map.get_xy(a1_et1.n);
     const auto [a1_et1_x2, a1_et1_y2] = map.get_destination_xy(a1_et1);
 
@@ -126,29 +126,31 @@ SCIP_RETCODE fiveedge_conflicts_separate(
     // Skip this separator if an earlier separator found cuts.
     auto& found_cuts = SCIPprobdataGetFoundCutsIndicator(probdata);
     if (found_cuts)
+    {
         return SCIP_OKAY;
+    }
 
     // Get the edges fractionally used by each agent.
-    const auto& agent_edges = SCIPprobdataGetAgentFractionalEdgesNoWaits(probdata);
+    const auto& fractional_move_edges = SCIPprobdataGetFractionalMoveEdges(probdata);
 
     // Find conflicts.
     for (Agent a1 = 0; a1 < N; ++a1)
     {
         // Get the edges of agent 1.
-        const auto& agent_edges_a1 = agent_edges[a1];
+        const auto& fractional_move_edges_a1 = fractional_move_edges[a1];
 
         // Loop through the first edge of agent 1.
-        for (const auto [a1_et1, a1_et1_val] : agent_edges_a1)
+        for (const auto& [a1_et1, a1_et1_val] : fractional_move_edges_a1)
         {
             // Get the destination of the edge.
             const auto a1_et1_dest = map.get_destination(a1_et1);
 
             // Loop through the second edge of agent 1.
-            for (const auto [a1_et2, a1_et2_val] : agent_edges_a1)
+            for (const auto& [a1_et2, a1_et2_val] : fractional_move_edges_a1)
                 if (a1_et2.n == a1_et1_dest && a1_et2.t == a1_et1.t + 1)
                 {
                     // Loop through the third edge of agent 1.
-                    for (const auto [a1_et3, a1_et3_val] : agent_edges_a1)
+                    for (const auto& [a1_et3, a1_et3_val] : fractional_move_edges_a1)
                         if (a1_et3.t == a1_et1.t || a1_et3.t == a1_et1.t + 1)
                         {
                             // Get the vertices of the edge.
@@ -170,15 +172,15 @@ SCIP_RETCODE fiveedge_conflicts_separate(
                                     if (a2 != a1)
                                     {
                                         // Get the edges of agent 2.
-                                        const auto& agent_edges_a2 = agent_edges[a2];
+                                        const auto& fractional_move_edges_a2 = fractional_move_edges[a2];
 
                                         // Get the value of the edges of agent 2.
-                                        const auto a2_et1_it = agent_edges_a2.find(a2_et1);
-                                        const auto a2_et2_it = agent_edges_a2.find(a2_et2);
-                                        const auto a2_et1_val = a2_et1_it != agent_edges_a2.end() ?
+                                        const auto a2_et1_it = fractional_move_edges_a2.find(a2_et1);
+                                        const auto a2_et2_it = fractional_move_edges_a2.find(a2_et2);
+                                        const auto a2_et1_val = a2_et1_it != fractional_move_edges_a2.end() ?
                                                                 a2_et1_it->second :
                                                                 0.0;
-                                        const auto a2_et2_val = a2_et2_it != agent_edges_a2.end() ?
+                                        const auto a2_et2_val = a2_et2_it != fractional_move_edges_a2.end() ?
                                                                 a2_et2_it->second :
                                                                 0.0;
 

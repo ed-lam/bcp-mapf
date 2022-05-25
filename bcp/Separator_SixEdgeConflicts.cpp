@@ -19,7 +19,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #ifdef USE_SIXEDGE_CONFLICTS
 
-//#define PRINT_DEBUG
+// #define PRINT_DEBUG
 
 #include "Separator_SixEdgeConflicts.h"
 #include "ProblemData.h"
@@ -133,26 +133,28 @@ SCIP_RETCODE sixedge_conflicts_separate(
     // Skip this separator if an earlier separator found cuts.
     auto& found_cuts = SCIPprobdataGetFoundCutsIndicator(probdata);
     if (found_cuts)
+    {
         return SCIP_OKAY;
+    }
 
     // Get the edges fractionally used by each agent.
-    const auto& agent_edges = SCIPprobdataGetAgentFractionalEdgesNoWaits(probdata);
-    const auto& agent_edges_with_waits = SCIPprobdataGetAgentFractionalEdges(probdata);
+    const auto& fractional_move_edges = SCIPprobdataGetFractionalMoveEdges(probdata);
+    const auto& fractional_edges = SCIPprobdataGetFractionalEdges(probdata);
 
     // Find conflicts.
     for (Agent a1 = 0; a1 < N; ++a1)
     {
         // Get the edges of agent 1.
-        const auto& agent_edges_a1 = agent_edges[a1];
-        const auto& agent_edges_with_waits_a1 = agent_edges_with_waits[a1];
+        const auto& fractional_move_edges_a1 = fractional_move_edges[a1];
+        const auto& fractional_edges_a1 = fractional_edges[a1];
 
         // Loop through the first edge of agent 1.
-        for (const auto [a1_et1, a1_et1_val] : agent_edges_a1)
+        for (const auto& [a1_et1, a1_et1_val] : fractional_move_edges_a1)
         {
             debug_assert(a1_et1.d != Direction::WAIT);
 
             // Loop through the second edge of agent 1.
-            for (const auto [a1_et2, a1_et2_val] : agent_edges_a1)
+            for (const auto& [a1_et2, a1_et2_val] : fractional_move_edges_a1)
             if (a1_et2.t == a1_et1.t + 1 &&
                 a1_et2.n == map.get_destination(a1_et1) &&
                 map.get_destination(a1_et2) != a1_et1.n)
@@ -166,23 +168,23 @@ SCIP_RETCODE sixedge_conflicts_separate(
                     if (a2 != a1)
                     {
                         // Get the edges of agent 2.
-                        const auto& agent_edges_a2 = agent_edges[a2];
-                        const auto& agent_edges_with_waits_a2 = agent_edges_with_waits[a2];
+                        const auto& fractional_move_edges_a2 = fractional_move_edges[a2];
+                        const auto& fractional_edges_a2 = fractional_edges[a2];
 
                         // Get the values of the first edge of agent 2.
-                        const auto a2_et1_it = agent_edges_a2.find(a2_et1);
-                        const auto a2_et2_it = agent_edges_a2.find(a2_et2);
-                        if (a2_et1_it == agent_edges_a2.end() || a2_et2_it == agent_edges_a2.end())
+                        const auto a2_et1_it = fractional_move_edges_a2.find(a2_et1);
+                        const auto a2_et2_it = fractional_move_edges_a2.find(a2_et2);
+                        if (a2_et1_it == fractional_move_edges_a2.end() || a2_et2_it == fractional_move_edges_a2.end())
                         {
                             continue;
                         }
                         const auto a2_et1_val = a2_et1_it->second;
                         const auto a2_et2_val = a2_et2_it->second;
 
-                        for (const auto [a2_et3, a2_et3_val] : agent_edges_with_waits_a2)
+                        for (const auto& [a2_et3, a2_et3_val] : fractional_edges_a2)
                             if (a2_et3.n == a1_et2.n && a2_et3.t == a1_et2.t)
                             {
-                                for (const auto [a1_et3, a1_et3_val] : agent_edges_with_waits_a1)
+                                for (const auto& [a1_et3, a1_et3_val] : fractional_edges_a1)
                                     if (a1_et3.n != a1_et2.n && a1_et3.t == a1_et2.t)
                                     {
                                         const auto lhs = a1_et1_val + a1_et2_val + a1_et3_val + a2_et1_val + a2_et2_val + a2_et3_val;

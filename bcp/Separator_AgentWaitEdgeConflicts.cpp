@@ -19,7 +19,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #ifdef USE_AGENTWAITEDGE_CONFLICTS
 
-//#define PRINT_DEBUG
+// #define PRINT_DEBUG
 
 #include "Separator_AgentWaitEdgeConflicts.h"
 #include "ProblemData.h"
@@ -32,6 +32,27 @@ Author: Edward Lam <ed@ed-lam.com>
 #define SEPA_MAXBOUNDDIST 1.0
 #define SEPA_USESSUBSCIP  FALSE    // does the separator use a secondary SCIP instance? */
 #define SEPA_DELAY        FALSE    // should separation method be delayed, if other separators found cuts? */
+
+struct AgentWaitEdgeConflictCandidate
+{
+    EdgeTime a1_et2;
+    SCIP_Real* a1_et2_vals;
+    Array<EdgeTime, 5> a2_et23456s;
+    Array<SCIP_Real*, 5> a2_et23456_vals;
+};
+
+struct AgentWaitEdgeConflictData
+{
+    SCIP_Real lhs;
+    Agent a1;
+    Agent a2;
+    EdgeTime a1_et1;
+    EdgeTime a1_et2;
+    EdgeTime a2_et1;
+    Array<EdgeTime, 5> a2_et23456s;
+};
+
+#define MATRIX(i,j) (i * N + j)
 
 SCIP_RETCODE agentwaitedge_conflicts_create_cut(
     SCIP* scip,                 // SCIP
@@ -122,55 +143,193 @@ SCIP_RETCODE agentwaitedge_conflicts_create_cut(
     return SCIP_OKAY;
 }
 
-Vector<Array<EdgeTime, 5>>
-get_a2_et23456(
-    const EdgeTime a1_et2,
+Vector<AgentWaitEdgeConflictCandidate> get_candidates(
+    const EdgeTime a1_et1,
     const EdgeTime a2_et1,
+    const HashTable<EdgeTime, SCIP_Real*>& fractional_edges_vec,
     const Map& map
 )
 {
-    Vector<Array<EdgeTime, 5>> a2_et23456;
-
-    const auto n = a1_et2.n;
-    const auto t = a1_et2.t;
-    if (n != a2_et1.n)
+    Vector<AgentWaitEdgeConflictCandidate> candidates;
     {
-        // One timestep before.
-        if (t > 0)
+        const auto a1_et2 = EdgeTime{a1_et1.n, Direction::WAIT, a1_et1.t};
+        auto a1_et2_vals_it = fractional_edges_vec.find(a1_et2);
+        if (a1_et2_vals_it != fractional_edges_vec.end())
         {
-            a2_et23456.push_back(Array<EdgeTime, 5>{EdgeTime{map.get_south(n), Direction::NORTH, t - 1},
-                                                    EdgeTime{map.get_north(n), Direction::SOUTH, t - 1},
-                                                    EdgeTime{map.get_west(n), Direction::EAST, t - 1},
-                                                    EdgeTime{map.get_east(n), Direction::WEST, t - 1},
-                                                    EdgeTime{map.get_wait(n), Direction::WAIT, t - 1}});
+            const auto a1_et2_vals = a1_et2_vals_it->second;
+
+            const auto n = a1_et2.n;
+            const auto t = a1_et2.t;
+            if (n != a2_et1.n)
+            {
+                // One timestep before.
+                if (t > 0)
+                {
+                    auto& candidate = candidates.emplace_back();
+                    candidate.a1_et2 = a1_et2;
+                    candidate.a1_et2_vals = a1_et2_vals;
+
+                    candidate.a2_et23456s = {EdgeTime{map.get_south(n), Direction::NORTH, t - 1},
+                                             EdgeTime{map.get_north(n), Direction::SOUTH, t - 1},
+                                             EdgeTime{map.get_west(n), Direction::EAST, t - 1},
+                                             EdgeTime{map.get_east(n), Direction::WEST, t - 1},
+                                             EdgeTime{map.get_wait(n), Direction::WAIT, t - 1}};
+                    for (Int idx = 0; idx < 5; ++idx)
+                    {
+                        auto it = fractional_edges_vec.find(candidate.a2_et23456s[idx]);
+                        candidate.a2_et23456_vals[idx] = (it != fractional_edges_vec.end() ? it->second : nullptr);
+                    }
+                }
+
+                // Same timestep.
+                {
+                    auto& candidate = candidates.emplace_back();
+                    candidate.a1_et2 = a1_et2;
+                    candidate.a1_et2_vals = a1_et2_vals;
+
+                    candidate.a2_et23456s = {EdgeTime{n, Direction::NORTH, t},
+                                             EdgeTime{n, Direction::SOUTH, t},
+                                             EdgeTime{n, Direction::EAST, t},
+                                             EdgeTime{n, Direction::WEST, t},
+                                             EdgeTime{n, Direction::WAIT, t}};
+                    for (Int idx = 0; idx < 5; ++idx)
+                    {
+                        auto it = fractional_edges_vec.find(candidate.a2_et23456s[idx]);
+                        candidate.a2_et23456_vals[idx] = (it != fractional_edges_vec.end() ? it->second : nullptr);
+                    }
+                }
+            }
+
+            if (n != map.get_destination(a2_et1))
+            {
+                // Same timestep.
+                {
+                    auto& candidate = candidates.emplace_back();
+                    candidate.a1_et2 = a1_et2;
+                    candidate.a1_et2_vals = a1_et2_vals;
+
+                    candidate.a2_et23456s = {EdgeTime{map.get_south(n), Direction::NORTH, t},
+                                             EdgeTime{map.get_north(n), Direction::SOUTH, t},
+                                             EdgeTime{map.get_west(n), Direction::EAST, t},
+                                             EdgeTime{map.get_east(n), Direction::WEST, t},
+                                             EdgeTime{map.get_wait(n), Direction::WAIT, t}};
+                    for (Int idx = 0; idx < 5; ++idx)
+                    {
+                        auto it = fractional_edges_vec.find(candidate.a2_et23456s[idx]);
+                        candidate.a2_et23456_vals[idx] = (it != fractional_edges_vec.end() ? it->second : nullptr);
+                    }
+                }
+
+                // One timestep after.
+                {
+                    auto& candidate = candidates.emplace_back();
+                    candidate.a1_et2 = a1_et2;
+                    candidate.a1_et2_vals = a1_et2_vals;
+
+                    candidate.a2_et23456s = {EdgeTime{n, Direction::NORTH, t + 1},
+                                             EdgeTime{n, Direction::SOUTH, t + 1},
+                                             EdgeTime{n, Direction::EAST, t + 1},
+                                             EdgeTime{n, Direction::WEST, t + 1},
+                                             EdgeTime{n, Direction::WAIT, t + 1}};
+                    for (Int idx = 0; idx < 5; ++idx)
+                    {
+                        auto it = fractional_edges_vec.find(candidate.a2_et23456s[idx]);
+                        candidate.a2_et23456_vals[idx] = (it != fractional_edges_vec.end() ? it->second : nullptr);
+                    }
+                }
+            }
         }
-
-        // Same timestep.
-        a2_et23456.push_back(Array<EdgeTime, 5>{EdgeTime{n, Direction::NORTH, t},
-                                                EdgeTime{n, Direction::SOUTH, t},
-                                                EdgeTime{n, Direction::EAST, t},
-                                                EdgeTime{n, Direction::WEST, t},
-                                                EdgeTime{n, Direction::WAIT, t}});
     }
-
-    if (n != map.get_destination(a2_et1))
     {
-        // Same timestep.
-        a2_et23456.push_back(Array<EdgeTime, 5>{EdgeTime{map.get_south(n), Direction::NORTH, t},
-                                                EdgeTime{map.get_north(n), Direction::SOUTH, t},
-                                                EdgeTime{map.get_west(n), Direction::EAST, t},
-                                                EdgeTime{map.get_east(n), Direction::WEST, t},
-                                                EdgeTime{map.get_wait(n), Direction::WAIT, t}});
+        const auto a1_et2 = EdgeTime{map.get_destination(a1_et1), Direction::WAIT, a1_et1.t};
+        auto a1_et2_vals_it = fractional_edges_vec.find(a1_et2);
+        if (a1_et2_vals_it != fractional_edges_vec.end())
+        {
+            const auto a1_et2_vals = a1_et2_vals_it->second;
 
-        // One timestep after.
-        a2_et23456.push_back(Array<EdgeTime, 5>{EdgeTime{n, Direction::NORTH, t + 1},
-                                                EdgeTime{n, Direction::SOUTH, t + 1},
-                                                EdgeTime{n, Direction::EAST, t + 1},
-                                                EdgeTime{n, Direction::WEST, t + 1},
-                                                EdgeTime{n, Direction::WAIT, t + 1}});
+            const auto n = a1_et2.n;
+            const auto t = a1_et2.t;
+            if (n != a2_et1.n)
+            {
+                // One timestep before.
+                if (t > 0)
+                {
+                    auto& candidate = candidates.emplace_back();
+                    candidate.a1_et2 = a1_et2;
+                    candidate.a1_et2_vals = a1_et2_vals;
+
+                    candidate.a2_et23456s = {EdgeTime{map.get_south(n), Direction::NORTH, t - 1},
+                                             EdgeTime{map.get_north(n), Direction::SOUTH, t - 1},
+                                             EdgeTime{map.get_west(n), Direction::EAST, t - 1},
+                                             EdgeTime{map.get_east(n), Direction::WEST, t - 1},
+                                             EdgeTime{map.get_wait(n), Direction::WAIT, t - 1}};
+                    for (Int idx = 0; idx < 5; ++idx)
+                    {
+                        auto it = fractional_edges_vec.find(candidate.a2_et23456s[idx]);
+                        candidate.a2_et23456_vals[idx] = (it != fractional_edges_vec.end() ? it->second : nullptr);
+                    }
+                }
+
+                // Same timestep.
+                {
+                    auto& candidate = candidates.emplace_back();
+                    candidate.a1_et2 = a1_et2;
+                    candidate.a1_et2_vals = a1_et2_vals;
+
+                    candidate.a2_et23456s = {EdgeTime{n, Direction::NORTH, t},
+                                             EdgeTime{n, Direction::SOUTH, t},
+                                             EdgeTime{n, Direction::EAST, t},
+                                             EdgeTime{n, Direction::WEST, t},
+                                             EdgeTime{n, Direction::WAIT, t}};
+                    for (Int idx = 0; idx < 5; ++idx)
+                    {
+                        auto it = fractional_edges_vec.find(candidate.a2_et23456s[idx]);
+                        candidate.a2_et23456_vals[idx] = (it != fractional_edges_vec.end() ? it->second : nullptr);
+                    }
+                }
+            }
+
+            if (n != map.get_destination(a2_et1))
+            {
+                // Same timestep.
+                {
+                    auto& candidate = candidates.emplace_back();
+                    candidate.a1_et2 = a1_et2;
+                    candidate.a1_et2_vals = a1_et2_vals;
+
+                    candidate.a2_et23456s = {EdgeTime{map.get_south(n), Direction::NORTH, t},
+                                             EdgeTime{map.get_north(n), Direction::SOUTH, t},
+                                             EdgeTime{map.get_west(n), Direction::EAST, t},
+                                             EdgeTime{map.get_east(n), Direction::WEST, t},
+                                             EdgeTime{map.get_wait(n), Direction::WAIT, t}};
+                    for (Int idx = 0; idx < 5; ++idx)
+                    {
+                        auto it = fractional_edges_vec.find(candidate.a2_et23456s[idx]);
+                        candidate.a2_et23456_vals[idx] = (it != fractional_edges_vec.end() ? it->second : nullptr);
+                    }
+                }
+
+                // One timestep after.
+                {
+                    auto& candidate = candidates.emplace_back();
+                    candidate.a1_et2 = a1_et2;
+                    candidate.a1_et2_vals = a1_et2_vals;
+
+                    candidate.a2_et23456s = {EdgeTime{n, Direction::NORTH, t + 1},
+                                             EdgeTime{n, Direction::SOUTH, t + 1},
+                                             EdgeTime{n, Direction::EAST, t + 1},
+                                             EdgeTime{n, Direction::WEST, t + 1},
+                                             EdgeTime{n, Direction::WAIT, t + 1}};
+                    for (Int idx = 0; idx < 5; ++idx)
+                    {
+                        auto it = fractional_edges_vec.find(candidate.a2_et23456s[idx]);
+                        candidate.a2_et23456_vals[idx] = (it != fractional_edges_vec.end() ? it->second : nullptr);
+                    }
+                }
+            }
+        }
     }
-
-    return a2_et23456;
+    return candidates;
 }
 
 // Separator
@@ -198,148 +357,151 @@ SCIP_RETCODE agentwaitedge_conflicts_separate(
     // Skip this separator if an earlier separator found cuts.
     auto& found_cuts = SCIPprobdataGetFoundCutsIndicator(probdata);
     if (found_cuts)
+    {
         return SCIP_OKAY;
+    }
 
     // Get the edges fractionally used by each agent.
-    const auto& agent_edges = SCIPprobdataGetAgentFractionalEdgesNoWaits(probdata);
-    const auto& agent_edges_with_waits = SCIPprobdataGetAgentFractionalEdges(probdata);
+    const auto& fractional_edges_vec = SCIPprobdataGetFractionalEdgesVec(probdata);
 
     // Find conflicts.
-    for (Agent a1 = 0; a1 < N; ++a1)
-    {
-        // Get the edges of agent 1.
-        const auto& agent_edges_a1 = agent_edges[a1];
-        const auto& agent_edges_with_waits_a1 = agent_edges_with_waits[a1];
-
-        // Loop through the first edge of agent 1.
-        for (const auto [a1_et1, a1_et1_val] : agent_edges_a1)
+    Vector<AgentWaitEdgeConflictData> cuts;
+    for (const auto& [a1_et1, a1_et1_vals] : fractional_edges_vec)
+        if (a1_et1.d != Direction::WAIT)
         {
-            debug_assert(a1_et1.d != Direction::WAIT);
-
             // Get the first edge of agent 2.
             const EdgeTime a2_et1{map.get_opposite_edge(a1_et1.et.e), a1_et1.t};
+            auto a2_et1_it = fractional_edges_vec.find(a2_et1);
+            if (a2_et1_it == fractional_edges_vec.end())
+            {
+                continue;
+            }
+            const auto& a2_et1_vals = a2_et1_it->second;
 
-            // Loop through the second agent.
-            for (Agent a2 = 0; a2 < N; ++a2)
-                if (a2 != a1)
+            // Loop through the cut candidates.
+            const auto candidates = get_candidates(a1_et1, a2_et1, fractional_edges_vec, map);
+            for (const auto& [a1_et2, a1_et2_vals, a2_et23456s, a2_et23456_vals] : candidates)
+                for (Agent a1 = 0; a1 < N; ++a1)
                 {
-                    // Get the edges of agent 2.
-                    const auto& agent_edges_a2 = agent_edges[a2];
-                    const auto& agent_edges_with_waits_a2 = agent_edges_with_waits[a2];
-
-                    // Get the values of the first edge of agent 2.
-                    const auto a2_et1_it = agent_edges_a2.find(a2_et1);
-                    if (a2_et1_it == agent_edges_a2.end())
+                    const auto a1_et1_val = a1_et1_vals[a1];
+                    const auto a1_et2_val = a1_et2_vals[a1];
+                    if (a1_et1_val > 0 && a1_et2_val > 0)
                     {
-                        continue;
-                    }
-                    const auto a2_et1_val = a2_et1_it->second;
-
-                    // Loop through the second edge of agent 1.
-                    const Array<EdgeTime, 2> a1_et2s{EdgeTime{a1_et1.n, Direction::WAIT, a1_et1.t},
-                                                     EdgeTime{map.get_destination(a1_et1), Direction::WAIT, a1_et1.t}};
-                    for (const auto a1_et2 : a1_et2s)
-                    {
-                        // Get the values of the second edge of agent 1.
-                        const auto a1_et2_it = agent_edges_with_waits_a1.find(a1_et2);
-                        if (a1_et2_it == agent_edges_with_waits_a1.end())
-                        {
-                            continue;
-                        }
-                        const auto a1_et2_val = a1_et2_it->second;
-
-                        // Get the remaining edges of agent 2.
-                        for (const auto [a2_et2, a2_et3, a2_et4, a2_et5, a2_et6] : get_a2_et23456(a1_et2, a2_et1, map))
-                        {
-                            // Get the values of the edges of agent 2.
-                            const auto a2_et2_it = agent_edges_with_waits_a2.find(a2_et2);
-                            const auto a2_et3_it = agent_edges_with_waits_a2.find(a2_et3);
-                            const auto a2_et4_it = agent_edges_with_waits_a2.find(a2_et4);
-                            const auto a2_et5_it = agent_edges_with_waits_a2.find(a2_et5);
-                            const auto a2_et6_it = agent_edges_with_waits_a2.find(a2_et6);
-                            const auto a2_et2_val = a2_et2_it != agent_edges_with_waits_a2.end() ? a2_et2_it->second : 0;
-                            const auto a2_et3_val = a2_et3_it != agent_edges_with_waits_a2.end() ? a2_et3_it->second : 0;
-                            const auto a2_et4_val = a2_et4_it != agent_edges_with_waits_a2.end() ? a2_et4_it->second : 0;
-                            const auto a2_et5_val = a2_et5_it != agent_edges_with_waits_a2.end() ? a2_et5_it->second : 0;
-                            const auto a2_et6_val = a2_et6_it != agent_edges_with_waits_a2.end() ? a2_et6_it->second : 0;
-
-                            // Create the cut if violated.
-                            const auto lhs = a1_et1_val + a1_et2_val +
-                                a2_et1_val + a2_et2_val + a2_et3_val + a2_et4_val + a2_et5_val + a2_et6_val;
-                            if (SCIPisSumGT(scip, lhs, 1.0 + CUT_VIOLATION))
+                        for (Agent a2 = 0; a2 < N; ++a2)
+                            if (a2 != a1)
                             {
-                                // Print.
-#ifdef PRINT_DEBUG
+                                const auto a2_et1_val = a2_et1_vals[a2];
+                                if (a2_et1_val > 0)
                                 {
-                                    const auto [a1_et1_x1, a1_et1_y1] = map.get_xy(a1_et1.n);
-                                    const auto [a1_et1_x2, a1_et1_y2] = map.get_destination_xy(a1_et1);
+                                    // Get the values of the remaining edges of agent 2.
+                                    const auto a2_et2_val = a2_et23456_vals[0] ? a2_et23456_vals[0][a2] : 0.0;
+                                    const auto a2_et3_val = a2_et23456_vals[1] ? a2_et23456_vals[1][a2] : 0.0;
+                                    const auto a2_et4_val = a2_et23456_vals[2] ? a2_et23456_vals[2][a2] : 0.0;
+                                    const auto a2_et5_val = a2_et23456_vals[3] ? a2_et23456_vals[3][a2] : 0.0;
+                                    const auto a2_et6_val = a2_et23456_vals[4] ? a2_et23456_vals[4][a2] : 0.0;
 
-                                    const auto [a1_et2_x1, a1_et2_y1] = map.get_xy(a1_et2.n);
-                                    const auto [a1_et2_x2, a1_et2_y2] = map.get_destination_xy(a1_et2);
-
-                                    const auto [a2_et1_x1, a2_et1_y1] = map.get_xy(a2_et1.n);
-                                    const auto [a2_et1_x2, a2_et1_y2] = map.get_destination_xy(a2_et1);
-
-                                    const auto [a2_et2_x1, a2_et2_y1] = map.get_xy(a2_et2.n);
-                                    const auto [a2_et2_x2, a2_et2_y2] = map.get_destination_xy(a2_et2);
-
-                                    const auto [a2_et3_x1, a2_et3_y1] = map.get_xy(a2_et3.n);
-                                    const auto [a2_et3_x2, a2_et3_y2] = map.get_destination_xy(a2_et3);
-
-                                    const auto [a2_et4_x1, a2_et4_y1] = map.get_xy(a2_et4.n);
-                                    const auto [a2_et4_x2, a2_et4_y2] = map.get_destination_xy(a2_et4);
-
-                                    const auto [a2_et5_x1, a2_et5_y1] = map.get_xy(a2_et5.n);
-                                    const auto [a2_et5_x2, a2_et5_y2] = map.get_destination_xy(a2_et5);
-
-                                    const auto [a2_et6_x1, a2_et6_y1] = map.get_xy(a2_et6.n);
-                                    const auto [a2_et6_x2, a2_et6_y2] = map.get_destination_xy(a2_et6);
-
-                                    debugln("   Creating agent wait-edge conflict cut on edges "
-                                            "(({},{}),({},{}),{}) and (({},{}),({},{}),{}) for agent {} and "
-                                            "(({},{}),({},{}),{}), (({},{}),({},{}),{}), "
-                                            "(({},{}),({},{}),{}), (({},{}),({},{}),{}), "
-                                            "(({},{}),({},{}),{}), (({},{}),({},{}),{}) for agent {} "
-                                            "with value {} in "
-                                            "branch-and-bound node {}",
-                                            a1_et1_x1, a1_et1_y1, a1_et1_x2, a1_et1_y2, a1_et1.t,
-                                            a1_et2_x1, a1_et2_y1, a1_et2_x2, a1_et2_y2, a1_et2.t,
-                                            a1,
-                                            a2_et1_x1, a2_et1_y1, a2_et1_x2, a2_et1_y2, a2_et1.t,
-                                            a2_et2_x1, a2_et2_y1, a2_et2_x2, a2_et2_y2, a2_et2.t,
-                                            a2_et3_x1, a2_et3_y1, a2_et3_x2, a2_et3_y2, a2_et3.t,
-                                            a2_et4_x1, a2_et4_y1, a2_et4_x2, a2_et4_y2, a2_et4.t,
-                                            a2_et5_x1, a2_et5_y1, a2_et5_x2, a2_et5_y2, a2_et5.t,
-                                            a2_et6_x1, a2_et6_y1, a2_et6_x2, a2_et6_y2, a2_et6.t,
-                                            a2,
-                                            lhs,
-                                            SCIPnodeGetNumber(SCIPgetCurrentNode(scip)));
+                                    // Store a cut if violated.
+                                    const auto lhs = a1_et1_val + a1_et2_val +
+                                                     a2_et1_val + a2_et2_val + a2_et3_val + a2_et4_val + a2_et5_val +
+                                                     a2_et6_val;
+                                    if (SCIPisSumGT(scip, lhs, 1.0 + CUT_VIOLATION))
+                                    {
+                                        auto& cut = cuts.emplace_back();
+                                        cut.lhs = lhs;
+                                        cut.a1 = a1;
+                                        cut.a2 = a2;
+                                        cut.a1_et1 = a1_et1;
+                                        cut.a1_et2 = a1_et2;
+                                        cut.a2_et1 = a2_et1;
+                                        cut.a2_et23456s = a2_et23456s;
+                                    }
                                 }
-#endif
-
-                                // Create cut.
-                                SCIP_CALL(agentwaitedge_conflicts_create_cut(scip,
-                                                                             probdata,
-                                                                             sepa,
-                                                                             a1,
-                                                                             a2,
-                                                                             a1_et1,
-                                                                             a1_et2,
-                                                                             a2_et1,
-                                                                             a2_et2,
-                                                                             a2_et3,
-                                                                             a2_et4,
-                                                                             a2_et5,
-                                                                             a2_et6,
-                                                                             result));
-                                found_cuts = true;
-                                goto NEXT_AGENT;
                             }
-                        }
                     }
                 }
         }
-        NEXT_AGENT:;
+
+    // Create the most violated cuts.
+    Vector<Int> agent_nb_cuts(N * N);
+    std::sort(cuts.begin(),
+              cuts.end(),
+              [](const AgentWaitEdgeConflictData& a, const AgentWaitEdgeConflictData& b) { return a.lhs > b.lhs; });
+    for (const auto& cut: cuts)
+    {
+        const auto& [lhs, a1, a2, a1_et1, a1_et2, a2_et1, a2_et23456s] = cut;
+        auto& nb_cuts = agent_nb_cuts[MATRIX(std::min(a1, a2), std::max(a1, a2))];
+        if (nb_cuts < 1)
+        {
+            // Get the remaining edges of agent 2.
+            const auto& a2_et2 = a2_et23456s[0];
+            const auto& a2_et3 = a2_et23456s[1];
+            const auto& a2_et4 = a2_et23456s[2];
+            const auto& a2_et5 = a2_et23456s[3];
+            const auto& a2_et6 = a2_et23456s[4];
+
+            // Print.
+#ifdef PRINT_DEBUG
+            {
+                const auto [a1_et1_x1, a1_et1_y1] = map.get_xy(a1_et1.n);
+                const auto [a1_et1_x2, a1_et1_y2] = map.get_destination_xy(a1_et1);
+
+                const auto [a1_et2_x1, a1_et2_y1] = map.get_xy(a1_et2.n);
+                const auto [a1_et2_x2, a1_et2_y2] = map.get_destination_xy(a1_et2);
+
+                const auto [a2_et1_x1, a2_et1_y1] = map.get_xy(a2_et1.n);
+                const auto [a2_et1_x2, a2_et1_y2] = map.get_destination_xy(a2_et1);
+
+                const auto [a2_et2_x1, a2_et2_y1] = map.get_xy(a2_et2.n);
+                const auto [a2_et2_x2, a2_et2_y2] = map.get_destination_xy(a2_et2);
+
+                const auto [a2_et3_x1, a2_et3_y1] = map.get_xy(a2_et3.n);
+                const auto [a2_et3_x2, a2_et3_y2] = map.get_destination_xy(a2_et3);
+
+                const auto [a2_et4_x1, a2_et4_y1] = map.get_xy(a2_et4.n);
+                const auto [a2_et4_x2, a2_et4_y2] = map.get_destination_xy(a2_et4);
+
+                const auto [a2_et5_x1, a2_et5_y1] = map.get_xy(a2_et5.n);
+                const auto [a2_et5_x2, a2_et5_y2] = map.get_destination_xy(a2_et5);
+
+                const auto [a2_et6_x1, a2_et6_y1] = map.get_xy(a2_et6.n);
+                const auto [a2_et6_x2, a2_et6_y2] = map.get_destination_xy(a2_et6);
+
+                debugln("   Creating agent wait-edge conflict cut on edges "
+                        "(({},{}),({},{}),{}) and (({},{}),({},{}),{}) for agent {} and "
+                        "(({},{}),({},{}),{}), (({},{}),({},{}),{}), (({},{}),({},{}),{}), (({},{}),({},{}),{}), "
+                        "(({},{}),({},{}),{}), (({},{}),({},{}),{}) for agent {} with value {} in "
+                        "branch-and-bound node {}",
+                        a1_et1_x1, a1_et1_y1, a1_et1_x2, a1_et1_y2, a1_et1.t,
+                        a1_et2_x1, a1_et2_y1, a1_et2_x2, a1_et2_y2, a1_et2.t,
+                        a1,
+                        a2_et1_x1, a2_et1_y1, a2_et1_x2, a2_et1_y2, a2_et1.t,
+                        a2_et2_x1, a2_et2_y1, a2_et2_x2, a2_et2_y2, a2_et2.t,
+                        a2_et3_x1, a2_et3_y1, a2_et3_x2, a2_et3_y2, a2_et3.t,
+                        a2_et4_x1, a2_et4_y1, a2_et4_x2, a2_et4_y2, a2_et4.t,
+                        a2_et5_x1, a2_et5_y1, a2_et5_x2, a2_et5_y2, a2_et5.t,
+                        a2_et6_x1, a2_et6_y1, a2_et6_x2, a2_et6_y2, a2_et6.t,
+                        a2,
+                        lhs,
+                        SCIPnodeGetNumber(SCIPgetCurrentNode(scip)));
+            }
+#endif
+
+            // Create cut.
+            SCIP_CALL(agentwaitedge_conflicts_create_cut(scip,
+                                                        probdata,
+                                                        sepa,
+                                                        a1,
+                                                        a2,
+                                                        a1_et1,
+                                                        a1_et2,
+                                                        a2_et1,
+                                                        a2_et2,
+                                                        a2_et3,
+                                                        a2_et4,
+                                                        a2_et5,
+                                                        a2_et6,
+                                                        result));
+        }
     }
 
     // Done.

@@ -19,7 +19,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #ifdef USE_CLIQUE_CONFLICTS
 
-//#define PRINT_DEBUG
+// #define PRINT_DEBUG
 
 #include "Separator_CliqueConflicts.h"
 #include "ProblemData.h"
@@ -424,7 +424,9 @@ SCIP_RETCODE clique_conflicts_separate(
     // Skip this separator if an earlier separator found cuts.
     auto& found_cuts = SCIPprobdataGetFoundCutsIndicator(probdata);
     if (found_cuts)
+    {
         return SCIP_OKAY;
+    }
 
     // Get variables.
     const auto& vars = SCIPprobdataGetVars(probdata);

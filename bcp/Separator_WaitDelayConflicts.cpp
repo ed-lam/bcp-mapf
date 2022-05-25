@@ -19,7 +19,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #ifdef USE_WAITDELAY_CONFLICTS
 
-//#define PRINT_DEBUG
+// #define PRINT_DEBUG
 
 #include "Separator_WaitDelayConflicts.h"
 #include "ProblemData.h"
@@ -109,27 +109,29 @@ SCIP_RETCODE waitdelay_conflicts_separate(
     // Skip this separator if an earlier separator found cuts.
     auto& found_cuts = SCIPprobdataGetFoundCutsIndicator(probdata);
     if (found_cuts)
+    {
         return SCIP_OKAY;
+    }
 
     // Get the edges fractionally used by each agent.
-    const auto& agent_edges = SCIPprobdataGetAgentFractionalEdges(probdata);
+    const auto& fractional_edges = SCIPprobdataGetFractionalEdges(probdata);
 
     // Find conflicts.
     Vector<WaitDelayConflictData> cuts;
     for (Agent a1 = 0; a1 < N; ++a1)
     {
         // Get the edges of agent 1.
-        const auto& agent_edges_a1 = agent_edges[a1];
+        const auto& fractional_edges_a1 = fractional_edges[a1];
 
         // Loop through the second agent.
         for (Agent a2 = 0; a2 < N; ++a2)
             if (a2 != a1)
             {
                 // Get the edges of agent 2.
-                const auto& agent_edges_a2 = agent_edges[a2];
+                const auto& fractional_edges_a2 = fractional_edges[a2];
 
                 // Loop through all waits of agent 2.
-                for (const auto [a2_et, a2_et_val] : agent_edges_a2)
+                for (const auto& [a2_et, a2_et_val] : fractional_edges_a2)
                     if (a2_et.d == Direction::WAIT && a2_et.t > 0)
                     {
                         // Store the edges for a1 being at n at time t.
@@ -152,8 +154,8 @@ SCIP_RETCODE waitdelay_conflicts_separate(
                         SCIP_Real lhs = a2_et_val;
                         for (const auto et : a1_ets)
                         {
-                            auto it = agent_edges_a1.find(et);
-                            if (it != agent_edges_a1.end())
+                            auto it = fractional_edges_a1.find(et);
+                            if (it != fractional_edges_a1.end())
                             {
                                 lhs += it->second;
                             }
@@ -162,10 +164,10 @@ SCIP_RETCODE waitdelay_conflicts_separate(
                         // Store a cut if violated.
                         if (SCIPisSumGT(scip, lhs, 1.0 + CUT_VIOLATION))
                         {
-                            cuts.emplace_back(WaitDelayConflictData{lhs, 
-                                                                    a1, 
-                                                                    a2, 
-                                                                    a1_ets, 
+                            cuts.emplace_back(WaitDelayConflictData{lhs,
+                                                                    a1,
+                                                                    a2,
+                                                                    a1_ets,
                                                                     a2_et
 #ifdef DEBUG
                                                                   , nt
@@ -184,7 +186,7 @@ SCIP_RETCODE waitdelay_conflicts_separate(
     for (const auto& cut : cuts)
     {
         const auto& [lhs,
-                     a1, 
+                     a1,
                      a2,
                      a1_ets,
                      a2_et
@@ -200,7 +202,7 @@ SCIP_RETCODE waitdelay_conflicts_separate(
                     "branch-and-bound node {}",
                     map.get_x(nt.n), map.get_y(nt.n), nt.t,
                     a1, a2,
-                    lhs, 
+                    lhs,
                     SCIPnodeGetNumber(SCIPgetCurrentNode(scip)));
 
             // Create cut.

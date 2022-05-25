@@ -116,10 +116,13 @@ struct SCIP_ProbData
     Vector<SCIP_VAR*> dummy_vars;                                               // Array of dummy variables
     Vector<Pair<SCIP_VAR*, SCIP_Real>> vars;                                    // Array of variables for all agents
     Vector<Vector<Pair<SCIP_VAR*, SCIP_Real>>> agent_vars;                      // Array of variables for each agent
-    Vector<HashTable<NodeTime, SCIP_Real>> fractional_vertices;                 // Fractional vertices
-    Vector<HashTable<EdgeTime, SCIP_Real>> fractional_edges;                    // Fractional edges
-    Vector<HashTable<EdgeTime, SCIP_Real>> fractional_edges_no_waits;           // Fractional edges without waits
-    HashTable<EdgeTime, Vector<SCIP_Real>> fractional_edges_vec;                // Fractional edges by edge-time
+#if defined(USE_THREEVERTEX_CONFLICTS) || defined(USE_VERTEX_FOUREDGE_CONFLICTS)
+    Vector<HashTable<NodeTime, SCIP_Real>> fractional_vertices;                 // Vertices with fractional values
+#endif
+    Vector<HashTable<EdgeTime, SCIP_Real>> fractional_edges;                    // Edges with fractional values
+    Vector<HashTable<EdgeTime, SCIP_Real>> fractional_move_edges;               // Non-wait edges with fractional values
+    Vector<HashTable<EdgeTime, SCIP_Real>> positive_move_edges;                 // Non-wait edges with positive value
+    HashTable<EdgeTime, SCIP_Real*> fractional_edges_vec;                       // Edges with fractional values organised by edge
 
     // Constraints
     Vector<SCIP_CONS*> agent_part;                                              // Agent partition constraints
@@ -204,15 +207,26 @@ SCIP_DECL_PROBTRANS(probtrans)
                                 (*targetdata)->dummy_vars.data()));
 
     // Allocate memory for database of fractional vertices and edges.
+#if defined(USE_THREEVERTEX_CONFLICTS) || defined(USE_VERTEX_FOUREDGE_CONFLICTS)
     (*targetdata)->fractional_vertices.resize(N);
+#endif
     (*targetdata)->fractional_edges.resize(N);
-    (*targetdata)->fractional_edges_no_waits.resize(N);
-//    for (Agent a = 0; a < N; ++a)
-//    {
-//        (*targetdata)->fractional_vertices[a].reserve(1);
-//        (*targetdata)->fractional_edges[a].reserve(1);
-//        (*targetdata)->fractional_edges_no_waits[a].reserve(1);
-//    }
+    (*targetdata)->fractional_move_edges.resize(N);
+    (*targetdata)->positive_move_edges.resize(N);
+    {
+        const auto& map = (*targetdata)->instance->map;
+        const auto reserve_size = sqrt(map.width() * map.height()) * 5;
+        for (Agent a = 0; a < N; ++a)
+        {
+#if defined(USE_THREEVERTEX_CONFLICTS) || defined(USE_VERTEX_FOUREDGE_CONFLICTS)
+            (*targetdata)->fractional_vertices[a].reserve(reserve_size);
+#endif
+            (*targetdata)->fractional_edges[a].reserve(reserve_size);
+            (*targetdata)->fractional_move_edges[a].reserve(reserve_size);
+            (*targetdata)->positive_move_edges[a].reserve(reserve_size);
+        }
+        (*targetdata)->fractional_edges_vec.reserve(reserve_size * N);
+    }
 
     // Copy agent partition constraints.
     debug_assert(static_cast<Agent>(sourcedata->agent_part.size()) == N);
@@ -356,6 +370,13 @@ SCIP_RETCODE probdataFree(
         auto ptr = cut.begin();
         const auto size = cut.size();
         SCIPfreeBlockMemoryArray(scip, &ptr, size);
+    }
+
+    // Release fractional edges.
+    const auto N = SCIPprobdataGetN(*probdata);
+    for (auto& [_, ptr] : (*probdata)->fractional_edges_vec)
+    {
+        SCIPfreeBlockMemoryArray(scip, &ptr, N);
     }
 
     // Destroy object.
@@ -1550,16 +1571,18 @@ Vector<Vector<Pair<NodeTime, SCIP_ROW*>>>& SCIPprobdataGetCrossingAgentGoalConfl
 #endif
 
 // Get the vertices fractionally used by each agent
-const Vector<HashTable<NodeTime, SCIP_Real>>& SCIPprobdataGetAgentFractionalVertices(
+#if defined(USE_THREEVERTEX_CONFLICTS) || defined(USE_VERTEX_FOUREDGE_CONFLICTS)
+const Vector<HashTable<NodeTime, SCIP_Real>>& SCIPprobdataGetFractionalVertices(
     SCIP_ProbData* probdata    // Problem data
 )
 {
     debug_assert(probdata);
     return probdata->fractional_vertices;
 }
+#endif
 
 // Get the edges fractionally used by each agent
-const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetAgentFractionalEdges(
+const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetFractionalEdges(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1568,22 +1591,32 @@ const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetAgentFractionalEdge
 }
 
 // Get the non-wait edges fractionally used by each agent
-const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetAgentFractionalEdgesNoWaits(
+const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetFractionalMoveEdges(
     SCIP_ProbData* probdata    // Problem data
 )
 {
     debug_assert(probdata);
-    return probdata->fractional_edges_no_waits;
+    return probdata->fractional_move_edges;
 }
 
-// Get the edges fractionally used by each agent grouped by edge-time
-const HashTable<EdgeTime, Vector<SCIP_Real>>& SCIPprobdataGetAgentFractionalEdgesVec(
+// Get the non-wait edges used by each agent
+const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetPositiveMoveEdges(
+    SCIP_ProbData* probdata    // Problem data
+)
+{
+    debug_assert(probdata);
+    return probdata->positive_move_edges;
+}
+
+// Get the edges fractionally used by each agent, grouped by edge-time
+const HashTable<EdgeTime, SCIP_Real*>& SCIPprobdataGetFractionalEdgesVec(
     SCIP_ProbData* probdata    // Problem data
 )
 {
     debug_assert(probdata);
     return probdata->fractional_edges_vec;
 }
+
 // Update the database of fractionally used vertices and edges
 void update_fractional_vertices_and_edges(
     SCIP* scip    // SCIP
@@ -1619,138 +1652,169 @@ void update_fractional_vertices_and_edges(
         }
     }
 
-    // Get vertices of each agent.
-    auto& fractional_vertices = probdata->fractional_vertices;
-    auto& fractional_edges = probdata->fractional_edges;
-    auto& fractional_edges_no_waits = probdata->fractional_edges_no_waits;
+    // Free allocations.
     auto& fractional_edges_vec = probdata->fractional_edges_vec;
+    for (auto& [_, ptr] : fractional_edges_vec)
+    {
+        SCIPfreeBlockMemoryArray(scip, &ptr, N);
+    }
     fractional_edges_vec.clear();
+
+    // Get vertices of each agent.
+#if defined(USE_THREEVERTEX_CONFLICTS) || defined(USE_VERTEX_FOUREDGE_CONFLICTS)
+    auto& fractional_vertices = probdata->fractional_vertices;
+#endif
+    auto& fractional_edges = probdata->fractional_edges;
+    auto& fractional_move_edges = probdata->fractional_move_edges;
+    auto& positive_move_edges = probdata->positive_move_edges;
     for (Agent a = 0; a < N; ++a)
     {
         // Clear data from previous iteration.
-        auto& agent_vertices = fractional_vertices[a];
-        agent_vertices.clear();
-        // agent_vertices.reserve(sqrt(map.width() * map.height()) * 15);
+#if defined(USE_THREEVERTEX_CONFLICTS) || defined(USE_VERTEX_FOUREDGE_CONFLICTS)
+        auto& agent_fractional_vertices = fractional_vertices[a];
+        agent_fractional_vertices.clear();
+#endif
 
         // Clear data from previous iteration.
-        auto& agent_edges = fractional_edges[a];
-        agent_edges.clear();
-        // agent_edges.reserve(sqrt(map.width() * map.height()) * 20);
+        auto& agent_fractional_edges = fractional_edges[a];
+        agent_fractional_edges.clear();
 
         // Clear data from previous iteration.
-        auto& agent_edges_no_waits = fractional_edges_no_waits[a];
-        agent_edges_no_waits.clear();
-        // agent_edges_no_waits.reserve(sqrt(map.width() * map.height()) * 20);
+        auto& agent_fractional_move_edges = fractional_move_edges[a];
+        agent_fractional_move_edges.clear();
+
+        // Clear data from previous iteration.
+        auto& agent_positive_move_edges = positive_move_edges[a];
+        agent_positive_move_edges.clear();
 
         // Calculate the number of times a vertex is used by summing the columns.
         for (auto& [var, var_val] : agent_vars[a])
         {
             // Get the path.
             debug_assert(var);
-            auto vardata = SCIPvarGetData(var);
+            const auto vardata = SCIPvarGetData(var);
             const auto path_length = SCIPvardataGetPathLength(vardata);
             const auto path = SCIPvardataGetPath(vardata);
 
-            // Get the variable value.
+            // Proceed for paths with positive value.
             var_val = SCIPgetSolVal(scip, nullptr, var);
-
-            // Store the vertices and edges of the path.
-            if (!SCIPisIntegral(scip, var_val))
+            if (SCIPisPositive(scip, var_val))
             {
-                // Store everything except the last vertex.
-                Time t = 0;
-                for (; t < path_length - 1; ++t)
-                {
-                    // Store the vertex.
-                    {
-                        const NodeTime nt{path[t].n, t};
-                        agent_vertices[nt] += var_val;
-                    }
-
-                    // Store the edge.
-                    {
-                        const EdgeTime et{path[t], t};
-                        agent_edges[et] += var_val;
-
-                        auto [it, _] = fractional_edges_vec.emplace(std::piecewise_construct,
-                                                                    std::forward_as_tuple(et),
-                                                                    std::forward_as_tuple(N));
-                        it->second[a] += var_val;
-                    }
-
-                    // Store the edge if not a wait edge.
+                // Store the positive vertices.
+                for (Time t = 0; t < path_length - 1; ++t)
                     if (path[t].d != Direction::WAIT)
                     {
                         const EdgeTime et{path[t], t};
-                        agent_edges_no_waits[et] += var_val;
+                        agent_positive_move_edges[et] += var_val;
                     }
-                }
 
-                // Store the edges after the agent reaches its goal.
-                const auto n = path[t].n;
-                for (; t < makespan - 1; ++t)
+                // Store the fractional vertices and edges.
+                if (!SCIPisIntegral(scip, var_val))
                 {
-                    // Store the vertex.
+                    // Store everything except the last vertex.
+                    Time t = 0;
+                    for (; t < path_length - 1; ++t)
+                    {
+                        // Store the vertex.
+#if defined(USE_THREEVERTEX_CONFLICTS) || defined(USE_VERTEX_FOUREDGE_CONFLICTS)
+                        {
+                            const NodeTime nt{path[t].n, t};
+                            agent_fractional_vertices[nt] += var_val;
+                        }
+#endif
+
+                        // Store the edge.
+                        {
+                            const EdgeTime et{path[t], t};
+                            agent_fractional_edges[et] += var_val;
+                        }
+
+                        // Store the edge if not a wait edge.
+                        if (path[t].d != Direction::WAIT)
+                        {
+                            const EdgeTime et{path[t], t};
+                            agent_fractional_move_edges[et] += var_val;
+                        }
+                    }
+
+                    // Store the edges after the agent reaches its goal.
+                    const auto n = path[t].n;
+                    for (; t < makespan - 1; ++t)
+                    {
+                        // Store the vertex.
+#if defined(USE_THREEVERTEX_CONFLICTS) || defined(USE_VERTEX_FOUREDGE_CONFLICTS)
+                        {
+                            const NodeTime nt{n, t};
+                            agent_fractional_vertices[nt] += var_val;
+                        }
+#endif
+
+                        // Store the edge.
+                        {
+                            const EdgeTime et{n, Direction::WAIT, t};
+                            agent_fractional_edges[et] += var_val;
+                        }
+                    }
+
+                    // Store the last vertex.
+#if defined(USE_THREEVERTEX_CONFLICTS) || defined(USE_VERTEX_FOUREDGE_CONFLICTS)
                     {
                         const NodeTime nt{n, t};
-                        agent_vertices[nt] += var_val;
+                        agent_fractional_vertices[nt] += var_val;
                     }
-
-                    // Store the edge.
-                    {
-                        const EdgeTime et{n, Direction::WAIT, t};
-                        agent_edges[et] += var_val;
-
-                        auto [it, _] = fractional_edges_vec.emplace(std::piecewise_construct,
-                                                                    std::forward_as_tuple(et),
-                                                                    std::forward_as_tuple(N));
-                        it->second[a] += var_val;
-                    }
-                }
-
-                // Store the last vertex.
-                {
-                    const NodeTime nt{n, t};
-                    agent_vertices[nt] += var_val;
+#endif
                 }
             }
         }
 
         // Delete vertices with integer values.
-        for (auto it = agent_vertices.begin(); it != agent_vertices.end();)
+#if defined(USE_THREEVERTEX_CONFLICTS) || defined(USE_VERTEX_FOUREDGE_CONFLICTS)
+        for (auto it = agent_fractional_vertices.begin(); it != agent_fractional_vertices.end();)
         {
             const auto& [nt, val] = *it;
             if (SCIPisIntegral(scip, val))
             {
-                it = agent_vertices.erase(it);
+                it = agent_fractional_vertices.erase(it);
             }
             else
             {
                 ++it;
             }
         }
+#endif
 
         // Delete edges with integer values.
-        for (auto it = agent_edges.begin(); it != agent_edges.end();)
+        for (auto it = agent_fractional_edges.begin(); it != agent_fractional_edges.end();)
         {
             const auto& [et, val] = *it;
             if (SCIPisIntegral(scip, val))
             {
-                it = agent_edges.erase(it);
+                it = agent_fractional_edges.erase(it);
             }
             else
             {
+                // Store the edge in another place, organised by edge.
+                {
+                    auto [it, success] = fractional_edges_vec.try_emplace(et, nullptr);
+                    if (success)
+                    {
+                        scip_assert(SCIPallocClearBlockMemoryArray(scip, &it->second, N));
+                    }
+                    it->second[a] += val;
+                }
+
+                // Advance to the next edge.
                 ++it;
             }
         }
 
-        // Delete non-wait edges with integer values.
-        for (auto it = agent_edges_no_waits.begin(); it != agent_edges_no_waits.end();)
+        // Delete move edges with integer values.
+        for (auto it = agent_fractional_move_edges.begin(); it != agent_fractional_move_edges.end();)
         {
             const auto& [et, val] = *it;
             if (SCIPisIntegral(scip, val))
             {
-                it = agent_edges_no_waits.erase(it);
+                it = agent_fractional_move_edges.erase(it);
             }
             else
             {
@@ -1759,26 +1823,28 @@ void update_fractional_vertices_and_edges(
         }
 
         // Print.
+#if defined(USE_THREEVERTEX_CONFLICTS) || defined(USE_VERTEX_FOUREDGE_CONFLICTS)
 #ifdef PRINT_DEBUG
-        if (!agent_vertices.empty())
+        if (!agent_fractional_vertices.empty())
         {
             println("   Fractional vertices for agent {}:", a);
             const auto& map = SCIPprobdataGetMap(probdata);
-            for (const auto [nt, val] : agent_vertices)
+            for (const auto [nt, val] : agent_fractional_vertices)
             {
                 const auto [x, y] = map.get_xy(nt.n);
                 println("      (({},{}),{}) val {:.4f}", x, y, nt.t, val);
             }
         }
 #endif
+#endif
 
         // Print.
 #ifdef PRINT_DEBUG
-        if (!agent_edges.empty())
+        if (!agent_fractional_edges.empty())
         {
             println("   Fractional edges used by agent {}:", a);
             const auto& map = SCIPprobdataGetMap(probdata);
-            for (const auto [et, val] : agent_edges)
+            for (const auto [et, val] : agent_fractional_edges)
             {
                 const auto [x1, y1] = map.get_xy(et.n);
                 const auto [x2, y2] = map.get_destination_xy(et);
@@ -1789,11 +1855,11 @@ void update_fractional_vertices_and_edges(
 
         // Print.
 #ifdef PRINT_DEBUG
-        if (!agent_edges_no_waits.empty())
+        if (!agent_fractional_move_edges.empty())
         {
-            println("   Fractional non-wait edges used by agent {}:", a);
+            println("   Fractional move edges used by agent {}:", a);
             const auto& map = SCIPprobdataGetMap(probdata);
-            for (const auto [et, val] : agent_edges_no_waits)
+            for (const auto [et, val] : agent_fractional_move_edges)
             {
                 const auto [x1, y1] = map.get_xy(et.n);
                 const auto [x2, y2] = map.get_destination_xy(et);

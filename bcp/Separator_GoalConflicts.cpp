@@ -19,7 +19,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #ifdef USE_GOAL_CONFLICTS
 
-//#define PRINT_DEBUG
+// #define PRINT_DEBUG
 
 #include "Separator_GoalConflicts.h"
 #include "ProblemData.h"
@@ -198,7 +198,9 @@ SCIP_RETCODE goal_conflicts_separate(
     // Skip this separator if an earlier separator found cuts.
     auto& found_cuts = SCIPprobdataGetFoundCutsIndicator(probdata);
     if (found_cuts)
+    {
         return SCIP_OKAY;
+    }
 
     // Get variables.
     const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
@@ -232,8 +234,10 @@ SCIP_RETCODE goal_conflicts_separate(
 //    }
 
     // Get the times that each agent finishes.
-    Vector<Vector<Time>> finish_times(N);
+    Vector<Vector<Pair<Time, SCIP_Real>>> finish_times(N);
     for (Agent a = 0; a < N; ++a)
+    {
+        auto& finish_times_a = finish_times[a];
         for (const auto& [var, var_val] : agent_vars[a])
         {
             // Get the path length.
@@ -246,26 +250,42 @@ SCIP_RETCODE goal_conflicts_separate(
             if (SCIPisPositive(scip, var_val))
             {
                 const auto t = path_length - 1;
-                if (std::find(finish_times[a].begin(), finish_times[a].end(), t) ==
-                    finish_times[a].end())
+                auto it = std::find_if(finish_times_a.begin(), finish_times_a.end(),
+                                       [t](const Pair<Time, SCIP_Real>& pair){ return pair.first == t; });
+                if (it != finish_times_a.end())
                 {
-                    finish_times[a].push_back(t);
+                    it->second += var_val;
+                }
+                else
+                {
+                    finish_times_a.emplace_back(std::make_pair(t, var_val));
                 }
             }
         }
+        std::sort(finish_times_a.begin(), finish_times_a.end(),
+                  [](const Pair<Time, SCIP_Real>& pair1, const Pair<Time, SCIP_Real>& pair2)
+                  {
+                      return pair1.first < pair2.first;
+                  });
+        for (size_t idx = 1; idx < finish_times_a.size(); ++idx)
+        {
+            finish_times_a[idx].second += finish_times_a[idx - 1].second;
+        }
+    }
 
     // Find conflicts.
     Vector<GoalConflictData> cuts;
     for (Agent a1 = 0; a1 < N; ++a1)
     {
         const auto conflict_node = agents[a1].goal;
-        for (const auto conflict_time : finish_times[a1])
+        for (const auto& [conflict_time, lhs1] : finish_times[a1])
         {
             // Make the node-time of the conflict.
             const NodeTime nt{conflict_node, conflict_time};
 
             // Sum paths belonging to the agent of the conflicting goal.
-            SCIP_Real lhs1 = 0.0;
+#ifdef DEBUG
+            SCIP_Real check_lhs1 = 0.0;
             for (const auto& [var, var_val] : agent_vars[a1])
             {
                 // Get the path length.
@@ -282,9 +302,11 @@ SCIP_RETCODE goal_conflicts_separate(
                 const auto t = path_length - 1;
                 if (t <= nt.t)
                 {
-                    lhs1 += var_val;
+                    check_lhs1 += var_val;
                 }
             }
+            debug_assert(SCIPisEQ(scip, lhs1, check_lhs1));
+#endif
 
             // Check if any agent is trying to cross the goal.
             for (Agent a2 = 0; a2 < N; ++a2)

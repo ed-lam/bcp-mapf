@@ -19,7 +19,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #ifdef USE_VERTEX_FOUREDGE_CONFLICTS
 
-//#define PRINT_DEBUG
+// #define PRINT_DEBUG
 
 #include "Separator_VertexFourEdgeConflicts.h"
 #include "ProblemData.h"
@@ -140,22 +140,24 @@ SCIP_RETCODE vertexfouredge_conflicts_separate(
     // Skip this separator if an earlier separator found cuts.
     auto& found_cuts = SCIPprobdataGetFoundCutsIndicator(probdata);
     if (found_cuts)
+    {
         return SCIP_OKAY;
+    }
 
     // Get the edges fractionally used by each agent.
-    const auto& agent_vertices = SCIPprobdataGetAgentFractionalVertices(probdata);
-    const auto& agent_edges = SCIPprobdataGetAgentFractionalEdgesNoWaits(probdata);
-    const auto& agent_edges_with_waits = SCIPprobdataGetAgentFractionalEdges(probdata);
+    const auto& fractional_vertices = SCIPprobdataGetFractionalVertices(probdata);
+    const auto& fractional_move_edges = SCIPprobdataGetFractionalMoveEdges(probdata);
+    const auto& fractional_edges = SCIPprobdataGetFractionalEdges(probdata);
 
     // Find conflicts.
     for (Agent a1 = 0; a1 < N; ++a1)
     {
         // Get the vertices and edges of agent 1.
-        const auto& agent_vertices_a1 = agent_vertices[a1];
-        const auto& agent_edges_a1 = agent_edges[a1];
+        const auto& fractional_vertices_a1 = fractional_vertices[a1];
+        const auto& fractional_move_edges_a1 = fractional_move_edges[a1];
 
         // Loop through the first edge of agent 1.
-        for (const auto [a1_et1, a1_et1_val] : agent_edges_a1)
+        for (const auto& [a1_et1, a1_et1_val] : fractional_move_edges_a1)
         {
             // Get the coordinates of the first edge of agent 1.
             const auto [a1_et1_x, a1_et1_y] = map.get_xy(a1_et1.n);
@@ -167,7 +169,7 @@ SCIP_RETCODE vertexfouredge_conflicts_separate(
             const EdgeTime a2_et1{map.get_opposite_edge(a1_et1.et.e), a1_et1.t};
 
             // Loop through the second edge of agent 1.
-            for (const auto [a1_et2, a1_et2_val] : agent_edges_a1)
+            for (const auto& [a1_et2, a1_et2_val] : fractional_move_edges_a1)
                 if (a1_et2.t == a1_et1.t + 1)
                 {
                     // Get the coordinates of the second edge of agent 1.
@@ -185,10 +187,10 @@ SCIP_RETCODE vertexfouredge_conflicts_separate(
                                 if (a1 != a2)
                                 {
                                     // Get the value of the edges of agent 2.
-                                    const auto& agent_edges_a2 = agent_edges[a2];
-                                    const auto a2_et1_it = agent_edges_a2.find(a2_et1);
-                                    const auto a2_et2_it = agent_edges_a2.find(a2_et2);
-                                    if (a2_et1_it == agent_edges_a2.end() || a2_et2_it == agent_edges_a2.end())
+                                    const auto& fractional_move_edges_a2 = fractional_move_edges[a2];
+                                    const auto a2_et1_it = fractional_move_edges_a2.find(a2_et1);
+                                    const auto a2_et2_it = fractional_move_edges_a2.find(a2_et2);
+                                    if (a2_et1_it == fractional_move_edges_a2.end() || a2_et2_it == fractional_move_edges_a2.end())
                                     {
                                         continue;
                                     }
@@ -201,7 +203,7 @@ SCIP_RETCODE vertexfouredge_conflicts_separate(
                                         // Get all incompatible vertices at time t.
                                         Vector<NodeTime> a1_nts;
                                         Float a1_nts_val = 0;
-                                        for (const auto [a1_nt, a1_nt_val] : agent_vertices_a1)
+                                        for (const auto& [a1_nt, a1_nt_val] : fractional_vertices_a1)
                                             if (a1_nt.t == t)
                                             {
                                                 const auto [a1_nt_x, a1_nt_y] = map.get_xy(a1_nt.n);
@@ -283,11 +285,11 @@ SCIP_RETCODE vertexfouredge_conflicts_separate(
                             if (a1 != a2)
                             {
                                 // Get the value of the edges of agent 2.
-                                const auto& agent_edges_a2 = agent_edges[a2];
-                                const auto& agent_edges_with_waits_a2 = agent_edges_with_waits[a2];
-                                const auto a2_et1_it = agent_edges_a2.find(a2_et1);
-                                const auto a2_et2_it = agent_edges_with_waits_a2.find(a2_et2);
-                                if (a2_et1_it == agent_edges_a2.end() || a2_et2_it == agent_edges_with_waits_a2.end())
+                                const auto& fractional_move_edges_a2 = fractional_move_edges[a2];
+                                const auto& fractional_edges_a2 = fractional_edges[a2];
+                                const auto a2_et1_it = fractional_move_edges_a2.find(a2_et1);
+                                const auto a2_et2_it = fractional_edges_a2.find(a2_et2);
+                                if (a2_et1_it == fractional_move_edges_a2.end() || a2_et2_it == fractional_edges_a2.end())
                                 {
                                     continue;
                                 }
@@ -300,7 +302,7 @@ SCIP_RETCODE vertexfouredge_conflicts_separate(
                                     // Get all vertices at time t.
                                     Vector<NodeTime> a1_nts;
                                     Float a1_nts_val = 0;
-                                    for (const auto [a1_nt, a1_nt_val] : agent_vertices_a1)
+                                    for (const auto& [a1_nt, a1_nt_val] : fractional_vertices_a1)
                                         if (a1_nt.t == t)
                                         {
                                             a1_nts.push_back(a1_nt);

@@ -19,7 +19,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #ifdef USE_EXITENTRY_CONFLICTS
 
-//#define PRINT_DEBUG
+// #define PRINT_DEBUG
 
 #include "Separator_ExitEntryConflicts.h"
 #include "ProblemData.h"
@@ -109,21 +109,23 @@ SCIP_RETCODE exitentry_conflicts_separate(
     // Skip this separator if an earlier separator found cuts.
     auto& found_cuts = SCIPprobdataGetFoundCutsIndicator(probdata);
     if (found_cuts)
+    {
         return SCIP_OKAY;
+    }
 
     // Get the edges fractionally used by each agent.
-    const auto& agent_edges_no_waits = SCIPprobdataGetAgentFractionalEdgesNoWaits(probdata);
-    const auto& agent_edges_vec = SCIPprobdataGetAgentFractionalEdgesVec(probdata);
+    const auto& fractonal_move_edges = SCIPprobdataGetFractionalMoveEdges(probdata);
+    const auto& fractional_edges_vec = SCIPprobdataGetFractionalEdgesVec(probdata);
 
     // Find conflicts.
     Vector<ExitEntryConflictData> cuts;
     for (Agent a1 = 0; a1 < N; ++a1)
     {
         // Get the edges of agent 1.
-        const auto& agent_edges_a1 = agent_edges_no_waits[a1];
+        const auto& fractional_move_edges_a1 = fractonal_move_edges[a1];
 
         // Loop through all edges of agent 1.
-        for (const auto [a1_et, a1_et_val] : agent_edges_a1)
+        for (const auto& [a1_et, a1_et_val] : fractional_move_edges_a1)
         {
             // Get the vertices of the edge.
             const auto t = a1_et.t;
@@ -167,15 +169,15 @@ SCIP_RETCODE exitentry_conflicts_separate(
             }
 
             // Get the values of those edges.
-            Array<const Vector<SCIP_Real>*, 11> a2_es_vals{nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
-                                                           nullptr, nullptr, nullptr, nullptr, nullptr};
+            Array<SCIP_Real*, 11> a2_es_vals{nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+                                             nullptr, nullptr, nullptr, nullptr, nullptr};
             Int a2_es_vals_size = 0;
             for (Int idx = 0; idx < a2_es_size; ++idx)
             {
                 const auto e = a2_es[idx];
-                if (auto it = agent_edges_vec.find(EdgeTime{e, t}); it != agent_edges_vec.end())
+                if (auto it = fractional_edges_vec.find(EdgeTime{e, t}); it != fractional_edges_vec.end())
                 {
-                    a2_es_vals[a2_es_vals_size] = &it->second;
+                    a2_es_vals[a2_es_vals_size] = it->second;
                     ++a2_es_vals_size;
                 }
             }
@@ -188,7 +190,7 @@ SCIP_RETCODE exitentry_conflicts_separate(
                     SCIP_Real lhs = a1_et_val;
                     for (Int idx = 0; idx < a2_es_vals_size; ++idx)
                     {
-                        lhs += (*(a2_es_vals[idx]))[a2];
+                        lhs += a2_es_vals[idx][a2];
                     }
 
                     // Store a cut if violated.

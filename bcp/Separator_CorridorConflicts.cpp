@@ -19,7 +19,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #if defined(USE_CORRIDOR_CONFLICTS) || defined(USE_WAITCORRIDOR_CONFLICTS)
 
-//#define PRINT_DEBUG
+// #define PRINT_DEBUG
 
 #include "Separator_CorridorConflicts.h"
 #include "ProblemData.h"
@@ -140,51 +140,53 @@ SCIP_RETCODE corridor_conflicts_separate(
     // Skip this separator if an earlier separator found cuts.
     auto& found_cuts = SCIPprobdataGetFoundCutsIndicator(probdata);
     if (found_cuts)
+    {
         return SCIP_OKAY;
+    }
 
     // Get the edges fractionally used by each agent.
-    const auto& agent_edges = SCIPprobdataGetAgentFractionalEdges(probdata);
-    const auto& agent_edges_vec = SCIPprobdataGetAgentFractionalEdgesVec(probdata);
+    const auto& fractional_edges = SCIPprobdataGetFractionalEdges(probdata);
+    const auto& fractional_edges_vec = SCIPprobdataGetFractionalEdgesVec(probdata);
 
     // Find conflicts.
     Vector<CorridorConflictData> cuts;
-    Vector<SCIP_Real> zeros(N, 0.0);
+    auto zeros = std::make_unique<SCIP_Real[]>(N);
     for (Agent a1 = 0; a1 < N - 1; ++a1)
     {
         // Get the edges of agent 1.
-        const auto& agent_edges_a1 = agent_edges[a1];
+        const auto& fractional_edges_a1 = fractional_edges[a1];
 
         // Loop through the first edge of agent 1.
-        for (const auto [a1_et1, a1_et1_val]: agent_edges_a1)
+        for (const auto& [a1_et1, a1_et1_val] : fractional_edges_a1)
             if (a1_et1.d != Direction::WAIT)
             {
                 const auto t = a1_et1.t;
 
                 // Get the second edge of agent 1.
                 const EdgeTime a1_et2{a1_et1.et.e, a1_et1.t + 1};
-                const auto a1_et2_it = agent_edges_a1.find(a1_et2);
-                const auto a1_et2_val = a1_et2_it != agent_edges_a1.end() ? a1_et2_it->second : 0.0;
+                const auto a1_et2_it = fractional_edges_a1.find(a1_et2);
+                const auto a1_et2_val = a1_et2_it != fractional_edges_a1.end() ? a1_et2_it->second : 0.0;
 
                 // Get the first edge of agent 2.
                 const EdgeTime a2_et1{map.get_opposite_edge(a1_et1.et.e), t};
-                const auto a2_et1_it = agent_edges_vec.find(a2_et1);
-                const auto& a2_et1_vals = a2_et1_it != agent_edges_vec.end() ? a2_et1_it->second : zeros;
+                const auto a2_et1_it = fractional_edges_vec.find(a2_et1);
+                const auto a2_et1_vals = a2_et1_it != fractional_edges_vec.end() ? a2_et1_it->second : zeros.get();
 
                 // Get the second edge of agent 2.
                 const EdgeTime a2_et2{a2_et1.et.e, a2_et1.t + 1};
-                const auto a2_et2_it = agent_edges_vec.find(a2_et2);
-                const auto& a2_et2_vals = a2_et2_it != agent_edges_vec.end() ? a2_et2_it->second : zeros;
+                const auto a2_et2_it = fractional_edges_vec.find(a2_et2);
+                const auto a2_et2_vals = a2_et2_it != fractional_edges_vec.end() ? a2_et2_it->second : zeros.get();
 
 #ifdef USE_WAITCORRIDOR_CONFLICTS
                 // Get the third edge of agent 1.
                 const EdgeTime a1_et3{a2_et1.n, Direction::WAIT, a2_et1.t};
-                const auto a1_et3_it = agent_edges_a1.find(a1_et3);
-                const auto a1_et3_val = a1_et3_it != agent_edges_a1.end() ? a1_et3_it->second : 0.0;
+                const auto a1_et3_it = fractional_edges_a1.find(a1_et3);
+                const auto a1_et3_val = a1_et3_it != fractional_edges_a1.end() ? a1_et3_it->second : 0.0;
 
                 // Get the fourth edge of agent 1.
                 const EdgeTime a1_et4{a1_et2.n, Direction::WAIT, a1_et2.t};
-                const auto a1_et4_it = agent_edges_a1.find(a1_et4);
-                const auto a1_et4_val = a1_et4_it != agent_edges_a1.end() ? a1_et4_it->second : 0.0;
+                const auto a1_et4_it = fractional_edges_a1.find(a1_et4);
+                const auto a1_et4_val = a1_et4_it != fractional_edges_a1.end() ? a1_et4_it->second : 0.0;
 #endif
 
                 // Loop through the second agent.
