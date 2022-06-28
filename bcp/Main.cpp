@@ -41,8 +41,7 @@ SCIP_RETCODE start_solver(
     {
         // Create program options.
         cxxopts::Options options(argv[0],
-                                 "BCP-MAPF - branch-and-cut-and-price solver for "
-                                 "multi-agent path finding");
+                                 "BCP-MAPF - branch-and-cut-and-price for multi-agent path finding");
         options.positional_help("instance_file").show_positional_help();
         options.add_options()
             ("help", "Print help")
@@ -100,7 +99,7 @@ SCIP_RETCODE start_solver(
     }
 
     // Print.
-    println("Branch-and-cut-and-price solver for multi-agent path finding");
+    println("Branch-and-cut-and-price for multi-agent path finding");
     println("Edward Lam <ed@ed-lam.com>");
     println("Monash University, Melbourne, Australia");
 #ifdef DEBUG
