@@ -90,6 +90,9 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "Constraint_VertexBranching.h"
 #include "Constraint_WaitBranching.h"
 #include "Constraint_LengthBranching.h"
+#ifdef USE_EECBS_PRIMAL_HEURISTIC
+#include "Heuristic_EECBS.h"
+#endif
 #ifdef USE_LNS2_INIT_PRIMAL_HEURISTIC
 #include "Heuristic_LNS2Init.h"
 #endif
@@ -1384,6 +1387,11 @@ SCIP_RETCODE SCIPprobdataCreate(
     SCIP_CALL(SCIPincludeConshdlrVertexBranching(scip));
 //    SCIP_CALL(SCIPincludeConshdlrWaitBranching(scip));
     SCIP_CALL(SCIPincludeConshdlrLengthBranching(scip));
+
+    // Include EECBS primal heuristic.
+#ifdef USE_EECBS_PRIMAL_HEURISTIC
+    SCIP_CALL(SCIPincludeHeurEECBS(scip));
+#endif
 
     // Include LNS2 primal heuristic.
 #ifdef USE_LNS2_INIT_PRIMAL_HEURISTIC

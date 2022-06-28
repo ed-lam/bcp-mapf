@@ -104,6 +104,8 @@ set(BCP_MAPF_SOURCE_FILES
     bcp/Constraint_VertexBranching.cpp
     bcp/Constraint_LengthBranching.h
     bcp/Constraint_LengthBranching.cpp
+    bcp/Heuristic_EECBS.h
+    bcp/Heuristic_EECBS.cpp
     bcp/Heuristic_LNS2Init.h
     bcp/Heuristic_LNS2Init.cpp
     bcp/Heuristic_LNS2Repair.h
@@ -119,12 +121,17 @@ set(BCP_MAPF_SOURCE_FILES
 file(GLOB LNS2_SOURCE_FILES "lns2/src/*.cpp" "lns2/src/CBS/*.cpp" "lns2/src/PIBT/*.cpp")
 set_source_files_properties(${LNS2_SOURCE_FILES} PROPERTIES COMPILE_FLAGS "-w")
 
+# Find EECBS.
+file(GLOB EECBS_SOURCE_FILES "eecbs/src/*.cpp")
+set_source_files_properties(${EECBS_SOURCE_FILES} PROPERTIES COMPILE_FLAGS "-w")
+
 # Create target.
 add_executable(bcp-mapf
                ${BCP_MAPF_SOURCE_FILES}
                ${TRUFFLEHOG_SOURCE_FILES}
                ${CLIQUER_SOURCE_FILES}
                ${LNS2_SOURCE_FILES}
+               ${EECBS_SOURCE_FILES}
                )
 add_executable(trufflehog EXCLUDE_FROM_ALL ${TRUFFLEHOG_SOURCE_FILES} trufflehog/Main.cpp)
 target_include_directories(bcp-mapf PUBLIC ./ bcp/)
@@ -276,6 +283,7 @@ target_compile_options(trufflehog PRIVATE -DUSE_GOAL_CONFLICTS)
 # Set primal heuristics options.
 target_compile_options(bcp-mapf PRIVATE -DUSE_LNS2_INIT_PRIMAL_HEURISTIC -DLNS2_INIT_TIME_LIMIT=10.0)
 target_compile_options(bcp-mapf PRIVATE -DUSE_LNS2_REPAIR_PRIMAL_HEURISTIC -DLNS2_REPAIR_TIME_LIMIT=0.2)
+target_compile_options(bcp-mapf PRIVATE -DUSE_EECBS_PRIMAL_HEURISTIC -DEECBS_TIME_LIMIT=15.0 -DEECBS_SUBOPTIMALITY=1.1)
 # target_compile_options(bcp-mapf PRIVATE -DUSE_PRIORITIZED_PLANNING_PRIMAL_HEURISTIC)
 
 # Set node selection options.
