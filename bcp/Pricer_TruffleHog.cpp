@@ -840,8 +840,8 @@ SCIP_RETCODE run_trufflehog_pricer(
             }
             else if (dir == LengthBranchDirection::LEq)
             {
-                // Block the vertex at time t and onwards.
-                latest_visit_time[nt.n] = nt.t - 1;
+                // Block crossing the node at time t and later.
+                latest_visit_time[nt.n] = std::min(latest_visit_time[nt.n], nt.t - 1);
             }
         }
         debug_assert(waypoints.empty() || latest_goal_time >= waypoints.back().t);
