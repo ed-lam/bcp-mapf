@@ -19,6 +19,7 @@ endif ()
 
 # Set up compile options
 option(LNS2 "Use LNS2 primal heuristic" OFF)
+option(EECBS "Use EECBS primal heuristic - not yet debugged, do not use" OFF)
 
 # Set source files.
 set(TRUFFLEHOG_SOURCE_FILES
@@ -129,8 +130,12 @@ else ()
 endif ()
 
 # Find EECBS.
-file(GLOB EECBS_SOURCE_FILES "eecbs/src/*.cpp")
-set_source_files_properties(${EECBS_SOURCE_FILES} PROPERTIES COMPILE_FLAGS "-w")
+if (EECBS)
+    file(GLOB EECBS_SOURCE_FILES "eecbs/src/*.cpp")
+    set_source_files_properties(${EECBS_SOURCE_FILES} PROPERTIES COMPILE_FLAGS "-w")
+else ()
+    set(EECBS_SOURCE_FILES "")
+endif ()
 
 # Create target.
 add_executable(bcp-mapf
@@ -295,7 +300,9 @@ if (LNS2)
     target_compile_options(bcp-mapf PRIVATE -DUSE_LNS2_INIT_PRIMAL_HEURISTIC -DLNS2_INIT_TIME_LIMIT=10.0)
     target_compile_options(bcp-mapf PRIVATE -DUSE_LNS2_REPAIR_PRIMAL_HEURISTIC -DLNS2_REPAIR_TIME_LIMIT=0.2)
 endif ()
-target_compile_options(bcp-mapf PRIVATE -DUSE_EECBS_PRIMAL_HEURISTIC -DEECBS_TIME_LIMIT=15.0 -DEECBS_SUBOPTIMALITY=1.1)
+if (EECBS)
+    target_compile_options(bcp-mapf PRIVATE -DUSE_EECBS_PRIMAL_HEURISTIC -DEECBS_TIME_LIMIT=15.0 -DEECBS_SUBOPTIMALITY=1.1)
+endif ()
 # target_compile_options(bcp-mapf PRIVATE -DUSE_PRIORITIZED_PLANNING_PRIMAL_HEURISTIC)
 
 # Set node selection options.
