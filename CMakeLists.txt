@@ -17,6 +17,9 @@ if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif ()
 
+# Set up compile options
+option(LNS2 "Use LNS2 primal heuristic" OFF)
+
 # Set source files.
 set(TRUFFLEHOG_SOURCE_FILES
     robin-hood-hashing/src/include/robin_hood.h
@@ -118,8 +121,12 @@ set(BCP_MAPF_SOURCE_FILES
     )
 
 # Find LNS2.
-file(GLOB LNS2_SOURCE_FILES "lns2/src/*.cpp" "lns2/src/CBS/*.cpp" "lns2/src/PIBT/*.cpp")
-set_source_files_properties(${LNS2_SOURCE_FILES} PROPERTIES COMPILE_FLAGS "-w")
+if (LNS2)
+    file(GLOB LNS2_SOURCE_FILES "lns2/src/*.cpp" "lns2/src/CBS/*.cpp" "lns2/src/PIBT/*.cpp")
+    set_source_files_properties(${LNS2_SOURCE_FILES} PROPERTIES COMPILE_FLAGS "-w")
+else ()
+    set(LNS2_SOURCE_FILES "")
+endif ()
 
 # Find EECBS.
 file(GLOB EECBS_SOURCE_FILES "eecbs/src/*.cpp")
@@ -136,6 +143,9 @@ add_executable(bcp-mapf
 add_executable(trufflehog EXCLUDE_FROM_ALL ${TRUFFLEHOG_SOURCE_FILES} trufflehog/Main.cpp)
 target_include_directories(bcp-mapf PUBLIC ./ bcp/)
 target_include_directories(trufflehog PUBLIC ./ bcp/)
+if (LNS2)
+    target_include_directories(bcp-mapf PUBLIC "lns2/inc" "lns2/inc/CBS" "lns2/inc/PIBT")
+endif ()
 
 # Include SCIP binaries.
 find_path(SCIP_INCLUDE_DIR
@@ -239,7 +249,7 @@ set(CLIQUER_SOURCE_FILES
     )
 add_library(cliquer STATIC ${CLIQUER_SOURCE_FILES})
 
-# Include boost - used by LNS2.
+# Include Boost.
 find_package(Boost REQUIRED)
 target_include_directories(bcp-mapf PUBLIC ${Boost_INCLUDE_DIR})
 
@@ -281,8 +291,10 @@ target_compile_options(bcp-mapf PRIVATE -DUSE_GOAL_CONFLICTS)
 target_compile_options(trufflehog PRIVATE -DUSE_GOAL_CONFLICTS)
 
 # Set primal heuristics options.
-target_compile_options(bcp-mapf PRIVATE -DUSE_LNS2_INIT_PRIMAL_HEURISTIC -DLNS2_INIT_TIME_LIMIT=10.0)
-target_compile_options(bcp-mapf PRIVATE -DUSE_LNS2_REPAIR_PRIMAL_HEURISTIC -DLNS2_REPAIR_TIME_LIMIT=0.2)
+if (LNS2)
+    target_compile_options(bcp-mapf PRIVATE -DUSE_LNS2_INIT_PRIMAL_HEURISTIC -DLNS2_INIT_TIME_LIMIT=10.0)
+    target_compile_options(bcp-mapf PRIVATE -DUSE_LNS2_REPAIR_PRIMAL_HEURISTIC -DLNS2_REPAIR_TIME_LIMIT=0.2)
+endif ()
 target_compile_options(bcp-mapf PRIVATE -DUSE_EECBS_PRIMAL_HEURISTIC -DEECBS_TIME_LIMIT=15.0 -DEECBS_SUBOPTIMALITY=1.1)
 # target_compile_options(bcp-mapf PRIVATE -DUSE_PRIORITIZED_PLANNING_PRIMAL_HEURISTIC)
 
