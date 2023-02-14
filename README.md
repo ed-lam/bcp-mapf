@@ -77,7 +77,7 @@ BCP can be run as a bounded suboptimal algorithm by setting an optimality gap. F
 
 The Moving AI benchmarks can be found in the `instances/movingai` directory. There is (usually) a total of 1000 agents in each instance file, and the user can specify how many of the first N agents to run. For example, you can run an instance with only the first 50 agents:
 ```
-./bcp-mapf --time-limit=30 --agent-limit=50 ../instances/movingai/Berlin_1_256-random-1.scen
+./bcp-mapf --time-limit=30 --agent-limit=50 instances/movingai/Berlin_1_256-random-1.scen
 ```
 
 The optimal solution (or feasible solution if a time limit or gap limit is reached) will be saved into the `outputs` directory.
