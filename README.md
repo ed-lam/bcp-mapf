@@ -17,7 +17,7 @@ Dependencies
 
 BCP is implemented in C++17 and is compiled using CMake, so you will need a recent compiler and a recent version of CMake. It is tested to run on Mac and Linux. It has not been tested on Windows.
 
-BCP uses SCIP 7.0.3 for branch-and-bound. Source code to SCIP is available free (as in 🍺) for academic use. BCP calls Gurobi or CPLEX for solving the linear relaxation. [Gurobi](https://www.gurobi.com/downloads/end-user-license-agreement-academic/) and [CPLEX](https://community.ibm.com/community/user/datascience/blogs/xavier-nodet1/2020/07/09/cplex-free-for-students) are commercial software but provide free binaries under an academic license. BCP is tested with Gurobi 9.5.1 and CPLEX 20.1.0.
+BCP uses SCIP 7.0.3 for branch-and-bound. Source code to SCIP is available free (as in 🍺) for academic use. BCP calls Gurobi or CPLEX for solving the linear relaxation. [Gurobi](https://www.gurobi.com/downloads/end-user-license-agreement-academic/) and [CPLEX](https://community.ibm.com/community/user/datascience/blogs/xavier-nodet1/2020/07/09/cplex-free-for-students) are commercial software but provide free binaries under an academic license. BCP is tested with Gurobi 10.0.1 and CPLEX 20.1.0.
 
 Compiling
 ---------
