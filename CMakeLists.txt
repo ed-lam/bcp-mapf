@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.12)
 project(bcp-mapf)
 
 # Verbose.
@@ -255,8 +255,10 @@ set(CLIQUER_SOURCE_FILES
 add_library(cliquer STATIC ${CLIQUER_SOURCE_FILES})
 
 # Include Boost.
-find_package(Boost REQUIRED)
-target_include_directories(bcp-mapf PUBLIC ${Boost_INCLUDE_DIR})
+find_path(BOOST_INCLUDE_DIR
+          NAMES boost/container/small_vector.hpp
+          HINTS "${BOOST_DIR}" "$ENV{BOOST_DIR}")
+target_include_directories(bcp-mapf PUBLIC ${BOOST_INCLUDE_DIR})
 
 # Link to math library.
 find_library(LIBM m)
