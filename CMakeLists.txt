@@ -170,20 +170,20 @@ if (SCIP_INCLUDE_DIR AND SCIP_CONFIG_DIR AND SCIP_LIBRARY)
 else ()
 
     # Include Gurobi.
-    find_path(GUROBI_INCLUDE_DIR
+    find_path(GUROBI_INCLUDE_DIRS
         NAMES gurobi_c.h
-        HINTS "${GUROBI_DIR}/include" "${GUROBI_DIR}/*/include" "$ENV{GUROBI_DIR}/include" "$ENV{GUROBI_DIR}/*/include")
+        HINTS "${GUROBI_DIR}/include" "${GUROBI_DIR}/*/include" "$ENV{GUROBI_DIR}/include" "$ENV{GUROBI_DIR}/*/include" "$ENV{GUROBI_HOME}/include")
     find_library(GUROBI_LIBRARY
-        NAMES gurobi100 gurobi95 gurobi91 gurobi90 gurobi81 gurobi80 gurobi75 gurobi70
-        HINTS "${GUROBI_DIR}/lib" "${GUROBI_DIR}/*/lib" "$ENV{GUROBI_DIR}/lib" "$ENV{GUROBI_DIR}/*/lib")
-    if (GUROBI_INCLUDE_DIR AND GUROBI_LIBRARY)
+        NAMES gurobi110 gurobi100 gurobi95 gurobi91 gurobi90 gurobi81 gurobi80 gurobi75 gurobi70
+        HINTS "${GUROBI_DIR}/lib" "${GUROBI_DIR}/*/lib" "$ENV{GUROBI_DIR}/lib" "$ENV{GUROBI_DIR}/*/lib" "$ENV{GUROBI_HOME}/lib")
+    if (GUROBI_INCLUDE_DIRS AND GUROBI_LIBRARY)
         set(LPS grb CACHE STRING "options for LP solver")
-        target_include_directories(bcp-mapf PUBLIC ${GUROBI_INCLUDE_DIR})
+        target_include_directories(bcp-mapf PUBLIC ${GUROBI_INCLUDE_DIRS})
         message("Using Gurobi at ${GUROBI_LIBRARY} as LP solver")
     endif ()
 
     # Include CPLEX.
-    if (NOT GUROBI_INCLUDE_DIR OR NOT GUROBI_LIBRARY)
+    if (NOT GUROBI_INCLUDE_DIRS OR NOT GUROBI_LIBRARY)
         find_path(CPLEX_INCLUDE_DIR
             NAMES cplex.h
             HINTS "${CPLEX_DIR}/include/ilcplex" "$ENV{CPLEX_DIR}/include/ilcplex")
@@ -198,7 +198,7 @@ else ()
     endif ()
 
     # Include SoPlex.
-    if ((NOT GUROBI_INCLUDE_DIR OR NOT GUROBI_LIBRARY) AND (NOT CPLEX_INCLUDE_DIR OR NOT CPLEX_LIBRARY))
+    if ((NOT GUROBI_INCLUDE_DIRS OR NOT GUROBI_LIBRARY) AND (NOT CPLEX_INCLUDE_DIR OR NOT CPLEX_LIBRARY))
         set(LPS spx CACHE STRING "options for LP solver")
         set(CONF_INCLUDE_DIRS ../soplex/src/)
         configure_file(scipoptsuite-7.0.3/soplex/soplex-config.cmake.in
