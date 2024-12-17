@@ -23,9 +23,6 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "problem/includes.h"
 #include "pricing/coordinates.h"
 
-namespace TruffleHog
-{
-
 class Map
 {
     Vector<bool> passable_;  // Row-major matrix
@@ -201,5 +198,4 @@ class Map
     }
 };
 
-}
 #endif

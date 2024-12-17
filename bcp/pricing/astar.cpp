@@ -29,9 +29,6 @@ Author: Edward Lam <ed@ed-lam.com>
 #define isGT(x, y) ((x)-(y) > (EPS))
 #define isGE(x, y) ((x)-(y) >= -(EPS))
 
-namespace TruffleHog
-{
-
 #ifdef DEBUG
 static bool verbose = false;
 #endif
@@ -1548,5 +1545,3 @@ void AStar::set_verbose(const bool on)
     verbose = on;
 }
 #endif
-
-}

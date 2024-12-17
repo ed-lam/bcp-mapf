@@ -26,9 +26,6 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "problem/map.h"
 #include "pricing/priority_queue.h"
 
-namespace TruffleHog
-{
-
 class Heuristic
 {
     // Label for heuristic
@@ -117,7 +114,5 @@ class Heuristic
     // Compute lower bound from every node to a goal node
     void search(const Node goal, Vector<IntCost>& h);
 };
-
-}
 
 #endif

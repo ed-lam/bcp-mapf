@@ -25,9 +25,6 @@ Author: Edward Lam <ed@ed-lam.com>
 #include <memory>
 #include <cstddef>
 
-namespace TruffleHog
-{
-
 class LabelPool
 {
     Vector<UniquePtr<std::byte[]>> blocks_;
@@ -58,7 +55,5 @@ class LabelPool
     // Allocate
     void allocate_blocks();
 };
-
-}
 
 #endif

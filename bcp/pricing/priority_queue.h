@@ -27,9 +27,6 @@ Author: Edward Lam <ed@ed-lam.com>
 #define EPS (1e-6)
 #define isLE(x, y) ((x)-(y) <= (EPS))
 
-namespace TruffleHog
-{
-
 template<class Label, class Compare>
 class PriorityQueue
 {
@@ -261,7 +258,5 @@ class PriorityQueue
     }
 #endif
 };
-
-}
 
 #endif

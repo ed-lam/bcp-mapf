@@ -44,9 +44,6 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "scip/scip.h"
 #pragma GCC diagnostic pop
 
-namespace TruffleHog
-{
-
 using Int = int32_t;
 //using UInt = uint32_t;
 using Float = double;
@@ -74,11 +71,7 @@ using Pair = std::pair<T1, T2>;
 template <class T>
 using UniquePtr = std::unique_ptr<T>;
 
-}
-
 // ---------------------------------------------------------------------------------------
-
-using namespace TruffleHog;
 
 template<class ...T>
 using Tuple = std::tuple<T...>;

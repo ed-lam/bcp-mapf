@@ -21,9 +21,6 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #define BLOCK_SIZE (10 * 1024 * 1024)
 
-namespace TruffleHog
-{
-
 LabelPool::LabelPool() :
     blocks_(),
     block_idx_(0),
@@ -78,6 +75,4 @@ void LabelPool::reset(const Int label_size)
     label_size_ = label_size % 8 ? // Round up to next multiple of 8
                   label_size + (8 - label_size % 8) :
                   label_size;
-}
-
 }

@@ -24,9 +24,6 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "pricing/coordinates.h"
 #include "problem/map.h"
 
-namespace TruffleHog
-{
-
 class AgentsData
 {
     struct AgentData
@@ -78,7 +75,5 @@ class AgentsData
                         goal_x, goal_y});
     }
 };
-
-}
 
 #endif

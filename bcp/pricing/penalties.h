@@ -24,9 +24,6 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "pricing/coordinates.h"
 #include "problem/map.h"
 
-namespace TruffleHog
-{
-
 // Data structure for storing the costs of traversing an edge
 struct EdgeCosts
 {
@@ -368,7 +365,5 @@ class FinishTimePenalties
         return t < static_cast<Time>(finish_time_penalties_.size()) ? finish_time_penalties_[t] : 0.0;
     }
 };
-
-}
 
 #endif

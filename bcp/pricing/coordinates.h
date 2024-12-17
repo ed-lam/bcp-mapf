@@ -22,9 +22,6 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #include "problem/includes.h"
 
-namespace TruffleHog
-{
-
 using Node = Int;
 using Time = Int;
 enum Direction: uint8_t
@@ -115,8 +112,6 @@ inline bool operator==(const EdgeTime a, const EdgeTime b)
 inline bool operator!=(const EdgeTime a, const EdgeTime b)
 {
     return !(a == b);
-}
-
 }
 
 union AgentTime
@@ -240,27 +235,27 @@ namespace robin_hood
 {
 
 template<>
-struct hash<TruffleHog::Edge>
+struct hash<Edge>
 {
-    inline std::size_t operator()(const TruffleHog::Edge e) const noexcept
+    inline std::size_t operator()(const Edge e) const noexcept
     {
         return robin_hood::hash<uint32_t>{}(e.id);
     }
 };
 
 template<>
-struct hash<TruffleHog::NodeTime>
+struct hash<NodeTime>
 {
-    inline std::size_t operator()(const TruffleHog::NodeTime nt) const noexcept
+    inline std::size_t operator()(const NodeTime nt) const noexcept
     {
         return robin_hood::hash<uint64_t>{}(nt.nt);
     }
 };
 
 template<>
-struct hash<TruffleHog::EdgeTime>
+struct hash<EdgeTime>
 {
-    inline std::size_t operator()(const TruffleHog::EdgeTime et) const noexcept
+    inline std::size_t operator()(const EdgeTime et) const noexcept
     {
         return robin_hood::hash<uint64_t>{}(et.id);
     }
@@ -269,18 +264,18 @@ struct hash<TruffleHog::EdgeTime>
 }
 
 template<>
-struct fmt::formatter<TruffleHog::Direction> : formatter<std::string_view>
+struct fmt::formatter<Direction> : formatter<std::string_view>
 {
-    auto format(TruffleHog::Direction d, fmt::format_context& ctx) const
+    auto format(Direction d, fmt::format_context& ctx) const
     {
         std::string_view name = "INVALID";
         switch (d)
         {
-            case TruffleHog::Direction::NORTH: name = "NORTH"; break;
-            case TruffleHog::Direction::SOUTH: name = "SOUTH"; break;
-            case TruffleHog::Direction::EAST:  name = "EAST";  break;
-            case TruffleHog::Direction::WEST:  name = "WEST";  break;
-            case TruffleHog::Direction::WAIT:  name = "WAIT";  break;
+            case Direction::NORTH: name = "NORTH"; break;
+            case Direction::SOUTH: name = "SOUTH"; break;
+            case Direction::EAST:  name = "EAST";  break;
+            case Direction::WEST:  name = "WEST";  break;
+            case Direction::WAIT:  name = "WAIT";  break;
             default: break;
         }
         return fmt::formatter<string_view>::format(name, ctx);
@@ -288,27 +283,27 @@ struct fmt::formatter<TruffleHog::Direction> : formatter<std::string_view>
 };
 
 template<>
-struct fmt::formatter<TruffleHog::Edge> : formatter<std::string_view>
+struct fmt::formatter<Edge> : formatter<std::string_view>
 {
-    auto format(const TruffleHog::Edge e, fmt::format_context& ctx) const
+    auto format(const Edge e, fmt::format_context& ctx) const
     {
         return fmt::format_to(ctx.out(), "(n={},d={})", e.n, e.d);
     }
 };
 
 template<>
-struct fmt::formatter<TruffleHog::NodeTime> : formatter<std::string_view>
+struct fmt::formatter<NodeTime> : formatter<std::string_view>
 {
-    auto format(const TruffleHog::NodeTime nt, fmt::format_context& ctx) const
+    auto format(const NodeTime nt, fmt::format_context& ctx) const
     {
         return fmt::format_to(ctx.out(), "(n={},t={})", nt.n, nt.t);
     }
 };
 
 template<>
-struct fmt::formatter<TruffleHog::EdgeTime> : formatter<std::string_view>
+struct fmt::formatter<EdgeTime> : formatter<std::string_view>
 {
-    auto format(const TruffleHog::EdgeTime et, fmt::format_context& ctx) const
+    auto format(const EdgeTime et, fmt::format_context& ctx) const
     {
         return fmt::format_to(ctx.out(), "(n={},d={},t={})", et.n, et.d, et.t);
     }

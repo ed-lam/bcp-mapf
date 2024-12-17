@@ -33,9 +33,6 @@ Author: Edward Lam <ed@ed-lam.com>
 template <class T, std::size_t N>
 using SmallVector = boost::container::small_vector<T, N>;
 
-namespace TruffleHog
-{
-
 class AStar
 {
     // Label for main low-level search
@@ -271,7 +268,5 @@ class AStar
     template<bool has_resources>
     AStar::Label* dominated(Label* const new_label);
 };
-
-}
 
 #endif

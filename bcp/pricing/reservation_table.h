@@ -26,9 +26,6 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #ifdef USE_RESERVATION_TABLE
 
-namespace TruffleHog
-{
-
 class ReservationTable
 {
     char* table_;
@@ -139,8 +136,6 @@ class ReservationTable
         return size;
     }
 };
-
-}
 
 #endif
 

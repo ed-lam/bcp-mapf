@@ -23,9 +23,6 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #define MAX_PATH_LENGTH_FACTOR 2
 
-namespace TruffleHog
-{
-
 Heuristic::Heuristic(const Map& map) :
     map_(map),
     h_(),
@@ -188,6 +185,4 @@ const Vector<IntCost>& Heuristic::get_h(const Node goal)
         }
     }
     return h;
-}
-
 }

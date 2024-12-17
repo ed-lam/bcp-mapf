@@ -24,9 +24,6 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "problem/map.h"
 #include <filesystem>
 
-namespace TruffleHog
-{
-
 struct Instance
 {
     std::filesystem::path scenario_path;
@@ -45,7 +42,5 @@ struct Instance
     Instance& operator=(Instance&&) = default;
     ~Instance() = default;
 };
-
-}
 
 #endif

@@ -20,9 +20,6 @@ Author: Edward Lam <ed@ed-lam.com>
 #include <fstream>
 #include "problem/instance.h"
 
-namespace TruffleHog
-{
-
 struct AgentMapData
 {
     String map_path;
@@ -215,6 +212,4 @@ Instance::Instance(const std::filesystem::path& scenario_path, const Agent agent
         release_assert(goal_tile < map.size() && map[goal_tile],
                        "Agent {} ends at an obstacle", a);
     }
-}
-
 }
