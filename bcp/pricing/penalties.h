@@ -20,9 +20,9 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifndef TRUFFLEHOG_EDGEPENALTIES_H
 #define TRUFFLEHOG_EDGEPENALTIES_H
 
-#include "Includes.h"
-#include "Coordinates.h"
-#include "Map.h"
+#include "problem/includes.h"
+#include "pricing/coordinates.h"
+#include "problem/map.h"
 
 namespace TruffleHog
 {

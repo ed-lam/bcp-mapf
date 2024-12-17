@@ -20,12 +20,12 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifndef MAPF_PROBDATA_H
 #define MAPF_PROBDATA_H
 
-#include "Includes.h"
-#include "Coordinates.h"
-#include "Separator.h"
+#include "problem/includes.h"
+#include "pricing/coordinates.h"
+#include "constraints/separator.h"
 
-#include "trufflehog/Instance.h"
-#include "trufflehog/AStar.h"
+#include "problem/instance.h"
+#include "pricing/astar.h"
 
 #ifdef USE_GOAL_CONFLICTS
 struct GoalConflict

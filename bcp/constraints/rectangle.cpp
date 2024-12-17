@@ -21,9 +21,9 @@ Author: Edward Lam <ed@ed-lam.com>
 //
 // // #define PRINT_DEBUG
 //
-// #include "Separator_RectangleConflicts.h"
-// #include "ProblemData.h"
-// #include "VariableData.h"
+// #include "constraints/rectangle.h"
+// #include "problem/problem.h"
+// #include "problem/variable_data.h"
 // #include <algorithm>
 //
 // template<class T>

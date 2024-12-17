@@ -33,8 +33,8 @@ Author: Edward Lam <ed@ed-lam.com>
 #define HEUR_USESSUBSCIP      FALSE    // Does the heuristic use a secondary SCIP instance?
 
 #include "Heuristic_LNS2Repair.h"
-#include "ProblemData.h"
-#include "VariableData.h"
+#include "problem/problem.h"
+#include "problem/variable_data.h"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdelete-non-virtual-dtor"

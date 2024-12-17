@@ -22,7 +22,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifndef MAPF_SEPARATOR_FIVEEDGECONFLICTS_H
 #define MAPF_SEPARATOR_FIVEEDGECONFLICTS_H
 
-#include "Includes.h"
+#include "problem/includes.h"
 
 // Create separator for five-edge conflicts and include it
 SCIP_RETCODE SCIPincludeSepaFiveEdgeConflicts(

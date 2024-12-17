@@ -19,12 +19,12 @@ Author: Edward Lam <ed@ed-lam.com>
 
 //#define PRINT_DEBUG
 
-#include "BranchingRule.h"
-#include "Includes.h"
-#include "ProblemData.h"
-#include "VariableData.h"
+#include "branching/branching_rule.h"
+#include "problem/includes.h"
+#include "problem/problem.h"
+#include "problem/variable_data.h"
 #ifdef USE_RECTANGLE_KNAPSACK_CONFLICTS
-#include "Separator_RectangleKnapsackConflicts.h"
+#include "constraints/rectangle_knapsack.h"
 #endif
 #ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
 #include "Separator_RectangleCliqueConflicts.h"

@@ -20,8 +20,8 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifndef MAPF_BRANCHINGRULE_H
 #define MAPF_BRANCHINGRULE_H
 
-#include "Includes.h"
-#include "Coordinates.h"
+#include "problem/includes.h"
+#include "pricing/coordinates.h"
 
 // Create the branching rule and include it in SCIP
 SCIP_RETCODE SCIPincludeBranchrule(

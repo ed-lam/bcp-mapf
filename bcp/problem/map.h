@@ -20,8 +20,8 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifndef TRUFFLEHOG_MAP_H
 #define TRUFFLEHOG_MAP_H
 
-#include "Includes.h"
-#include "Coordinates.h"
+#include "problem/includes.h"
+#include "pricing/coordinates.h"
 
 namespace TruffleHog
 {

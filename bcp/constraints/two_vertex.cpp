@@ -21,9 +21,9 @@ Author: Edward Lam <ed@ed-lam.com>
 
 // #define PRINT_DEBUG
 
-#include "Separator_TwoVertexConflicts.h"
-#include "ProblemData.h"
-#include "VariableData.h"
+#include "constraints/two_vertex.h"
+#include "problem/problem.h"
+#include "problem/variable_data.h"
 
 #define SEPA_NAME         "two_vertex"
 #define SEPA_DESC         "Separator for two vertex conflicts"

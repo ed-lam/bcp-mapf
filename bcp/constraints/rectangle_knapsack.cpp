@@ -21,10 +21,10 @@ Author: Edward Lam <ed@ed-lam.com>
 
 // #define PRINT_DEBUG
 
-#include "Separator_RectangleKnapsackConflicts.h"
-#include "Separator_RectangleConflicts.h"
-#include "ProblemData.h"
-#include "VariableData.h"
+#include "constraints/rectangle_knapsack.h"
+#include "constraints/rectangle.h"
+#include "problem/problem.h"
+#include "problem/variable_data.h"
 
 #define SEPA_NAME         "rectangle_knapsack"
 #define SEPA_DESC         "Separator for rectangle knapsack conflicts"

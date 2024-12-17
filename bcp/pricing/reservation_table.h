@@ -20,8 +20,8 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifndef TRUFFLEHOG_RESERVATIONTABLE_H
 #define TRUFFLEHOG_RESERVATIONTABLE_H
 
-#include "Includes.h"
-#include "Coordinates.h"
+#include "problem/includes.h"
+#include "pricing/coordinates.h"
 #include <cmath>
 
 #ifdef USE_RESERVATION_TABLE

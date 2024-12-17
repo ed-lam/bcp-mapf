@@ -17,10 +17,10 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#include "Output.h"
-#include "Includes.h"
-#include "ProblemData.h"
-#include "VariableData.h"
+#include "problem/output.h"
+#include "problem/includes.h"
+#include "problem/problem.h"
+#include "problem/variable_data.h"
 #include <sys/stat.h>
 
 SCIP_RETCODE write_best_solution(

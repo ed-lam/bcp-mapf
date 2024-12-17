@@ -20,12 +20,57 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifndef MAPF_DEBUG_H
 #define MAPF_DEBUG_H
 
-#include "trufflehog/Debug.h"
-
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #include "scip/scip.h"
 #pragma GCC diagnostic pop
+
+#include "fmt/color.h"
+#include "fmt/format.h"
+
+#ifdef DEBUG
+#define println(format, ...) do { \
+    fmt::print(format "\n", ##__VA_ARGS__); \
+    fflush(stdout); \
+} while (false)
+#else
+#define println(format, ...) do { \
+    fmt::print(format "\n", ##__VA_ARGS__); \
+} while (false)
+#endif
+
+#ifdef PRINT_DEBUG
+#define debugln(format, ...) println(format, ##__VA_ARGS__)
+#define debug(format, ...) fmt::print(format, ##__VA_ARGS__);
+#else
+#define debugln(format, ...) {}
+#define debug(format, ...) {}
+#endif
+
+#ifdef DEBUG
+#define err(format, ...) do { \
+    fmt::print(stderr, "Error: " format "\n", ##__VA_ARGS__); \
+    fmt::print(stderr, "Function: {}\n", __PRETTY_FUNCTION__); \
+    fmt::print(stderr, "File: {}\n", __FILE__); \
+    fmt::print(stderr, "Line: {}\n", __LINE__); \
+    std::abort(); \
+} while (false)
+#else
+#define err(format, ...) do { \
+    fmt::print(stderr, "Error: " format "\n", ##__VA_ARGS__); \
+    std::abort(); \
+} while (false)
+#endif
+
+#define release_assert(condition, ...) do { \
+    if (!(condition)) err(__VA_ARGS__); \
+} while (false)
+
+#ifdef DEBUG
+#define debug_assert(condition) release_assert(condition, "{}", #condition)
+#else
+#define debug_assert(condition) {}
+#endif
 
 #define scip_assert(statement, ...) do { \
     const auto error = statement; \

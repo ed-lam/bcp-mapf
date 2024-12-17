@@ -19,9 +19,9 @@ Author: Edward Lam <ed@ed-lam.com>
 
 ////#define PRINT_DEBUG
 //
-//#include "Constraint_WaitBranching.h"
-//#include "ProblemData.h"
-//#include "VariableData.h"
+//#include "branching/wait_branching_constraint.h"
+//#include "problem/problem.h"
+//#include "problem/variable_data.h"
 //
 // Constraint handler properties
 //#define CONSHDLR_NAME          "wait_branching"

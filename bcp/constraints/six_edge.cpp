@@ -21,9 +21,9 @@ Author: Edward Lam <ed@ed-lam.com>
 
 // #define PRINT_DEBUG
 
-#include "Separator_SixEdgeConflicts.h"
-#include "ProblemData.h"
-#include "VariableData.h"
+#include "constraints/six_edge.h"
+#include "problem/problem.h"
+#include "problem/variable_data.h"
 
 #define SEPA_NAME         "six_edge"
 #define SEPA_DESC         "Separator for six edge conflicts"

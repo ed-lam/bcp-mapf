@@ -19,9 +19,9 @@ Author: Edward Lam <ed@ed-lam.com>
 
 //#define PRINT_DEBUG
 
-#include "ConstraintHandler_EdgeConflicts.h"
-#include "ProblemData.h"
-#include "VariableData.h"
+#include "constraints/edgetime.h"
+#include "problem/problem.h"
+#include "problem/variable_data.h"
 
 #ifdef USE_WAITEDGE_CONFLICTS
 #define CONSHDLR_NAME          "wait_edge"

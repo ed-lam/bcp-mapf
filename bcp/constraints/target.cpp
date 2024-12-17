@@ -21,9 +21,9 @@ Author: Edward Lam <ed@ed-lam.com>
 
 // #define PRINT_DEBUG
 
-#include "Separator_GoalConflicts.h"
-#include "ProblemData.h"
-#include "VariableData.h"
+#include "constraints/target.h"
+#include "problem/problem.h"
+#include "problem/variable_data.h"
 
 #define SEPA_NAME         "goal"
 #define SEPA_DESC         "Separator for goal conflicts"

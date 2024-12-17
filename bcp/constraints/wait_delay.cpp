@@ -21,9 +21,9 @@ Author: Edward Lam <ed@ed-lam.com>
 
 // #define PRINT_DEBUG
 
-#include "Separator_WaitDelayConflicts.h"
-#include "ProblemData.h"
-#include "VariableData.h"
+#include "constraints/wait_delay.h"
+#include "problem/problem.h"
+#include "problem/variable_data.h"
 
 #define SEPA_NAME         "wait_delay"
 #define SEPA_DESC         "Separator for wait delay conflicts"

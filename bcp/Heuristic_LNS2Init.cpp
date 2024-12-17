@@ -33,8 +33,8 @@ Author: Edward Lam <ed@ed-lam.com>
 #define HEUR_USESSUBSCIP      FALSE    // Does the heuristic use a secondary SCIP instance?
 
 #include "Heuristic_LNS2Init.h"
-#include "ProblemData.h"
-#include "VariableData.h"
+#include "problem/problem.h"
+#include "problem/variable_data.h"
 #include "Clock.h"
 
 #pragma GCC diagnostic push

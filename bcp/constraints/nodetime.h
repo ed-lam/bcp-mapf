@@ -20,9 +20,9 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifndef MAPF_CONSTRAINTHANDLER_VERTEXCONFLICTS_H
 #define MAPF_CONSTRAINTHANDLER_VERTEXCONFLICTS_H
 
-#include "Includes.h"
-#include "Coordinates.h"
-#include "ProblemData.h"
+#include "problem/includes.h"
+#include "pricing/coordinates.h"
+#include "problem/problem.h"
 
 struct VertexConflict
 {

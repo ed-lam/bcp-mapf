@@ -21,9 +21,9 @@ Author: Edward Lam <ed@ed-lam.com>
 
 // #define PRINT_DEBUG
 
-#include "Separator_ExitEntryConflicts.h"
-#include "ProblemData.h"
-#include "VariableData.h"
+#include "constraints/exit_entry.h"
+#include "problem/problem.h"
+#include "problem/variable_data.h"
 
 #define SEPA_NAME         "exit_entry"
 #define SEPA_DESC         "Separator for exit entry conflicts"

@@ -21,9 +21,9 @@ Author: Edward Lam <ed@ed-lam.com>
 
 // #define PRINT_DEBUG
 
-#include "Separator_ThreeVertexConflicts.h"
-#include "ProblemData.h"
-#include "VariableData.h"
+#include "constraints/three_vertex.h"
+#include "problem/problem.h"
+#include "problem/variable_data.h"
 
 #define SEPA_NAME         "three_vertex"
 #define SEPA_DESC         "Separator for three vertex conflicts"

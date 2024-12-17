@@ -20,7 +20,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifndef TRUFFLEHOG_COORDINATES_H
 #define TRUFFLEHOG_COORDINATES_H
 
-#include "Includes.h"
+#include "problem/includes.h"
 
 namespace TruffleHog
 {
@@ -119,6 +119,123 @@ inline bool operator!=(const EdgeTime a, const EdgeTime b)
 
 }
 
+union AgentTime
+{
+    struct
+    {
+        Agent a{-1};
+        Time t{0};
+    };
+    uint64_t id;
+};
+static_assert(sizeof(AgentTime) == 8);
+static_assert(std::is_trivially_copyable<AgentTime>::value);
+inline bool operator==(const AgentTime a, const AgentTime b)
+{
+    return a.a == b.a && a.t == b.t; // TODO
+}
+inline bool operator!=(const AgentTime a, const AgentTime b)
+{
+    return !(a == b);
+}
+
+struct AgentNodeTime
+{
+    Agent a{-1};
+    Node n{0};
+    Time t{0};
+};
+static_assert(sizeof(AgentNodeTime) == 12);
+static_assert(std::is_trivially_copyable<AgentNodeTime>::value);
+inline bool operator==(const AgentNodeTime a, const AgentNodeTime b)
+{
+    return a.a == b.a && a.n == b.n && a.t == b.t;
+}
+inline bool operator!=(const AgentNodeTime a, const AgentNodeTime b)
+{
+    return !(a == b);
+}
+
+struct AgentEdgeTime
+{
+    Agent a{-1};
+    Edge e;
+    Time t{0};
+};
+static_assert(sizeof(AgentEdgeTime) == 12);
+static_assert(std::is_trivially_copyable<AgentEdgeTime>::value);
+inline bool operator==(const AgentEdgeTime a, const AgentEdgeTime b)
+{
+    return a.a == b.a && a.e == b.e && a.t == b.t;
+}
+inline bool operator!=(const AgentEdgeTime a, const AgentEdgeTime b)
+{
+    return !(a == b);
+}
+
+template<class T>
+inline void hash_combine(std::size_t& s, const T& v)
+{
+    robin_hood::hash<T> h;
+    s ^= h(v) + 0x9e3779b9 + (s << 6) + (s >> 2);
+}
+
+namespace robin_hood
+{
+
+template<>
+struct hash<AgentTime>
+{
+    inline std::size_t operator()(const AgentTime at) const noexcept
+    {
+        return robin_hood::hash<uint64_t>{}(at.id);
+    }
+};
+
+template<>
+struct hash<AgentNodeTime>
+{
+    inline std::size_t operator()(const AgentNodeTime ant) const noexcept
+    {
+        auto x = robin_hood::hash<Agent>{}(ant.a);
+        hash_combine(x, ant.n);
+        hash_combine(x, ant.t);
+        return x;
+    }
+};
+
+template<>
+struct hash<AgentEdgeTime>
+{
+    inline std::size_t operator()(const AgentEdgeTime ant) const noexcept
+    {
+        auto x = robin_hood::hash<Agent>{}(ant.a);
+        hash_combine(x, ant.e);
+        hash_combine(x, ant.t);
+        return x;
+    }
+};
+
+}
+
+namespace fmt
+{
+
+template<>
+struct formatter<AgentNodeTime>
+{
+    template<typename ParseContext>
+    constexpr auto parse(ParseContext& ctx) { return ctx.begin(); }
+
+    template<typename FormatContext>
+    inline auto format(const AgentNodeTime& ant, FormatContext& ctx)
+    {
+        return format_to(ctx.out(), "(a={},n={},t={})", ant.a, ant.n, ant.t);
+    }
+};
+
+}
+
 namespace robin_hood
 {
 
@@ -151,16 +268,12 @@ struct hash<TruffleHog::EdgeTime>
 
 }
 
-namespace fmt
-{
-
 template<>
-struct formatter<TruffleHog::Direction>: formatter<string_view>
+struct fmt::formatter<TruffleHog::Direction> : formatter<std::string_view>
 {
-    template<typename FormatContext>
-    inline auto format(const TruffleHog::Direction d, FormatContext& ctx)
+    auto format(TruffleHog::Direction d, fmt::format_context& ctx) const
     {
-        string_view name = "INVALID";
+        std::string_view name = "INVALID";
         switch (d)
         {
             case TruffleHog::Direction::NORTH: name = "NORTH"; break;
@@ -170,50 +283,36 @@ struct formatter<TruffleHog::Direction>: formatter<string_view>
             case TruffleHog::Direction::WAIT:  name = "WAIT";  break;
             default: break;
         }
-        return formatter<string_view>::format(name, ctx);
+        return fmt::formatter<string_view>::format(name, ctx);
     }
 };
 
 template<>
-struct formatter<TruffleHog::Edge>
+struct fmt::formatter<TruffleHog::Edge> : formatter<std::string_view>
 {
-    template<typename ParseContext>
-    constexpr auto parse(ParseContext& ctx) { return ctx.begin(); }
-
-    template<typename FormatContext>
-    inline auto format(const TruffleHog::Edge e, FormatContext& ctx)
+    auto format(const TruffleHog::Edge e, fmt::format_context& ctx) const
     {
-        return format_to(ctx.out(), "(n={},d={})", e.n, e.d);
+        return fmt::format_to(ctx.out(), "(n={},d={})", e.n, e.d);
     }
 };
 
 template<>
-struct formatter<TruffleHog::NodeTime>
+struct fmt::formatter<TruffleHog::NodeTime> : formatter<std::string_view>
 {
-    template<typename ParseContext>
-    constexpr auto parse(ParseContext& ctx) { return ctx.begin(); }
-
-    template<typename FormatContext>
-    inline auto format(const TruffleHog::NodeTime nt, FormatContext& ctx)
+    auto format(const TruffleHog::NodeTime nt, fmt::format_context& ctx) const
     {
-        return format_to(ctx.out(), "(n={},t={})", nt.n, nt.t);
+        return fmt::format_to(ctx.out(), "(n={},t={})", nt.n, nt.t);
     }
 };
 
 template<>
-struct formatter<TruffleHog::EdgeTime>
+struct fmt::formatter<TruffleHog::EdgeTime> : formatter<std::string_view>
 {
-    template<typename ParseContext>
-    constexpr auto parse(ParseContext& ctx) { return ctx.begin(); }
-
-    template<typename FormatContext>
-    inline auto format(const TruffleHog::EdgeTime et, FormatContext& ctx)
+    auto format(const TruffleHog::EdgeTime et, fmt::format_context& ctx) const
     {
-        return format_to(ctx.out(), "(n={},d={},t={})", et.n, et.d, et.t);
+        return fmt::format_to(ctx.out(), "(n={},d={},t={})", et.n, et.d, et.t);
     }
 };
-
-}
 
 //template<class T>
 //inline void hash_combine(std::size_t& s, const T& v)

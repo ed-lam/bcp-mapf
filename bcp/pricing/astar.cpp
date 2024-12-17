@@ -19,7 +19,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 //#define PRINT_DEBUG
 
-#include "AStar.h"
+#include "pricing/astar.h"
 #include <cstddef>
 
 #define EPS (1e-6)

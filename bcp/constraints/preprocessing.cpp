@@ -19,9 +19,9 @@ Author: Edward Lam <ed@ed-lam.com>
 
 // #define PRINT_DEBUG
 
-#include "Separator_Preprocessing.h"
-#include "ProblemData.h"
-#include "VariableData.h"
+#include "constraints/preprocessing.h"
+#include "problem/problem.h"
+#include "problem/variable_data.h"
 
 #define SEPA_NAME         "preprocessing"
 #define SEPA_DESC         "Separator for preprocessing dummy constraint"

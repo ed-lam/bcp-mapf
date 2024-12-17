@@ -24,100 +24,100 @@ option(EECBS "Use EECBS primal heuristic - not yet debugged, do not use" OFF)
 # Set source files.
 set(TRUFFLEHOG_SOURCE_FILES
     robin-hood-hashing/src/include/robin_hood.h
-    trufflehog/Includes.h
-    trufflehog/Debug.h
-    trufflehog/Coordinates.h
-    trufflehog/Map.h
-    trufflehog/AgentsData.h
-    trufflehog/Instance.h
-    trufflehog/Instance.cpp
-    trufflehog/PriorityQueue.h
-    trufflehog/LabelPool.h
-    trufflehog/LabelPool.cpp
-    trufflehog/Heuristic.h
-    trufflehog/Heuristic.cpp
-    trufflehog/Penalties.h
+    bcp/problem/includes.h
+    bcp/problem/debug.h
+    bcp/pricing/coordinates.h
+    bcp/problem/map.h
+    bcp/pricing/agents_data.h
+    bcp/problem/instance.h
+    bcp/problem/instance.cpp
+    bcp/pricing/priority_queue.h
+    bcp/pricing/memory_pool.h
+    bcp/pricing/memory_pool.cpp
+    bcp/pricing/distance_heuristic.h
+    bcp/pricing/distance_heuristic.cpp
+    bcp/pricing/penalties.h
     trufflehog/SIPPIntervals.h
     trufflehog/SIPPIntervals.cpp
-    trufflehog/AStar.h
-    trufflehog/AStar.cpp
-    trufflehog/ReservationTable.h
+    bcp/pricing/astar.h
+    bcp/pricing/astar.cpp
+    bcp/pricing/reservation_table.h
     )
 set(BCP_MAPF_SOURCE_FILES
     bcp/Main.cpp
-    bcp/Includes.h
-    bcp/Debug.h
+    bcp/problem/includes.h
+    bcp/problem/debug.h
     bcp/Clock.h
-    bcp/Coordinates.h
-    bcp/Reader.h
-    bcp/Reader.cpp
-    bcp/ProblemData.h
-    bcp/ProblemData.cpp
-    bcp/VariableData.h
-    bcp/VariableData.cpp
-    bcp/Pricer_TruffleHog.h
-    bcp/Pricer_TruffleHog.cpp
-    bcp/ConstraintHandler_VertexConflicts.h
-    bcp/ConstraintHandler_VertexConflicts.cpp
-    bcp/ConstraintHandler_EdgeConflicts.h
-    bcp/ConstraintHandler_EdgeConflicts.cpp
-    bcp/Separator.h
-    bcp/Separator_Preprocessing.h
-    bcp/Separator_Preprocessing.cpp
-    bcp/Separator_RectangleConflicts.h
-    bcp/Separator_RectangleConflicts.cpp
-    bcp/Separator_RectangleKnapsackConflicts.h
-    bcp/Separator_RectangleKnapsackConflicts.cpp
+    bcp/pricing/coordinates.h
+    bcp/problem/reader.h
+    bcp/problem/reader.cpp
+    bcp/problem/problem.h
+    bcp/problem/problem.cpp
+    bcp/problem/variable_data.h
+    bcp/problem/variable_data.cpp
+    bcp/pricing/pricer.h
+    bcp/pricing/pricer.cpp
+    bcp/constraints/nodetime.h
+    bcp/constraints/nodetime.cpp
+    bcp/constraints/edgetime.h
+    bcp/constraints/edgetime.cpp
+    bcp/constraints/separator.h
+    bcp/constraints/preprocessing.h
+    bcp/constraints/preprocessing.cpp
+    bcp/constraints/rectangle.h
+    bcp/constraints/rectangle.cpp
+    bcp/constraints/rectangle_knapsack.h
+    bcp/constraints/rectangle_knapsack.cpp
     bcp/Separator_RectangleCliqueConflicts.h
     bcp/Separator_RectangleCliqueConflicts.cpp
-    bcp/Separator_CorridorConflicts.h
-    bcp/Separator_CorridorConflicts.cpp
-    bcp/Separator_StepAsideConflicts.h
-    bcp/Separator_StepAsideConflicts.cpp
-    bcp/Separator_WaitDelayConflicts.h
-    bcp/Separator_WaitDelayConflicts.cpp
-    bcp/Separator_ExitEntryConflicts.h
-    bcp/Separator_ExitEntryConflicts.cpp
-    bcp/Separator_TwoEdgeConflicts.h
-    bcp/Separator_TwoEdgeConflicts.cpp
-    bcp/Separator_TwoVertexConflicts.h
-    bcp/Separator_TwoVertexConflicts.cpp
-    bcp/Separator_ThreeVertexConflicts.h
-    bcp/Separator_ThreeVertexConflicts.cpp
-    bcp/Separator_FourEdgeConflicts.h
-    bcp/Separator_FourEdgeConflicts.cpp
-    bcp/Separator_FiveEdgeConflicts.h
-    bcp/Separator_FiveEdgeConflicts.cpp
-    bcp/Separator_SixEdgeConflicts.h
-    bcp/Separator_SixEdgeConflicts.cpp
-    bcp/Separator_AgentWaitEdgeConflicts.h
-    bcp/Separator_AgentWaitEdgeConflicts.cpp
-    bcp/Separator_VertexFourEdgeConflicts.h
-    bcp/Separator_VertexFourEdgeConflicts.cpp
+    bcp/constraints/corridor.h
+    bcp/constraints/corridor.cpp
+    bcp/constraints/step_aside.h
+    bcp/constraints/step_aside.cpp
+    bcp/constraints/wait_delay.h
+    bcp/constraints/wait_delay.cpp
+    bcp/constraints/exit_entry.h
+    bcp/constraints/exit_entry.cpp
+    bcp/constraints/two_edge.h
+    bcp/constraints/two_edge.cpp
+    bcp/constraints/two_vertex.h
+    bcp/constraints/two_vertex.cpp
+    bcp/constraints/three_vertex.h
+    bcp/constraints/three_vertex.cpp
+    bcp/constraints/four_edge.h
+    bcp/constraints/four_edge.cpp
+    bcp/constraints/five_edge.h
+    bcp/constraints/five_edge.cpp
+    bcp/constraints/six_edge.h
+    bcp/constraints/six_edge.cpp
+    bcp/constraints/agent_wait_edge.h
+    bcp/constraints/agent_wait_edge.cpp
+    bcp/constraints/vertex_four_edge.h
+    bcp/constraints/vertex_four_edge.cpp
     bcp/Separator_CliqueConflicts.h
     bcp/Separator_CliqueConflicts.cpp
-    bcp/Separator_GoalConflicts.h
-    bcp/Separator_GoalConflicts.cpp
+    bcp/constraints/target.h
+    bcp/constraints/target.cpp
     bcp/Separator_PathLengthNogoods.h
     bcp/Separator_PathLengthNogoods.cpp
-    bcp/BranchingRule.h
-    bcp/BranchingRule.cpp
-    bcp/BranchingRule_Fractional.cpp
-    bcp/BranchingRule_Pseudosolution.cpp
-    bcp/Constraint_VertexBranching.h
-    bcp/Constraint_VertexBranching.cpp
-    bcp/Constraint_LengthBranching.h
-    bcp/Constraint_LengthBranching.cpp
+    bcp/branching/branching_rule.h
+    bcp/branching/branching_rule.cpp
+    bcp/branching/fractional.cpp
+    bcp/branching/pseudosolution.cpp
+    bcp/branching/vertex_branching_constraint.h
+    bcp/branching/vertex_branching_constraint.cpp
+    bcp/branching/length_branching_constraint.h
+    bcp/branching/length_branching_constraint.cpp
     bcp/Heuristic_EECBS.h
     bcp/Heuristic_EECBS.cpp
     bcp/Heuristic_LNS2Init.h
     bcp/Heuristic_LNS2Init.cpp
     bcp/Heuristic_LNS2Repair.h
     bcp/Heuristic_LNS2Repair.cpp
-    bcp/Heuristic_PrioritizedPlanning.h
-    bcp/Heuristic_PrioritizedPlanning.cpp
-    bcp/Output.h
-    bcp/Output.cpp
+    bcp/heuristics/prioritized_planning.h
+    bcp/heuristics/prioritized_planning.cpp
+    bcp/problem/output.h
+    bcp/problem/output.cpp
     )
 
 # Find LNS2.

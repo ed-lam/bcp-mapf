@@ -22,8 +22,8 @@ Author: Edward Lam <ed@ed-lam.com>
 #define PRINT_DEBUG
 
 #include "Separator_PathLengthNogoods.h"
-#include "ProblemData.h"
-#include "VariableData.h"
+#include "problem/problem.h"
+#include "problem/variable_data.h"
 
 #define SEPA_NAME         "path_length_nogoods"
 #define SEPA_DESC         "Separator for path length nogoods"

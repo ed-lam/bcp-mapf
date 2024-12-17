@@ -21,9 +21,9 @@ Author: Edward Lam <ed@ed-lam.com>
 
 // #define PRINT_DEBUG
 
-#include "Separator_StepAsideConflicts.h"
-#include "ProblemData.h"
-#include "VariableData.h"
+#include "constraints/step_aside.h"
+#include "problem/problem.h"
+#include "problem/variable_data.h"
 
 #define SEPA_NAME         "step_aside"
 #define SEPA_DESC         "Separator for step aside conflicts"

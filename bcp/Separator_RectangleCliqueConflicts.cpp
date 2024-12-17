@@ -22,8 +22,8 @@ Author: Edward Lam <ed@ed-lam.com>
 // // #define PRINT_DEBUG
 //
 // #include "Separator_RectangleCliqueConflicts.h"
-// #include "ProblemData.h"
-// #include "VariableData.h"
+// #include "problem/problem.h"
+// #include "problem/variable_data.h"
 // #include <algorithm>
 //
 // #define SEPA_NAME         "rectangle_clique"

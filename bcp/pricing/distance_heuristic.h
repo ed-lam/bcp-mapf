@@ -20,11 +20,11 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifndef TRUFFLEHOG_HEURISTIC_H
 #define TRUFFLEHOG_HEURISTIC_H
 
-#include "Includes.h"
-#include "Coordinates.h"
-#include "LabelPool.h"
-#include "Map.h"
-#include "PriorityQueue.h"
+#include "problem/includes.h"
+#include "pricing/coordinates.h"
+#include "pricing/memory_pool.h"
+#include "problem/map.h"
+#include "pricing/priority_queue.h"
 
 namespace TruffleHog
 {

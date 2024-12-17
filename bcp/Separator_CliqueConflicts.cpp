@@ -22,8 +22,8 @@ Author: Edward Lam <ed@ed-lam.com>
 // #define PRINT_DEBUG
 
 #include "Separator_CliqueConflicts.h"
-#include "ProblemData.h"
-#include "VariableData.h"
+#include "problem/problem.h"
+#include "problem/variable_data.h"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-compare"

@@ -20,8 +20,8 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifndef MAPF_SEPARATOR_H
 #define MAPF_SEPARATOR_H
 
-#include "Includes.h"
-#include "Coordinates.h"
+#include "problem/includes.h"
+#include "pricing/coordinates.h"
 
 struct AgentRobustCut
 {

@@ -20,8 +20,8 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifndef TRUFFLEHOG_INSTANCE_H
 #define TRUFFLEHOG_INSTANCE_H
 
-#include "AgentsData.h"
-#include "Map.h"
+#include "pricing/agents_data.h"
+#include "problem/map.h"
 #include <filesystem>
 
 namespace TruffleHog

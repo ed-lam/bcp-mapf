@@ -19,9 +19,9 @@ Author: Edward Lam <ed@ed-lam.com>
 
 //#define PRINT_DEBUG
 
-#include "ConstraintHandler_VertexConflicts.h"
-#include "ProblemData.h"
-#include "VariableData.h"
+#include "constraints/nodetime.h"
+#include "problem/problem.h"
+#include "problem/variable_data.h"
 
 #define CONSHDLR_NAME          "vertex"
 #define CONSHDLR_DESC          "Constraint handler for vertex conflicts"

@@ -21,9 +21,9 @@ Author: Edward Lam <ed@ed-lam.com>
 
 // #define PRINT_DEBUG
 
-#include "Separator_TwoEdgeConflicts.h"
-#include "ProblemData.h"
-#include "VariableData.h"
+#include "constraints/two_edge.h"
+#include "problem/problem.h"
+#include "problem/variable_data.h"
 
 #ifdef USE_WAITTWOEDGE_CONFLICTS
 #define SEPA_NAME         "wait_two_edge"

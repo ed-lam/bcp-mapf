@@ -17,13 +17,13 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#include "Reader.h"
-#include "Includes.h"
-#include "ProblemData.h"
+#include "problem/reader.h"
+#include "problem/includes.h"
+#include "problem/problem.h"
 #include <regex>
 
-#include "trufflehog/Instance.h"
-#include "trufflehog/AStar.h"
+#include "problem/instance.h"
+#include "pricing/astar.h"
 
 // Read instance from file
 SCIP_RETCODE read_instance(

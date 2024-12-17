@@ -22,7 +22,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifndef MAPF_SEPARATOR_AGENTWAITEDGECONFLICTS_H
 #define MAPF_SEPARATOR_AGENTWAITEDGECONFLICTS_H
 
-#include "Includes.h"
+#include "problem/includes.h"
 
 // Create separator for agent wait-edge conflicts and include it
 SCIP_RETCODE SCIPincludeSepaAgentWaitEdgeConflicts(

@@ -20,7 +20,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifndef MAPF_VARIABLEDATA_H
 #define MAPF_VARIABLEDATA_H
 
-#include "Coordinates.h"
+#include "pricing/coordinates.h"
 
 // Create variable data
 SCIP_RETCODE SCIPvardataCreate(

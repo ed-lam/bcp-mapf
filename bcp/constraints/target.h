@@ -22,9 +22,9 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifndef MAPF_SEPARATOR_GOALCONFLICTS_H
 #define MAPF_SEPARATOR_GOALCONFLICTS_H
 
-#include "Includes.h"
-#include "Coordinates.h"
-#include "ProblemData.h"
+#include "problem/includes.h"
+#include "pricing/coordinates.h"
+#include "problem/problem.h"
 
 // Create separator for goal conflicts and include it
 SCIP_RETCODE SCIPincludeSepaGoalConflicts(

@@ -20,10 +20,10 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifndef TRUFFLEHOG_SIPPINTERVALS_H
 #define TRUFFLEHOG_SIPPINTERVALS_H
 
-#include "Includes.h"
-#include "Coordinates.h"
-#include "Map.h"
-#include "Penalties.h"
+#include "problem/includes.h"
+#include "pricing/coordinates.h"
+#include "problem/map.h"
+#include "pricing/penalties.h"
 
 namespace TruffleHog
 {

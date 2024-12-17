@@ -19,7 +19,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 //#define PRINT_DEBUG
 
-#include "Heuristic.h"
+#include "pricing/distance_heuristic.h"
 
 #define MAX_PATH_LENGTH_FACTOR 2
 

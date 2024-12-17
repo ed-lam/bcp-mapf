@@ -19,21 +19,21 @@ Author: Edward Lam <ed@ed-lam.com>
 
 //#define PRINT_DEBUG
 
-#include "Pricer_TruffleHog.h"
-#include "Includes.h"
-#include "ProblemData.h"
-#include "VariableData.h"
+#include "pricing/pricer.h"
+#include "problem/includes.h"
+#include "problem/problem.h"
+#include "problem/variable_data.h"
 #include "scip/cons_setppc.h"
-#include "ConstraintHandler_VertexConflicts.h"
-#include "ConstraintHandler_EdgeConflicts.h"
-#include "Constraint_VertexBranching.h"
-//#include "Constraint_WaitBranching.h"
-#include "Constraint_LengthBranching.h"
+#include "constraints/nodetime.h"
+#include "constraints/edgetime.h"
+#include "branching/vertex_branching_constraint.h"
+//#include "branching/wait_branching_constraint.h"
+#include "branching/length_branching_constraint.h"
 #include <chrono>
 #include <numeric>
 
-#include "trufflehog/Instance.h"
-#include "trufflehog/AStar.h"
+#include "problem/instance.h"
+#include "pricing/astar.h"
 
 // Pricer properties
 #define PRICER_NAME     "trufflehog"

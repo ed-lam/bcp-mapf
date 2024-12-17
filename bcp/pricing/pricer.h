@@ -20,8 +20,8 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifndef MAPF_PRICER_TRUFFLEHOG_H
 #define MAPF_PRICER_TRUFFLEHOG_H
 
-#include "Includes.h"
-#include "ProblemData.h"
+#include "problem/includes.h"
+#include "problem/problem.h"
 
 // Include Truffle Hog pricer
 SCIP_RETCODE SCIPincludePricerTruffleHog(

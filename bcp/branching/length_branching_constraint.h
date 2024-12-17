@@ -20,8 +20,8 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifndef MAPF_CONSTRAINT_LENGTHBRANCHING_H
 #define MAPF_CONSTRAINT_LENGTHBRANCHING_H
 
-#include "Includes.h"
-#include "Coordinates.h"
+#include "problem/includes.h"
+#include "pricing/coordinates.h"
 
 enum LengthBranchDirection : bool
 {

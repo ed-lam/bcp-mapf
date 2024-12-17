@@ -22,10 +22,10 @@ Author: Edward Lam <ed@ed-lam.com>
 // #ifndef MAPF_SEPARATOR_RECTANGLECLIQUECONFLICTS_H
 // #define MAPF_SEPARATOR_RECTANGLECLIQUECONFLICTS_H
 //
-// #include "Includes.h"
-// #include "Coordinates.h"
-// #include "ProblemData.h"
-// #include "Separator_RectangleConflicts.h"
+// #include "problem/includes.h"
+// #include "pricing/coordinates.h"
+// #include "problem/problem.h"
+// #include "constraints/rectangle.h"
 //
 // // Create separator for rectangle clique conflicts and include it
 // SCIP_RETCODE SCIPincludeSepaRectangleCliqueConflicts(

@@ -21,9 +21,9 @@ Author: Edward Lam <ed@ed-lam.com>
 
 // #define PRINT_DEBUG
 
-#include "Separator_AgentWaitEdgeConflicts.h"
-#include "ProblemData.h"
-#include "VariableData.h"
+#include "constraints/agent_wait_edge.h"
+#include "problem/problem.h"
+#include "problem/variable_data.h"
 
 #define SEPA_NAME         "agent_wait_edge"
 #define SEPA_DESC         "Separator for agent wait edge conflicts"

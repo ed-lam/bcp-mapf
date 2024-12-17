@@ -22,7 +22,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifndef MAPF_SEPARATOR_WAITDELAYCONFLICTS_H
 #define MAPF_SEPARATOR_WAITDELAYCONFLICTS_H
 
-#include "Includes.h"
+#include "problem/includes.h"
 
 // Create separator for wait-delay conflicts and include it
 SCIP_RETCODE SCIPincludeSepaWaitDelayConflicts(

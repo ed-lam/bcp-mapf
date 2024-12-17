@@ -20,15 +20,15 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifndef TRUFFLEHOG_ASTAR_H
 #define TRUFFLEHOG_ASTAR_H
 
-#include "Includes.h"
-#include "Coordinates.h"
-#include "Map.h"
-#include "LabelPool.h"
-#include "ReservationTable.h"
-#include "PriorityQueue.h"
-#include "Penalties.h"
-#include "Heuristic.h"
-#include "SIPPIntervals.h"
+#include "problem/includes.h"
+#include "pricing/coordinates.h"
+#include "problem/map.h"
+#include "pricing/memory_pool.h"
+#include "pricing/reservation_table.h"
+#include "pricing/priority_queue.h"
+#include "pricing/penalties.h"
+#include "pricing/distance_heuristic.h"
+#include "trufflehog/SIPPIntervals.h"
 #include "boost/container/small_vector.hpp"
 
 template <class T, std::size_t N>

@@ -21,14 +21,14 @@ Author: Edward Lam <ed@ed-lam.com>
 
 // #define PRINT_DEBUG
 
-#include "Heuristic_PrioritizedPlanning.h"
-#include "ProblemData.h"
-#include "VariableData.h"
-#include "ConstraintHandler_VertexConflicts.h"
-#include "ConstraintHandler_EdgeConflicts.h"
-#include "Constraint_VertexBranching.h"
-//#include "Constraint_WaitBranching.h"
-#include "Constraint_LengthBranching.h"
+#include "heuristics/prioritized_planning.h"
+#include "problem/problem.h"
+#include "problem/variable_data.h"
+#include "constraints/nodetime.h"
+#include "constraints/edgetime.h"
+#include "branching/vertex_branching_constraint.h"
+//#include "branching/wait_branching_constraint.h"
+#include "branching/length_branching_constraint.h"
 #include <chrono>
 #include <numeric>
 #include <algorithm>

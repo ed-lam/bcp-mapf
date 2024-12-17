@@ -17,8 +17,8 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#include "VariableData.h"
-#include "ProblemData.h"
+#include "problem/variable_data.h"
+#include "problem/problem.h"
 
 // Struct has undefined size - cannot use sizeof(SCIP_VarData)
 struct SCIP_VarData

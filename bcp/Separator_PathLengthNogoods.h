@@ -22,9 +22,9 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifndef MAPF_SEPARATOR_PATHLENGTHNOGOODS_H
 #define MAPF_SEPARATOR_PATHLENGTHNOGOODS_H
 
-#include "Includes.h"
-#include "Coordinates.h"
-#include "ProblemData.h"
+#include "problem/includes.h"
+#include "pricing/coordinates.h"
+#include "problem/problem.h"
 
 // Create separator for path length nogoods and include it
 SCIP_RETCODE SCIPincludeSepaPathLengthNogoods(

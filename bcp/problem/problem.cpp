@@ -27,69 +27,69 @@ Author: Edward Lam <ed@ed-lam.com>
 #define REMOVE_PADDING
 #endif
 
-#include "ProblemData.h"
-#include "VariableData.h"
-#include "Pricer_TruffleHog.h"
+#include "problem/problem.h"
+#include "problem/variable_data.h"
+#include "pricing/pricer.h"
 #include "scip/cons_setppc.h"
 #include "scip/cons_knapsack.h"
-#include "ConstraintHandler_VertexConflicts.h"
-#include "ConstraintHandler_EdgeConflicts.h"
-#include "Separator_Preprocessing.h"
+#include "constraints/nodetime.h"
+#include "constraints/edgetime.h"
+#include "constraints/preprocessing.h"
 #ifdef USE_RECTANGLE_KNAPSACK_CONFLICTS
-#include "Separator_RectangleKnapsackConflicts.h"
+#include "constraints/rectangle_knapsack.h"
 #endif
 #ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
 #include "Separator_RectangleCliqueConflicts.h"
 #endif
 #if defined(USE_CORRIDOR_CONFLICTS) || defined(USE_WAITCORRIDOR_CONFLICTS)
-#include "Separator_CorridorConflicts.h"
+#include "constraints/corridor.h"
 #endif
 #ifdef USE_STEPASIDE_CONFLICTS
-#include "Separator_StepAsideConflicts.h"
+#include "constraints/step_aside.h"
 #endif
 #ifdef USE_WAITDELAY_CONFLICTS
-#include "Separator_WaitDelayConflicts.h"
+#include "constraints/wait_delay.h"
 #endif
 #ifdef USE_EXITENTRY_CONFLICTS
-#include "Separator_ExitEntryConflicts.h"
+#include "constraints/exit_entry.h"
 #endif
 #if defined(USE_TWOEDGE_CONFLICTS) || defined(USE_WAITTWOEDGE_CONFLICTS)
-#include "Separator_TwoEdgeConflicts.h"
+#include "constraints/two_edge.h"
 #endif
 #ifdef USE_TWOVERTEX_CONFLICTS
-#include "Separator_TwoVertexConflicts.h"
+#include "constraints/two_vertex.h"
 #endif
 #ifdef USE_THREEVERTEX_CONFLICTS
-#include "Separator_ThreeVertexConflicts.h"
+#include "constraints/three_vertex.h"
 #endif
 #ifdef USE_FOUREDGE_CONFLICTS
-#include "Separator_FourEdgeConflicts.h"
+#include "constraints/four_edge.h"
 #endif
 #ifdef USE_FIVEEDGE_CONFLICTS
-#include "Separator_FiveEdgeConflicts.h"
+#include "constraints/five_edge.h"
 #endif
 #ifdef USE_SIXEDGE_CONFLICTS
-#include "Separator_SixEdgeConflicts.h"
+#include "constraints/six_edge.h"
 #endif
 #ifdef USE_AGENTWAITEDGE_CONFLICTS
-#include "Separator_AgentWaitEdgeConflicts.h"
+#include "constraints/agent_wait_edge.h"
 #endif
 #ifdef USE_VERTEX_FOUREDGE_CONFLICTS
-#include "Separator_VertexFourEdgeConflicts.h"
+#include "constraints/vertex_four_edge.h"
 #endif
 #ifdef USE_CLIQUE_CONFLICTS
 #include "Separator_CliqueConflicts.h"
 #endif
 #ifdef USE_GOAL_CONFLICTS
-#include "Separator_GoalConflicts.h"
+#include "constraints/target.h"
 #endif
 #ifdef USE_PATH_LENGTH_NOGOODS
 #include "Separator_PathLengthNogoods.h"
 #endif
-#include "BranchingRule.h"
-#include "Constraint_VertexBranching.h"
-#include "Constraint_WaitBranching.h"
-#include "Constraint_LengthBranching.h"
+#include "branching/branching_rule.h"
+#include "branching/vertex_branching_constraint.h"
+#include "branching/wait_branching_constraint.h"
+#include "branching/length_branching_constraint.h"
 #ifdef USE_EECBS_PRIMAL_HEURISTIC
 #include "Heuristic_EECBS.h"
 #endif
@@ -100,7 +100,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "Heuristic_LNS2Repair.h"
 #endif
 #ifdef USE_PRIORITIZED_PLANNING_PRIMAL_HEURISTIC
-#include "Heuristic_PrioritizedPlanning.h"
+#include "heuristics/prioritized_planning.h"
 #endif
 
 // Problem data

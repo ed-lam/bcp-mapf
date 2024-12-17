@@ -17,7 +17,7 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#include "LabelPool.h"
+#include "pricing/memory_pool.h"
 
 #define BLOCK_SIZE (10 * 1024 * 1024)
 

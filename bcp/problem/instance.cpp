@@ -18,7 +18,7 @@ Author: Edward Lam <ed@ed-lam.com>
 */
 
 #include <fstream>
-#include "Instance.h"
+#include "problem/instance.h"
 
 namespace TruffleHog
 {

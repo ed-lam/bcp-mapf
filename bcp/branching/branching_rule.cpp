@@ -19,13 +19,13 @@ Author: Edward Lam <ed@ed-lam.com>
 
 //#define PRINT_DEBUG
 
-#include "BranchingRule.h"
-#include "Includes.h"
-#include "ProblemData.h"
-#include "VariableData.h"
-#include "Constraint_VertexBranching.h"
-#include "Constraint_WaitBranching.h"
-#include "Constraint_LengthBranching.h"
+#include "branching/branching_rule.h"
+#include "problem/includes.h"
+#include "problem/problem.h"
+#include "problem/variable_data.h"
+#include "branching/vertex_branching_constraint.h"
+#include "branching/wait_branching_constraint.h"
+#include "branching/length_branching_constraint.h"
 
 // Branching rule properties
 #define BRANCHRULE_NAME            "mapf"

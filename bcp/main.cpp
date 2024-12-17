@@ -17,9 +17,9 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#include "Includes.h"
-#include "Reader.h"
-#include "Output.h"
+#include "problem/includes.h"
+#include "problem/reader.h"
+#include "problem/output.h"
 
 #include "scip/scipshell.h"
 #include "scip/scipdefplugins.h"

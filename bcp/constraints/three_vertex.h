@@ -22,7 +22,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifndef MAPF_SEPARATOR_THREEVERTEXCONFLICTS_H
 #define MAPF_SEPARATOR_THREEVERTEXCONFLICTS_H
 
-#include "Includes.h"
+#include "problem/includes.h"
 
 // Create separator for three-vertex conflicts and include it
 SCIP_RETCODE SCIPincludeSepaThreeVertexConflicts(

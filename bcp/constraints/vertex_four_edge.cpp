@@ -21,9 +21,9 @@ Author: Edward Lam <ed@ed-lam.com>
 
 // #define PRINT_DEBUG
 
-#include "Separator_VertexFourEdgeConflicts.h"
-#include "ProblemData.h"
-#include "VariableData.h"
+#include "constraints/vertex_four_edge.h"
+#include "problem/problem.h"
+#include "problem/variable_data.h"
 
 #define SEPA_NAME         "vertex_four_edge"
 #define SEPA_DESC         "Separator for vertex four edge conflicts"
