@@ -171,7 +171,7 @@ get_lp_branch_candidates(
         if (!SCIPisIntegral(scip, val))
         {
             // Fractional.
-            scores.second = move(scores.first);
+            scores.second = std::move(scores.first);
             ++it;
         }
         else if (scores.first.size() == 1)
