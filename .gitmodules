@@ -10,6 +10,3 @@
 [submodule "lns2"]
 	path = lns2
 	url = https://github.com/ed-lam/lns2-for-bcp-mapf.git
-[submodule "eecbs"]
-	path = eecbs
-	url = https://github.com/ed-lam/eecbs-for-bcp-mapf.git
