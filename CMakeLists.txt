@@ -174,7 +174,7 @@ else ()
         NAMES gurobi_c.h
         HINTS "${GUROBI_DIR}/include" "${GUROBI_DIR}/*/include" "$ENV{GUROBI_DIR}/include" "$ENV{GUROBI_DIR}/*/include" "$ENV{GUROBI_HOME}/include")
     find_library(GUROBI_LIBRARY
-        NAMES gurobi110 gurobi100 gurobi95 gurobi91 gurobi90 gurobi81 gurobi80 gurobi75 gurobi70
+        NAMES gurobi120 gurobi110 gurobi100 gurobi95 gurobi91 gurobi90 gurobi81 gurobi80 gurobi75 gurobi70
         HINTS "${GUROBI_DIR}/lib" "${GUROBI_DIR}/*/lib" "$ENV{GUROBI_DIR}/lib" "$ENV{GUROBI_DIR}/*/lib" "$ENV{GUROBI_HOME}/lib")
     if (GUROBI_INCLUDE_DIRS AND GUROBI_LIBRARY)
         set(LPS grb CACHE STRING "options for LP solver")
