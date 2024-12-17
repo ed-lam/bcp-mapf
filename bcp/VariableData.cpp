@@ -79,7 +79,7 @@ SCIP_RETCODE SCIPvardataCreate(
         }
         else
         {
-            err("Invalid direction {}", path[t].d);
+            err("Invalid direction {}", static_cast<int>(path[t].d));
         }
     }
 #endif

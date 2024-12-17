@@ -93,7 +93,7 @@ SCIP_RETCODE start_solver(
             gap_limit = result["gap-limit"].as<SCIP_Real>();
         }
     }
-    catch (const cxxopts::OptionException& e)
+    catch (const cxxopts::exceptions::exception& e)
     {
         err("{}", e.what());
     }

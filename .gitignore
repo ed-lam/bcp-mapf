@@ -1,7 +1,8 @@
+**/.DS_Store
 .idea
 .vscode
-**/.DS_Store
-*.sh
 scip*/
 build/
+tracy/profiler/build/
 outputs/
+*.sh

@@ -29,7 +29,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #define scip_assert(statement, ...) do { \
     const auto error = statement; \
-    release_assert(error == SCIP_OKAY, "SCIP error {}", error); \
+    release_assert(error == SCIP_OKAY, "SCIP error {}", static_cast<int>(error)); \
 } while (false)
 
 #define not_yet_implemented() do { \

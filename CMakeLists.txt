@@ -118,7 +118,6 @@ set(BCP_MAPF_SOURCE_FILES
     bcp/Heuristic_PrioritizedPlanning.cpp
     bcp/Output.h
     bcp/Output.cpp
-    scipoptsuite-7.0.3/scip/src/scip/clock.c
     )
 
 # Find LNS2.
