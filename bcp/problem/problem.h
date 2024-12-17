@@ -37,14 +37,6 @@ struct GoalConflict
 };
 #endif
 
-#ifdef USE_PATH_LENGTH_NOGOODS
-struct PathLengthNogood
-{
-    SCIP_ROW* row;                                    // LP row
-    Vector<Pair<Agent, Time>> latest_finish_times;    // Latest time for an agent to reach its target
-};
-#endif
-
 // Create problem data
 SCIP_RETCODE SCIPprobdataCreate(
     SCIP* scip,                       // SCIP
@@ -136,24 +128,10 @@ SCIP_SEPA* SCIPprobdataGetRectangleKnapsackConflictsSepa(
 );
 #endif
 
-// Get separator for rectangle clique conflicts
-#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-SCIP_SEPA* SCIPprobdataGetRectangleCliqueConflictsSepa(
-    SCIP_ProbData* probdata    // Problem data
-);
-#endif
-
 // Get goal conflicts
 #ifdef USE_GOAL_CONFLICTS
 Vector<GoalConflict>& SCIPprobdataGetGoalConflicts(
 SCIP_ProbData* probdata    // Problem data
-);
-#endif
-
-// Get path length nogoods
-#ifdef USE_PATH_LENGTH_NOGOODS
-Vector<PathLengthNogood>& SCIPprobdataGetPathLengthNogoods(
-    SCIP_ProbData* probdata    // Problem data
 );
 #endif
 
@@ -316,12 +294,6 @@ void print_two_agent_robust_cuts_dual(
     SCIP* scip,             // SCIP
     const bool is_farkas    // Indicates if the master problem is infeasible
 );
-#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-void print_rectangle_clique_conflicts_dual(
-    SCIP* scip,             // SCIP
-    const bool is_farkas    // Indicates if the master problem is infeasible
-);
-#endif
 #ifdef USE_GOAL_CONFLICTS
 void print_goal_conflicts_dual(
     SCIP* scip,             // SCIP

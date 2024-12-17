@@ -38,9 +38,6 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifdef USE_RECTANGLE_KNAPSACK_CONFLICTS
 #include "constraints/rectangle_knapsack.h"
 #endif
-#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-#include "Separator_RectangleCliqueConflicts.h"
-#endif
 #if defined(USE_CORRIDOR_CONFLICTS) || defined(USE_WAITCORRIDOR_CONFLICTS)
 #include "constraints/corridor.h"
 #endif
@@ -77,14 +74,8 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifdef USE_VERTEX_FOUREDGE_CONFLICTS
 #include "constraints/vertex_four_edge.h"
 #endif
-#ifdef USE_CLIQUE_CONFLICTS
-#include "Separator_CliqueConflicts.h"
-#endif
 #ifdef USE_GOAL_CONFLICTS
 #include "constraints/target.h"
-#endif
-#ifdef USE_PATH_LENGTH_NOGOODS
-#include "Separator_PathLengthNogoods.h"
 #endif
 #include "branching/branching_rule.h"
 #include "branching/vertex_branching_constraint.h"
@@ -126,14 +117,8 @@ struct SCIP_ProbData
 #ifdef USE_RECTANGLE_KNAPSACK_CONFLICTS
     SCIP_SEPA* rectangle_knapsack_conflicts;                                    // Separator for rectangle knapsack conflicts
 #endif
-#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-    SCIP_SEPA* rectangle_clique_conflicts;                                      // Separator for rectangle clique conflicts
-#endif
 #ifdef USE_GOAL_CONFLICTS
     Vector<GoalConflict> goal_conflicts;                                        // Goal conflicts
-#endif
-#ifdef USE_PATH_LENGTH_NOGOODS
-    Vector<PathLengthNogood> path_length_nogoods;                               // Path length nogoods
 #endif
 
     // Constraints separated by agent for fast retrieval
@@ -252,12 +237,6 @@ SCIP_DECL_PROBTRANS(probtrans)
 #ifdef USE_RECTANGLE_KNAPSACK_CONFLICTS
     debug_assert(sourcedata->rectangle_knapsack_conflicts);
     (*targetdata)->rectangle_knapsack_conflicts = sourcedata->rectangle_knapsack_conflicts;
-#endif
-
-    // Copy separator for rectangle clique conflicts.
-#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-    debug_assert(sourcedata->rectangle_clique_conflicts);
-    (*targetdata)->rectangle_clique_conflicts = sourcedata->rectangle_clique_conflicts;
 #endif
 
     // Allocate memory for goal conflicts.
@@ -421,15 +400,6 @@ SCIP_DECL_PROBEXITSOL(probexitsol)
     for (auto& goal_conflict : probdata->goal_conflicts)
     {
         auto row = goal_conflict.row;
-        SCIP_CALL(SCIPreleaseRow(scip, &row));
-    }
-#endif
-
-    // Free rows of path length nogoods.
-#ifdef USE_PATH_LENGTH_NOGOODS
-    for (auto& path_length_nogood : probdata->path_length_nogoods)
-    {
-        auto row = path_length_nogood.row;
         SCIP_CALL(SCIPreleaseRow(scip, &row));
     }
 #endif
@@ -604,15 +574,6 @@ SCIP_RETCODE SCIPprobdataAddHeuristicVar(
                                      path));
 #endif
 
-    // Add coefficient to path length nogoods.
-#ifdef USE_PATH_LENGTH_NOGOODS
-    SCIP_CALL(path_length_nogoods_add_var(scip,
-                                          probdata->path_length_nogoods,
-                                          *var,
-                                          a,
-                                          path_length));
-#endif
-
     // Store variable in array of all variables.
     probdata->vars.emplace_back(*var, 0);
 
@@ -764,15 +725,6 @@ SCIP_RETCODE SCIPprobdataAddInitialVar(
                                      path));
 #endif
 
-    // Add coefficient to path length nogoods.
-#ifdef USE_PATH_LENGTH_NOGOODS
-    SCIP_CALL(path_length_nogoods_add_var(scip,
-                                          probdata->path_length_nogoods,
-                                          *var,
-                                          a,
-                                          path_length));
-#endif
-
     // Store variable in array of all variables.
     probdata->vars.emplace_back(*var, 0);
 
@@ -897,16 +849,6 @@ SCIP_RETCODE SCIPprobdataAddPricedVar(
         }
     }
 
-    // Add coefficient to rectangle clique conflicts constraints.
-#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-    SCIP_CALL(rectangle_clique_conflicts_add_var(scip,
-                                                 probdata->rectangle_clique_conflicts,
-                                                 *var,
-                                                 a,
-                                                 path_length,
-                                                 path));
-#endif
-
     // Add coefficient to goal conflicts constraints.
 #ifdef USE_GOAL_CONFLICTS
     SCIP_CALL(goal_conflicts_add_var(scip,
@@ -915,15 +857,6 @@ SCIP_RETCODE SCIPprobdataAddPricedVar(
                                      a,
                                      path_length,
                                      path));
-#endif
-
-    // Add coefficient to path length nogoods.
-#ifdef USE_PATH_LENGTH_NOGOODS
-    SCIP_CALL(path_length_nogoods_add_var(scip,
-                                          probdata->path_length_nogoods,
-                                          *var,
-                                          a,
-                                          path_length));
 #endif
 
     // Store variable in array of all variables.
@@ -1267,11 +1200,6 @@ SCIP_RETCODE SCIPprobdataCreate(
     SCIP_CALL(SCIPincludeSepaRectangleKnapsackConflicts(scip, &probdata->rectangle_knapsack_conflicts));
 #endif
 
-    // Include separator for rectangle clique conflicts.
-#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-    SCIP_CALL(SCIPincludeSepaRectangleCliqueConflicts(scip, &probdata->rectangle_clique_conflicts));
-#endif
-
     // Include separator for corridor conflicts.
 #if defined(USE_CORRIDOR_CONFLICTS) || defined(USE_WAITCORRIDOR_CONFLICTS)
     SCIP_CALL(SCIPincludeSepaCorridorConflicts(scip));
@@ -1332,19 +1260,9 @@ SCIP_RETCODE SCIPprobdataCreate(
     SCIP_CALL(SCIPincludeSepaVertexFourEdgeConflicts(scip));
 #endif
 
-    // Include separator for clique conflicts.
-#ifdef USE_CLIQUE_CONFLICTS
-    SCIP_CALL(SCIPincludeSepaCliqueConflicts(scip));
-#endif
-
     // Include separator for goal conflicts.
 #ifdef USE_GOAL_CONFLICTS
     SCIP_CALL(SCIPincludeSepaGoalConflicts(scip));
-#endif
-
-    // Include separator for path length nogoods.
-#ifdef USE_PATH_LENGTH_NOGOODS
-    SCIP_CALL(SCIPincludeSepaPathLengthNogoods(scip));
 #endif
 
     // Create dummy paths.
@@ -1471,18 +1389,6 @@ SCIP_SEPA* SCIPprobdataGetRectangleKnapsackConflictsSepa(
 }
 #endif
 
-// Get separator for rectangle clique conflicts
-#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-SCIP_SEPA* SCIPprobdataGetRectangleCliqueConflictsSepa(
-    SCIP_ProbData* probdata    // Problem data
-)
-{
-    debug_assert(probdata);
-    debug_assert(probdata->rectangle_clique_conflicts);
-    return probdata->rectangle_clique_conflicts;
-}
-#endif
-
 // Get goal conflicts
 #ifdef USE_GOAL_CONFLICTS
 Vector<GoalConflict>& SCIPprobdataGetGoalConflicts(
@@ -1491,17 +1397,6 @@ Vector<GoalConflict>& SCIPprobdataGetGoalConflicts(
 {
     debug_assert(probdata);
     return probdata->goal_conflicts;
-}
-#endif
-
-// Get path length nogoods
-#ifdef USE_PATH_LENGTH_NOGOODS
-Vector<PathLengthNogood>& SCIPprobdataGetPathLengthNogoods(
-    SCIP_ProbData* probdata    // Problem data
-)
-{
-    debug_assert(probdata);
-    return probdata->path_length_nogoods;
 }
 #endif
 
@@ -2369,28 +2264,6 @@ void print_two_agent_robust_cuts_dual(
         }
     }
 }
-#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-void print_rectangle_clique_conflicts_dual(
-    SCIP* scip,             // SCIP
-    const bool is_farkas    // Indicates if the master problem is infeasible
-)
-{
-    auto probdata = SCIPgetProbData(scip);
-    const auto& conflicts = rectangle_clique_conflicts_get_constraints(probdata);
-    for (const auto& rect_conflict : conflicts)
-    {
-        auto row = rect_conflict.row;
-        const auto row_dual =
-            SCIProwIsInLP(row) ?
-            (is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row)) :
-            0.0;
-        if (!SCIPisZero(scip, row_dual))
-        {
-            println("   Dual of {} = {:.4f}", SCIProwGetName(row), row_dual);
-        }
-    }
-}
-#endif
 #ifdef USE_GOAL_CONFLICTS
 void print_goal_conflicts_dual(
     SCIP* scip,             // SCIP

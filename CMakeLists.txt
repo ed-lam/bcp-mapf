@@ -18,7 +18,7 @@ if (NOT CMAKE_BUILD_TYPE)
 endif ()
 
 # Set source files.
-set(TRUFFLEHOG_SOURCE_FILES
+set(BCP_MAPF_SOURCE_FILES
     robin-hood-hashing/src/include/robin_hood.h
     bcp/problem/includes.h
     bcp/problem/debug.h
@@ -36,8 +36,6 @@ set(TRUFFLEHOG_SOURCE_FILES
     bcp/pricing/astar.h
     bcp/pricing/astar.cpp
     bcp/pricing/reservation_table.h
-    )
-set(BCP_MAPF_SOURCE_FILES
     bcp/Main.cpp
     bcp/problem/includes.h
     bcp/problem/debug.h
@@ -62,8 +60,6 @@ set(BCP_MAPF_SOURCE_FILES
     bcp/constraints/rectangle.cpp
     bcp/constraints/rectangle_knapsack.h
     bcp/constraints/rectangle_knapsack.cpp
-    bcp/Separator_RectangleCliqueConflicts.h
-    bcp/Separator_RectangleCliqueConflicts.cpp
     bcp/constraints/corridor.h
     bcp/constraints/corridor.cpp
     bcp/constraints/step_aside.h
@@ -88,12 +84,8 @@ set(BCP_MAPF_SOURCE_FILES
     bcp/constraints/agent_wait_edge.cpp
     bcp/constraints/vertex_four_edge.h
     bcp/constraints/vertex_four_edge.cpp
-    bcp/Separator_CliqueConflicts.h
-    bcp/Separator_CliqueConflicts.cpp
     bcp/constraints/target.h
     bcp/constraints/target.cpp
-    bcp/Separator_PathLengthNogoods.h
-    bcp/Separator_PathLengthNogoods.cpp
     bcp/branching/branching_rule.h
     bcp/branching/branching_rule.cpp
     bcp/branching/fractional.cpp
@@ -106,17 +98,11 @@ set(BCP_MAPF_SOURCE_FILES
     bcp/heuristics/prioritized_planning.cpp
     bcp/problem/output.h
     bcp/problem/output.cpp
-    )
+)
 
 # Create target.
-add_executable(bcp-mapf
-               ${BCP_MAPF_SOURCE_FILES}
-               ${TRUFFLEHOG_SOURCE_FILES}
-               ${CLIQUER_SOURCE_FILES}
-               )
-add_executable(trufflehog EXCLUDE_FROM_ALL ${TRUFFLEHOG_SOURCE_FILES} trufflehog/Main.cpp)
+add_executable(bcp-mapf ${BCP_MAPF_SOURCE_FILES})
 target_include_directories(bcp-mapf PUBLIC ./ bcp/)
-target_include_directories(trufflehog PUBLIC ./ bcp/)
 
 # Include SCIP binaries.
 find_path(SCIP_INCLUDE_DIR
@@ -206,20 +192,6 @@ target_include_directories(bcp-mapf PUBLIC cxxopts/include/)
 # Include robin-hood-hashing.
 target_include_directories(bcp-mapf PUBLIC robin-hood-hashing/src/include/)
 
-# Include cliquer.
-set(CLIQUER_SOURCE_FILES
-    cliquer-1.21/cliquer.c
-    cliquer-1.21/cliquer.h
-    cliquer-1.21/cliquerconf.h
-    cliquer-1.21/graph.c
-    cliquer-1.21/graph.h
-    cliquer-1.21/misc.h
-    cliquer-1.21/reorder.c
-    cliquer-1.21/reorder.h
-    cliquer-1.21/set.h
-    )
-add_library(cliquer STATIC ${CLIQUER_SOURCE_FILES})
-
 # Include Boost.
 find_path(BOOST_INCLUDE_DIR
           NAMES boost/container/small_vector.hpp
@@ -233,8 +205,7 @@ if (NOT LIBM)
 endif ()
 
 # Link to libraries.
-target_link_libraries(bcp-mapf fmt::fmt-header-only cliquer ${SCIP_LIBRARY} ${LIBM})
-target_link_libraries(trufflehog fmt::fmt-header-only)
+target_link_libraries(bcp-mapf fmt::fmt-header-only ${SCIP_LIBRARY} ${LIBM})
 
 # Set pricer options.
 target_compile_options(bcp-mapf PRIVATE -DUSE_RESERVATION_TABLE)
@@ -243,7 +214,6 @@ target_compile_options(bcp-mapf PRIVATE -DUSE_ASTAR_SOLUTION_CACHING)
 # Set separator options.
 target_compile_options(bcp-mapf PRIVATE -DUSE_WAITEDGE_CONFLICTS)
 target_compile_options(bcp-mapf PRIVATE -DUSE_RECTANGLE_KNAPSACK_CONFLICTS)
-#target_compile_options(bcp-mapf PRIVATE -DUSE_RECTANGLE_CLIQUE_CONFLICTS)
 target_compile_options(bcp-mapf PRIVATE -DUSE_CORRIDOR_CONFLICTS)
 target_compile_options(bcp-mapf PRIVATE -DUSE_WAITCORRIDOR_CONFLICTS)
 #target_compile_options(bcp-mapf PRIVATE -DUSE_STEPASIDE_CONFLICTS)
@@ -258,9 +228,7 @@ target_compile_options(bcp-mapf PRIVATE -DUSE_AGENTWAITEDGE_CONFLICTS)
 #target_compile_options(bcp-mapf PRIVATE -DUSE_FIVEEDGE_CONFLICTS)
 #target_compile_options(bcp-mapf PRIVATE -DUSE_SIXEDGE_CONFLICTS)
 #target_compile_options(bcp-mapf PRIVATE -DUSE_VERTEX_FOUREDGE_CONFLICTS)
-#target_compile_options(bcp-mapf PRIVATE -DUSE_CLIQUE_CONFLICTS)
 target_compile_options(bcp-mapf PRIVATE -DUSE_GOAL_CONFLICTS)
-target_compile_options(trufflehog PRIVATE -DUSE_GOAL_CONFLICTS)
 
 # Set primal heuristics options.
 # target_compile_options(bcp-mapf PRIVATE -DUSE_PRIORITIZED_PLANNING_PRIMAL_HEURISTIC)
@@ -272,12 +240,8 @@ target_compile_options(bcp-mapf PRIVATE -DUSE_BEST_FIRST_NODE_SELECTION)
 #target_compile_options(bcp-mapf PRIVATE -DUSE_HYBRID_ESTIMATE_BOUND_NODE_SELECTION)
 #target_compile_options(bcp-mapf PRIVATE -DUSE_RESTART_DEPTH_FIRST_NODE_SELECTION)
 
-# Set other options.
-#target_compile_options(bcp-mapf PRIVATE -DUSE_PATH_LENGTH_NOGOODS)
-
 # Set warnings.
 target_compile_options(bcp-mapf PRIVATE -Wall -Wextra -Wignored-qualifiers -Werror=return-type)
-target_compile_options(trufflehog PRIVATE -Wall -Wextra -Wignored-qualifiers -Werror=return-type)
 
 # Set flags.
 check_cxx_compiler_flag("-march=native" MARCH_NATIVE)
@@ -286,7 +250,6 @@ if (MARCH_NATIVE)
 endif ()
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_options(bcp-mapf PRIVATE -DDEBUG -D_GLIBCXX_DEBUG)
-    target_compile_options(trufflehog PRIVATE -DDEBUG -D_GLIBCXX_DEBUG)
     message("Compiled in debug mode")
 elseif (CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
     target_compile_options(bcp-mapf PRIVATE -Og -DNDEBUG -funroll-loops -fstrict-aliasing)

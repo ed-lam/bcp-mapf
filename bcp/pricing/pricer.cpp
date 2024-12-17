@@ -355,15 +355,9 @@ SCIP_RETCODE run_trufflehog_pricer(
 
     // Get cuts.
     const auto& agent_robust_cuts = SCIPprobdataGetAgentRobustCuts(probdata);
-#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-    const auto& rectangle_clique_conflicts_conss = rectangle_clique_conflicts_get_constraints(probdata);
-#endif
 #ifdef USE_GOAL_CONFLICTS
     const auto& goal_agent_goal_conflicts = SCIPprobdataGetGoalAgentGoalConflicts(probdata);
     const auto& crossing_agent_goal_conflicts = SCIPprobdataGetCrossingAgentGoalConflicts(probdata);
-#endif
-#ifdef USE_PATH_LENGTH_NOGOODS
-    const auto& path_length_nogoods = SCIPprobdataGetPathLengthNogoods(probdata);
 #endif
 
     // Get constraints for branching decisions.
@@ -506,9 +500,6 @@ SCIP_RETCODE run_trufflehog_pricer(
 //    print_two_agent_robust_cuts_dual(scip, is_farkas);
 //#ifdef USE_GOAL_CONFLICTS
 //    print_goal_conflicts_dual(scip, is_farkas);
-//#endif
-//#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-//    print_rectangle_clique_conflicts_dual(scip, is_farkas);
 //#endif
 //#endif
 
@@ -722,21 +713,6 @@ SCIP_RETCODE run_trufflehog_pricer(
                 goal_penalties.add(nt, -dual);
             }
         }
-#endif
-
-        // Modify edge costs for path length nogoods. If agent a finishes at or before time t, incur the penalty.
-#ifdef USE_PATH_LENGTH_NOGOODS
-        for (const auto& [row, latest_finish_times] : path_length_nogoods)
-            for (const auto& [nogood_a, t] : latest_finish_times)
-                if (a == nogood_a)
-                {
-                    const auto dual = is_farkas ? SCIProwGetDualfarkas(row) : SCIProwGetDualsol(row);
-                    debug_assert(SCIPisFeasLE(scip, dual, 0.0));
-                    if (SCIPisFeasLT(scip, dual, 0.0))
-                    {
-                        finish_time_penalties.add(t, -dual);
-                    }
-                }
 #endif
 
         // Modify edge costs for vertex branching decisions.

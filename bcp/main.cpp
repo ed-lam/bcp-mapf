@@ -110,9 +110,6 @@ SCIP_RETCODE start_solver(
 #ifdef USE_RECTANGLE_KNAPSACK_CONFLICTS
     println("Using rectangle knapsack conflict constraints");
 #endif
-#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
-    println("Using rectangle clique conflict constraints");
-#endif
 #if !defined(USE_WAITCORRIDOR_CONFLICTS) && defined(USE_CORRIDOR_CONFLICTS)
     println("Using corridor conflict constraints");
 #endif
@@ -155,14 +152,8 @@ SCIP_RETCODE start_solver(
 #ifdef USE_VERTEX_FOUREDGE_CONFLICTS
     println("Using vertex four edge conflict constraints");
 #endif
-#ifdef USE_CLIQUE_CONFLICTS
-    println("Using clique conflict constraints");
-#endif
 #ifdef USE_GOAL_CONFLICTS
     println("Using goal conflict constraints");
-#endif
-#ifdef USE_PATH_LENGTH_NOGOODS
-    println("Using path length nogoods");
 #endif
 #endif
     println("");
