@@ -864,17 +864,7 @@ SCIP_RETCODE run_trufflehog_pricer(
 
         // Solve.
         astar.before_solve(); // TODO: Merge back in.
-#ifdef USE_SIPP
-        std::tie(path_vertices, path_cost) = astar.solve_sipp<is_farkas>();
-#ifdef DEBUG
-        {
-            const auto [time_expanded_astar_path_vertices, time_expanded_astar_path_cost] = astar.solve<is_farkas>();
-            debug_assert(std::abs(time_expanded_astar_path_cost - path_cost) < 1e-8);
-        }
-#endif
-#else
         std::tie(path_vertices, path_cost) = astar.solve<is_farkas>();
-#endif
         if (!path_vertices.empty())
         {
             // Get the path.

@@ -17,10 +17,6 @@ if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif ()
 
-# Set up compile options
-option(LNS2 "Use LNS2 primal heuristic" OFF)
-option(EECBS "Use EECBS primal heuristic - not yet debugged, do not use" OFF)
-
 # Set source files.
 set(TRUFFLEHOG_SOURCE_FILES
     robin-hood-hashing/src/include/robin_hood.h
@@ -37,8 +33,6 @@ set(TRUFFLEHOG_SOURCE_FILES
     bcp/pricing/distance_heuristic.h
     bcp/pricing/distance_heuristic.cpp
     bcp/pricing/penalties.h
-    trufflehog/SIPPIntervals.h
-    trufflehog/SIPPIntervals.cpp
     bcp/pricing/astar.h
     bcp/pricing/astar.cpp
     bcp/pricing/reservation_table.h
@@ -108,48 +102,21 @@ set(BCP_MAPF_SOURCE_FILES
     bcp/branching/vertex_branching_constraint.cpp
     bcp/branching/length_branching_constraint.h
     bcp/branching/length_branching_constraint.cpp
-    bcp/Heuristic_EECBS.h
-    bcp/Heuristic_EECBS.cpp
-    bcp/Heuristic_LNS2Init.h
-    bcp/Heuristic_LNS2Init.cpp
-    bcp/Heuristic_LNS2Repair.h
-    bcp/Heuristic_LNS2Repair.cpp
     bcp/heuristics/prioritized_planning.h
     bcp/heuristics/prioritized_planning.cpp
     bcp/problem/output.h
     bcp/problem/output.cpp
     )
 
-# Find LNS2.
-if (LNS2)
-    file(GLOB LNS2_SOURCE_FILES "lns2/src/*.cpp" "lns2/src/CBS/*.cpp" "lns2/src/PIBT/*.cpp")
-    set_source_files_properties(${LNS2_SOURCE_FILES} PROPERTIES COMPILE_FLAGS "-w")
-else ()
-    set(LNS2_SOURCE_FILES "")
-endif ()
-
-# Find EECBS.
-if (EECBS)
-    file(GLOB EECBS_SOURCE_FILES "eecbs/src/*.cpp")
-    set_source_files_properties(${EECBS_SOURCE_FILES} PROPERTIES COMPILE_FLAGS "-w")
-else ()
-    set(EECBS_SOURCE_FILES "")
-endif ()
-
 # Create target.
 add_executable(bcp-mapf
                ${BCP_MAPF_SOURCE_FILES}
                ${TRUFFLEHOG_SOURCE_FILES}
                ${CLIQUER_SOURCE_FILES}
-               ${LNS2_SOURCE_FILES}
-               ${EECBS_SOURCE_FILES}
                )
 add_executable(trufflehog EXCLUDE_FROM_ALL ${TRUFFLEHOG_SOURCE_FILES} trufflehog/Main.cpp)
 target_include_directories(bcp-mapf PUBLIC ./ bcp/)
 target_include_directories(trufflehog PUBLIC ./ bcp/)
-if (LNS2)
-    target_include_directories(bcp-mapf PUBLIC "lns2/inc" "lns2/inc/CBS" "lns2/inc/PIBT")
-endif ()
 
 # Include SCIP binaries.
 find_path(SCIP_INCLUDE_DIR
@@ -270,7 +237,6 @@ target_link_libraries(bcp-mapf fmt::fmt-header-only cliquer ${SCIP_LIBRARY} ${LI
 target_link_libraries(trufflehog fmt::fmt-header-only)
 
 # Set pricer options.
-# target_compile_options(bcp-mapf PRIVATE -DUSE_SIPP)
 target_compile_options(bcp-mapf PRIVATE -DUSE_RESERVATION_TABLE)
 target_compile_options(bcp-mapf PRIVATE -DUSE_ASTAR_SOLUTION_CACHING)
 
@@ -297,13 +263,6 @@ target_compile_options(bcp-mapf PRIVATE -DUSE_GOAL_CONFLICTS)
 target_compile_options(trufflehog PRIVATE -DUSE_GOAL_CONFLICTS)
 
 # Set primal heuristics options.
-if (LNS2)
-    target_compile_options(bcp-mapf PRIVATE -DUSE_LNS2_INIT_PRIMAL_HEURISTIC -DLNS2_INIT_TIME_LIMIT=10.0)
-    target_compile_options(bcp-mapf PRIVATE -DUSE_LNS2_REPAIR_PRIMAL_HEURISTIC -DLNS2_REPAIR_TIME_LIMIT=0.2)
-endif ()
-if (EECBS)
-    target_compile_options(bcp-mapf PRIVATE -DUSE_EECBS_PRIMAL_HEURISTIC -DEECBS_TIME_LIMIT=15.0 -DEECBS_SUBOPTIMALITY=1.1)
-endif ()
 # target_compile_options(bcp-mapf PRIVATE -DUSE_PRIORITIZED_PLANNING_PRIMAL_HEURISTIC)
 
 # Set node selection options.

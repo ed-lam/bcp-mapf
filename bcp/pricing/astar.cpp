@@ -143,19 +143,17 @@ AStar::AStar(const Map& map) :
     h_node_to_waypoint_(nullptr),
     h_waypoint_to_goal_(),
     heuristic_(map),
-    label_pool_(),
+    label_pool_()
 #ifdef USE_RESERVATION_TABLE
-    open_(map.size()),
+  , open_(map.size())
 #else
-    open_(),
+  , open_()
 #endif
-    frontier_without_resources_(),
-    frontier_with_resources_(),
+  , frontier_without_resources_()
+  , frontier_with_resources_()
 #ifdef DEBUG
-    nb_labels_(0),
+  , nb_labels_(0)
 #endif
-
-    sipp_intervals_(map)
 {
 }
 
@@ -233,7 +231,7 @@ void AStar::generate_start()
 #endif
 }
 
-template<bool is_sipp, bool has_resources>
+template<bool has_resources>
 void AStar::generate_early_segment(Label* const current,
                                    const Node next_n,
                                    const Time next_t,
@@ -293,14 +291,6 @@ void AStar::generate_early_segment(Label* const current,
     next_label->g = current->g + cost;
     next_label->nt = next_nt.nt;
 #ifdef USE_RESERVATION_TABLE
-    if constexpr (is_sipp)
-    {
-        const auto n = current->n;
-        for (Time t = current->t + 1; t < next_t; ++t)
-        {
-            next_label->reserves += reservation_table().is_reserved(NodeTime{n, t});
-        }
-    }
     next_label->reserves += reservation_table().is_reserved(next_nt);
 #endif
 
@@ -311,8 +301,7 @@ void AStar::generate_early_segment(Label* const current,
         const auto [goal_nt, goal_cost] = goal_penalties[idx];
 
         const auto crossed = get_bitset(next_label->state_, idx);
-        if (!crossed && ((next_n == goal_nt.n && next_t >= goal_nt.t) ||
-                         (is_sipp && current->n == goal_nt.n && next_t - 1 >= goal_nt.t)))
+        if (!crossed && (next_n == goal_nt.n && next_t >= goal_nt.t))
         {
             // Incur the penalty.
             next_label->g += goal_cost;
@@ -413,7 +402,7 @@ void AStar::generate_early_segment(Label* const current,
 #endif
 }
 
-template<bool is_sipp, bool has_resources>
+template<bool has_resources>
 void AStar::generate_last_segment(Label* const current, const Node next_n, const Time next_t, const Cost cost)
 {
     // Get data.
@@ -466,14 +455,6 @@ void AStar::generate_last_segment(Label* const current, const Node next_n, const
     next_label->g = current->g + cost;
     next_label->nt = next_nt.nt;
 #ifdef USE_RESERVATION_TABLE
-    if constexpr (is_sipp)
-    {
-        const auto n = current->n;
-        for (Time t = current->t + 1; t < next_t; ++t)
-        {
-            next_label->reserves += reservation_table().is_reserved(NodeTime{n, t});
-        }
-    }
     next_label->reserves += reservation_table().is_reserved(next_nt);
 #endif
 
@@ -484,8 +465,7 @@ void AStar::generate_last_segment(Label* const current, const Node next_n, const
         const auto [goal_nt, goal_cost] = goal_penalties[idx];
 
         const auto crossed = get_bitset(next_label->state_, idx);
-        if (!crossed && ((next_n == goal_nt.n && next_t >= goal_nt.t) ||
-                         (is_sipp && current->n == goal_nt.n && next_t - 1 >= goal_nt.t)))
+        if (!crossed && (next_n == goal_nt.n && next_t >= goal_nt.t))
         {
             // Incur the penalty.
             next_label->g += goal_cost;
@@ -589,8 +569,6 @@ void AStar::generate_last_segment(Label* const current, const Node next_n, const
 template<IntCost default_cost, bool has_resources, bool is_last_segment, class... WaypointArgs>
 void AStar::generate_neighbours(Label* const current, WaypointArgs... waypoint_args)
 {
-    constexpr bool is_sipp = false;
-
     // Get data.
     auto& [start,
            waypoints,
@@ -637,295 +615,27 @@ void AStar::generate_neighbours(Label* const current, WaypointArgs... waypoint_a
     if (const auto next_n = map_.get_north(current_n);
         latest_visit_time[next_n] >= next_t && edge_costs.north < std::numeric_limits<Cost>::infinity())
     {
-        generate<is_sipp, has_resources, is_last_segment>(current, next_n, next_t, edge_costs.north, waypoint_args...);
+        generate<has_resources, is_last_segment>(current, next_n, next_t, edge_costs.north, waypoint_args...);
     }
     if (const auto next_n = map_.get_south(current_n);
         latest_visit_time[next_n] >= next_t && edge_costs.south < std::numeric_limits<Cost>::infinity())
     {
-        generate<is_sipp, has_resources, is_last_segment>(current, next_n, next_t, edge_costs.south, waypoint_args...);
+        generate<has_resources, is_last_segment>(current, next_n, next_t, edge_costs.south, waypoint_args...);
     }
     if (const auto next_n = map_.get_east(current_n);
         latest_visit_time[next_n] >= next_t && edge_costs.east < std::numeric_limits<Cost>::infinity())
     {
-        generate<is_sipp, has_resources, is_last_segment>(current, next_n, next_t, edge_costs.east, waypoint_args...);
+        generate<has_resources, is_last_segment>(current, next_n, next_t, edge_costs.east, waypoint_args...);
     }
     if (const auto next_n = map_.get_west(current_n);
         latest_visit_time[next_n] >= next_t && edge_costs.west < std::numeric_limits<Cost>::infinity())
     {
-        generate<is_sipp, has_resources, is_last_segment>(current, next_n, next_t, edge_costs.west, waypoint_args...);
+        generate<has_resources, is_last_segment>(current, next_n, next_t, edge_costs.west, waypoint_args...);
     }
     if (const auto next_n = map_.get_wait(current_n);
         latest_visit_time[next_n] >= next_t && edge_costs.wait < std::numeric_limits<Cost>::infinity())
     {
-        generate<is_sipp, has_resources, is_last_segment>(current, next_n, next_t, edge_costs.wait, waypoint_args...);
-    }
-}
-
-template<IntCost default_cost, bool has_resources, bool is_last_segment, class... WaypointArgs>
-void AStar::generate_neighbours_sipp(Label* const current, WaypointArgs... waypoint_args)
-{
-    constexpr bool is_sipp = true;
-
-    // Get data.
-    auto& [start,
-           waypoints,
-           goal,
-           earliest_goal_time,
-           latest_goal_time,
-           cost_offset,
-           latest_visit_time,
-           edge_penalties,
-           finish_time_penalties
-#ifdef USE_GOAL_CONFLICTS
-         , goal_penalties
-#endif
-    ] = data_;
-
-    // Get constant.
-    constexpr auto inf_cost = std::numeric_limits<Cost>::infinity();
-    constexpr auto max_time = std::numeric_limits<Time>::max();
-
-    // Print.
-#ifdef DEBUG
-    if (verbose)
-    {
-#ifdef USE_GOAL_CONFLICTS
-        const auto nb_goal_penalties = goal_penalties.size();
-#else
-        const auto nb_goal_penalties = 0;
-#endif
-        println("Expanding label {} {} (n {}, t {}, nt {}, xy ({},{}), g {}, h {}, f {}{})",
-                current->label_id,
-                fmt::ptr(current),
-                decltype(current->n){current->n},
-                decltype(current->t){current->t},
-                decltype(current->nt){current->nt},
-                map_.get_x(current->n),
-                map_.get_y(current->n),
-                current->g,
-                current->f - current->g,
-                current->f,
-                make_goal_state_string(&current->state_[0], nb_goal_penalties));
-    }
-#endif
-
-    // Get current label.
-    const auto n = current->n;
-    const auto t = current->t;
-
-    // Expand to after the next wait at the current node.
-    Time wait_start = max_time;
-    Time wait_end = max_time;
-    Cost wait_penalty = 0;
-    for (auto [it, end] = sipp_intervals_.get_intervals(n, Direction::WAIT); it != end; ++it)
-    {
-        const auto& interval = *it;
-        if (interval.end > t)
-        {
-            // Store the wait interval.
-            wait_start = std::max(interval.start, t);
-            wait_end = interval.end;
-            wait_penalty = interval.penalty;
-
-            // Expand in the wait direction.
-            const auto next_n = n;
-            const auto next_t = wait_end;
-            const Cost cost = (default_cost)                * std::max(wait_start - t, 0) +
-                              (default_cost + wait_penalty) * (wait_end - wait_start);
-            debug_assert(next_t == t + std::max(wait_start - t, 0) + (wait_end - wait_start));
-            if (cost < inf_cost && latest_visit_time[n] >= next_t - 1 && latest_visit_time[next_n] >= next_t)
-            {
-                generate<is_sipp, has_resources, is_last_segment>(current, next_n, next_t, cost, waypoint_args...);
-            }
-
-            // Only expand to the first of the upcoming wait intervals.
-            break;
-        }
-    }
-
-    // Expand in the move directions.
-    for (Int d = 0; d < 4; ++d)
-    {
-        // Get the destination node.
-        const auto next_n = map_.get_destination(n, static_cast<Direction>(d));
-
-        // Get the outgoing intervals at the current node and the wait intervals at the destination.
-        auto [interval, intervals_end] = sipp_intervals_.get_intervals(n, static_cast<Direction>(d));
-
-        // Advance to the first wait interval after the curren time.
-        auto [wait_interval, dest_wait_intervals_end] = sipp_intervals_.get_intervals(next_n, Direction::WAIT);
-        for (; wait_interval != dest_wait_intervals_end && wait_interval->end <= t + 1; ++wait_interval)
-        ;
-        debug_assert(wait_interval == dest_wait_intervals_end || wait_interval->end > t + 1);
-
-        // Expand.
-        const auto intervals_empty = interval == intervals_end;
-        if (intervals_empty || interval->start > 0)
-        {
-            // Expand before the first interval.
-            const Time interval_start = 0;
-            const Time interval_end = intervals_empty ? max_time : interval->start;
-            const Cost interval_penalty = 0.0;
-            if (interval_end > t)
-            {
-                debug_assert(interval_start < wait_end);
-                generate_neighbours_one_interval_sipp<default_cost, has_resources, is_last_segment>(current,
-                                                                                                    wait_start,
-                                                                                                    wait_end,
-                                                                                                    wait_penalty,
-                                                                                                    next_n,
-                                                                                                    interval_start,
-                                                                                                    interval_end,
-                                                                                                    interval_penalty,
-                                                                                                    dest_wait_intervals_end,
-                                                                                                    wait_interval,
-                                                                                                    waypoint_args...);
-            }
-        }
-        if (!intervals_empty)
-        {
-            // Expand at the intervals.
-            {
-                for (; interval != intervals_end && interval->end <= t; ++interval)
-                ;
-                debug_assert(interval == intervals_end || interval->end > t);
-                for (; interval != intervals_end && interval->start < wait_end; ++interval)
-                {
-                    // Expand at the interval.
-                    {
-                        const auto [interval_start, interval_end, interval_penalty] = *interval;
-                        generate_neighbours_one_interval_sipp<default_cost, has_resources, is_last_segment>(current,
-                                                                                                            wait_start,
-                                                                                                            wait_end,
-                                                                                                            wait_penalty,
-                                                                                                            next_n,
-                                                                                                            interval_start,
-                                                                                                            interval_end,
-                                                                                                            interval_penalty,
-                                                                                                            dest_wait_intervals_end,
-                                                                                                            wait_interval,
-                                                                                                            waypoint_args...);
-                    }
-                }
-            }
-
-            // Expand after the last interval.
-            if (interval == intervals_end)
-            {
-                --interval;
-                debug_assert(interval->end < std::numeric_limits<Time>::max());
-                const Time interval_start = interval->end;
-                const Time interval_end = std::numeric_limits<Time>::max();
-                const Cost interval_penalty = 0.0;
-                debug_assert(interval_end > t);
-                if (interval_start < wait_end)
-                {
-                    generate_neighbours_one_interval_sipp<default_cost, has_resources, is_last_segment>(current,
-                                                                                                        wait_start,
-                                                                                                        wait_end,
-                                                                                                        wait_penalty,
-                                                                                                        next_n,
-                                                                                                        interval_start,
-                                                                                                        interval_end,
-                                                                                                        interval_penalty,
-                                                                                                        dest_wait_intervals_end,
-                                                                                                        wait_interval,
-                                                                                                        waypoint_args...);
-                }
-            }
-        }
-    }
-}
-
-template<IntCost default_cost, bool has_resources, bool is_last_segment, class... WaypointArgs>
-void AStar::generate_neighbours_one_interval_sipp(Label* const current,
-                                                  const Time wait_start,
-                                                  const Time wait_end,
-                                                  const Cost wait_penalty,
-                                                  const Node next_n,
-                                                  const Time interval_start,
-                                                  const Time interval_end,
-                                                  const Cost interval_penalty,
-                                                  const SIPPInterval* const dest_wait_intervals_end,
-                                                  const SIPPInterval* wait_interval,
-                                                  WaypointArgs... waypoint_args)
-{
-    constexpr bool is_sipp = true;
-
-    // Get data.
-    const auto& [start,
-                 waypoints,
-                 goal,
-                 earliest_goal_time,
-                 latest_goal_time,
-                 cost_offset,
-                 latest_visit_time,
-                 edge_penalties,
-                 finish_time_penalties
-#ifdef USE_GOAL_CONFLICTS
-               , goal_penalties
-#endif
-    ] = data_;
-
-    // Get constant.
-    constexpr auto inf_cost = std::numeric_limits<Cost>::infinity();
-
-    // Get current label.
-    const auto n = current->n;
-    const auto t = current->t;
-
-    // Move to the destination departing at the start of the interval.
-    {
-        const auto next_t = std::max(interval_start, t) + 1;
-        Cost cost;
-        if (interval_start <= wait_start)
-        {
-            cost = (default_cost)                    * std::max(interval_start - t, 0) +
-                   (default_cost + interval_penalty) * 1;
-            debug_assert(next_t == t + std::max(interval_start - t, 0) + 1);
-        }
-        else
-        {
-            cost = (default_cost)                    * std::max(wait_start - t, 0) +
-                   (default_cost + wait_penalty)     * (interval_start - wait_start) +
-                   (default_cost + interval_penalty) * 1;
-            debug_assert(next_t == t + std::max(wait_start - t, 0) + (interval_start - wait_start) + 1);
-        }
-        if (cost < inf_cost && latest_visit_time[n] >= next_t - 1 && latest_visit_time[next_n] >= next_t)
-        {
-            generate<is_sipp, has_resources, is_last_segment>(current, next_n, next_t, cost, waypoint_args...);
-        }
-    }
-
-    // Move to the destination (within the interval) to arrive after a wait interval at the destination.
-    for (const auto latest_wait_end = std::min(interval_end, wait_end);
-         wait_interval != dest_wait_intervals_end && wait_interval->end <= latest_wait_end;
-         ++wait_interval)
-    {
-        const auto depart = wait_interval->end - 1;
-        debug_assert(depart < interval_end);
-        if (depart > interval_start)
-        {
-            const auto next_t = wait_interval->end;
-            Cost cost;
-            if (depart <= wait_start)
-            {
-                cost = (default_cost)                    * std::max(depart - t, 0) +
-                       (default_cost + interval_penalty) * 1;
-                debug_assert(next_t == t + std::max(depart - t, 0) + 1);
-            }
-            else
-            {
-                cost = (default_cost)                    * std::max(wait_start - t, 0) +
-                       (default_cost + wait_penalty)     * (depart - wait_start) +
-                       (default_cost + interval_penalty) * 1;
-                debug_assert(next_t == t + std::max(wait_start - t, 0) + (depart - wait_start) + 1);
-            }
-            if (cost < inf_cost && latest_visit_time[n] >= next_t - 1 && latest_visit_time[next_n] >= next_t)
-            {
-                generate<is_sipp, has_resources, is_last_segment>(current, next_n, next_t, cost, waypoint_args...);
-            }
-        }
+        generate<has_resources, is_last_segment>(current, next_n, next_t, edge_costs.wait, waypoint_args...);
     }
 }
 
@@ -1211,46 +921,23 @@ void AStar::preprocess_input()
 template<bool is_farkas>
 Pair<Vector<NodeTime>, Cost> AStar::solve()
 {
-    constexpr bool is_sipp = false;
-
 #ifdef USE_GOAL_CONFLICTS
     if (!data_.goal_penalties.empty())
     {
         constexpr bool has_resources = true;
-        return solve<is_sipp, is_farkas, has_resources>();
+        return solve<is_farkas, has_resources>();
     }
     else
 #endif
     {
         constexpr bool has_resources = false;
-        return solve<is_sipp, is_farkas, has_resources>();
+        return solve<is_farkas, has_resources>();
     }
 }
 template Pair<Vector<NodeTime>, Cost> AStar::solve<false>();
 template Pair<Vector<NodeTime>, Cost> AStar::solve<true>();
 
-template<bool is_farkas>
-Pair<Vector<NodeTime>, Cost> AStar::solve_sipp()
-{
-    constexpr bool is_sipp = true;
-
-#ifdef USE_GOAL_CONFLICTS
-    if (!data_.goal_penalties.empty())
-    {
-        constexpr bool has_resources = true;
-        return solve<is_sipp, is_farkas, has_resources>();
-    }
-    else
-#endif
-    {
-        constexpr bool has_resources = false;
-        return solve<is_sipp, is_farkas, has_resources>();
-    }
-}
-template Pair<Vector<NodeTime>, Cost> AStar::solve_sipp<false>();
-template Pair<Vector<NodeTime>, Cost> AStar::solve_sipp<true>();
-
-template<bool is_sipp, bool is_farkas, bool has_resources>
+template<bool is_farkas, bool has_resources>
 Pair<Vector<NodeTime>, Cost> AStar::solve()
 {
     // Get data.
@@ -1358,12 +1045,6 @@ Pair<Vector<NodeTime>, Cost> AStar::solve()
     h_node_to_waypoint_ = &heuristic_.get_h(waypoints[w].n);
     generate_start<has_resources>();
 
-    // Create SIPP intervals.
-    if constexpr (is_sipp)
-    {
-        sipp_intervals_.create_intervals(waypoints, goal, edge_penalties, finish_time_penalties);
-    }
-
     // Solve up to but not including the last waypoint (goal).
     constexpr IntCost default_cost = is_farkas ? 0 : 1;
     if (waypoints.size() > 1)
@@ -1433,14 +1114,7 @@ Pair<Vector<NodeTime>, Cost> AStar::solve()
             }
 
             // Generate neighbours.
-            if constexpr (is_sipp)
-            {
-                generate_neighbours_sipp<default_cost, has_resources, false>(current, w, waypoints[w].t);
-            }
-            else
-            {
-                generate_neighbours<default_cost, has_resources, false>(current, w, waypoints[w].t);
-            }
+            generate_neighbours<default_cost, has_resources, false>(current, w, waypoints[w].t);
         }
     }
 
@@ -1456,14 +1130,7 @@ Pair<Vector<NodeTime>, Cost> AStar::solve()
         if (current->n >= 0)
         {
             // Generate neighbours.
-            if constexpr (is_sipp)
-            {
-                generate_neighbours_sipp<default_cost, has_resources, true>(current);
-            }
-            else
-            {
-                generate_neighbours<default_cost, has_resources, true>(current);
-            }
+            generate_neighbours<default_cost, has_resources, true>(current);
 
             // Generate to the end.
             if (current->n == goal && current->t >= earliest_goal_time)
@@ -1478,26 +1145,9 @@ Pair<Vector<NodeTime>, Cost> AStar::solve()
 
             // Store the path.
             debug_assert(path.empty());
-            if constexpr (is_sipp)
+            for (auto l = current->parent; l; l = l->parent)
             {
-                auto prev = NodeTime{current->parent->nt};
-                for (auto l = current->parent; l; l = l->parent)
-                {
-                    for (Time t = prev.t; t > l->t + 1;)
-                    {
-                        --t;
-                        path.push_back(NodeTime{l->n, t});
-                    }
-                    path.push_back(l->nt);
-                    prev = NodeTime{l->nt};
-                }
-            }
-            else
-            {
-                for (auto l = current->parent; l; l = l->parent)
-                {
-                    path.push_back(l->nt);
-                }
+                path.push_back(l->nt);
             }
             std::reverse(path.begin(), path.end());
 
@@ -1584,7 +1234,6 @@ Pair<Vector<NodeTime>, Cost> AStar::calculate_cost(const Vector<Node>& input_pat
 
     constexpr bool has_resources = true;
     constexpr bool is_farkas = false;
-    constexpr bool is_sipp = false;
     constexpr bool is_last_segment = false;
 
     // ------------------------------------
@@ -1755,31 +1404,31 @@ Pair<Vector<NodeTime>, Cost> AStar::calculate_cost(const Vector<Node>& input_pat
                 idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
                 latest_visit_time[next_n] >= next_t && edge_costs.north < std::numeric_limits<Cost>::infinity())
             {
-                generate<is_sipp, has_resources, is_last_segment>(current, next_n, next_t, edge_costs.north, w, waypoint_time);
+                generate<has_resources, is_last_segment>(current, next_n, next_t, edge_costs.north, w, waypoint_time);
             }
             if (const auto next_n = map_.get_south(current_n);
                 idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
                 latest_visit_time[next_n] >= next_t && edge_costs.south < std::numeric_limits<Cost>::infinity())
             {
-                generate<is_sipp, has_resources, is_last_segment>(current, next_n, next_t, edge_costs.south, w, waypoint_time);
+                generate<has_resources, is_last_segment>(current, next_n, next_t, edge_costs.south, w, waypoint_time);
             }
             if (const auto next_n = map_.get_east(current_n);
                 idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
                 latest_visit_time[next_n] >= next_t && edge_costs.east < std::numeric_limits<Cost>::infinity())
             {
-                generate<is_sipp, has_resources, is_last_segment>(current, next_n, next_t, edge_costs.east, w, waypoint_time);
+                generate<has_resources, is_last_segment>(current, next_n, next_t, edge_costs.east, w, waypoint_time);
             }
             if (const auto next_n = map_.get_west(current_n);
                 idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
                 latest_visit_time[next_n] >= next_t && edge_costs.west < std::numeric_limits<Cost>::infinity())
             {
-                generate<is_sipp, has_resources, is_last_segment>(current, next_n, next_t, edge_costs.west, w, waypoint_time);
+                generate<has_resources, is_last_segment>(current, next_n, next_t, edge_costs.west, w, waypoint_time);
             }
             if (const auto next_n = map_.get_wait(current_n);
                 idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
                 latest_visit_time[next_n] >= next_t && edge_costs.wait < std::numeric_limits<Cost>::infinity())
             {
-                generate<is_sipp, has_resources, is_last_segment>(current, next_n, next_t, edge_costs.wait, w, waypoint_time);
+                generate<has_resources, is_last_segment>(current, next_n, next_t, edge_costs.wait, w, waypoint_time);
             }
 
             // Advance to the next node.
@@ -1806,31 +1455,31 @@ Pair<Vector<NodeTime>, Cost> AStar::calculate_cost(const Vector<Node>& input_pat
                 idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
                 latest_visit_time[next_n] >= current->t + 1 && edge_costs.north < std::numeric_limits<Cost>::infinity())
             {
-                generate_last_segment<has_resources, is_sipp>(current, next_n, next_t, edge_costs.north);
+                generate_last_segment<has_resources>(current, next_n, next_t, edge_costs.north);
             }
             if (const auto next_n = map_.get_south(current_n);
                 idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
                 latest_visit_time[next_n] >= current->t + 1 && edge_costs.south < std::numeric_limits<Cost>::infinity())
             {
-                generate_last_segment<has_resources, is_sipp>(current, next_n, next_t, edge_costs.south);
+                generate_last_segment<has_resources>(current, next_n, next_t, edge_costs.south);
             }
             if (const auto next_n = map_.get_east(current_n);
                 idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
                 latest_visit_time[next_n] >= current->t + 1 && edge_costs.east < std::numeric_limits<Cost>::infinity())
             {
-                generate_last_segment<has_resources, is_sipp>(current, next_n, next_t, edge_costs.east);
+                generate_last_segment<has_resources>(current, next_n, next_t, edge_costs.east);
             }
             if (const auto next_n = map_.get_west(current_n);
                 idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
                 latest_visit_time[next_n] >= current->t + 1 && edge_costs.west < std::numeric_limits<Cost>::infinity())
             {
-                generate_last_segment<has_resources, is_sipp>(current, next_n, next_t, edge_costs.west);
+                generate_last_segment<has_resources>(current, next_n, next_t, edge_costs.west);
             }
             if (const auto next_n = map_.get_wait(current_n);
                 idx < static_cast<Int>(input_path.size()) && next_n == input_path[idx] &&
                 latest_visit_time[next_n] >= current->t + 1 && edge_costs.wait < std::numeric_limits<Cost>::infinity())
             {
-                generate_last_segment<has_resources, is_sipp>(current, next_n, next_t, edge_costs.wait);
+                generate_last_segment<has_resources>(current, next_n, next_t, edge_costs.wait);
             }
 
             // Generate to the end.

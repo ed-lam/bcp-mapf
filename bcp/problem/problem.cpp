@@ -90,15 +90,6 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "branching/vertex_branching_constraint.h"
 #include "branching/wait_branching_constraint.h"
 #include "branching/length_branching_constraint.h"
-#ifdef USE_EECBS_PRIMAL_HEURISTIC
-#include "Heuristic_EECBS.h"
-#endif
-#ifdef USE_LNS2_INIT_PRIMAL_HEURISTIC
-#include "Heuristic_LNS2Init.h"
-#endif
-#ifdef USE_LNS2_REPAIR_PRIMAL_HEURISTIC
-#include "Heuristic_LNS2Repair.h"
-#endif
 #ifdef USE_PRIORITIZED_PLANNING_PRIMAL_HEURISTIC
 #include "heuristics/prioritized_planning.h"
 #endif
@@ -1387,19 +1378,6 @@ SCIP_RETCODE SCIPprobdataCreate(
     SCIP_CALL(SCIPincludeConshdlrVertexBranching(scip));
 //    SCIP_CALL(SCIPincludeConshdlrWaitBranching(scip));
     SCIP_CALL(SCIPincludeConshdlrLengthBranching(scip));
-
-    // Include EECBS primal heuristic.
-#ifdef USE_EECBS_PRIMAL_HEURISTIC
-    SCIP_CALL(SCIPincludeHeurEECBS(scip));
-#endif
-
-    // Include LNS2 primal heuristic.
-#ifdef USE_LNS2_INIT_PRIMAL_HEURISTIC
-    SCIP_CALL(SCIPincludeHeurLNS2Init(scip));
-#endif
-#ifdef USE_LNS2_REPAIR_PRIMAL_HEURISTIC
-    SCIP_CALL(SCIPincludeHeurLNS2Repair(scip));
-#endif
 
     // Include prioritized planning primal heuristic.
 #ifdef USE_PRIORITIZED_PLANNING_PRIMAL_HEURISTIC
