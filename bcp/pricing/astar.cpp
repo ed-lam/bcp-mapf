@@ -20,33 +20,13 @@ Author: Edward Lam <ed@ed-lam.com>
 // #define PRINT_DEBUG
 
 #include "pricing/astar.h"
+#include "types/bitset.h"
 #include "types/float_compare.h"
 #include <cstddef>
 
 #ifdef DEBUG
 static bool verbose = false;
 #endif
-
-static inline bool get_bitset(const std::byte* const bitset, const Int i)
-{
-    const auto idx = i / CHAR_BIT;
-    const auto mask = std::byte(0x01) << (i % CHAR_BIT);
-    return (bitset[idx] & mask) != std::byte(0x0);
-}
-
-static inline void set_bitset(std::byte* const bitset, const Int i)
-{
-    const auto idx = i / CHAR_BIT;
-    const auto mask = std::byte(0x01) << (i % CHAR_BIT);
-    bitset[idx] |= mask;
-}
-
-//static inline void clear_bitset(std::byte* const bitset, const Int i)
-//{
-//    const auto idx = i / CHAR_BIT;
-//    const auto mask = std::byte(0x01) << (i % CHAR_BIT);
-//    bitset[idx] &= ~mask;
-//}
 
 #ifdef DEBUG
 String make_goal_state_string(const std::byte* const state, const Int nb_goal_crossings)
