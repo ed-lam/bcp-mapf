@@ -28,11 +28,11 @@ Author: Edward Lam <ed@ed-lam.com>
 
 // ---------------------------------------------------------------------------------------
 
+#include "types/basic_types.h"
 #include "problem/debug.h"
 #include <string>
 #include <memory>
 #include <array>
-#include <vector>
 #include <string>
 #include <memory>
 #include <utility>
@@ -43,26 +43,13 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "scip/scip.h"
 #pragma GCC diagnostic pop
 
-using Int = int32_t;
-//using UInt = uint32_t;
-using Float = double;
-
-using Position = Int;
-using Agent = Int;
-using Cost = Float;
-using IntCost = Int;
-using Waypoint = Int;
+using Int = Int32;
+using Waypoint = Int32;
 
 using String = std::string;
 
 template<class T, size_t Size>
 using Array = std::array<T, Size>;
-
-template<class T>
-using Vector = std::vector<T>;
-
-template<class Key, class T, class Hash = robin_hood::hash<Key>, class KeyEqual = std::equal_to<Key>>
-using HashTable = robin_hood::unordered_flat_map<Key, T, Hash, KeyEqual, 60>;
 
 template<class T1, class T2>
 using Pair = std::pair<T1, T2>;

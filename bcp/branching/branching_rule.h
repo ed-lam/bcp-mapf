@@ -20,7 +20,8 @@ Author: Edward Lam <ed@ed-lam.com>
 #pragma once
 
 #include "problem/includes.h"
-#include "pricing/coordinates.h"
+#include "types/vector.h"
+#include "types/map_types.h"
 
 // Create the branching rule and include it in SCIP
 SCIP_RETCODE SCIPincludeBranchrule(

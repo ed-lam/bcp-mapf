@@ -20,7 +20,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #pragma once
 
 #include "problem/includes.h"
-#include "pricing/coordinates.h"
+#include "types/map_types.h"
 
 enum LengthBranchDirection : bool
 {

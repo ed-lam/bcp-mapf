@@ -114,7 +114,7 @@ SCIP_RETCODE write_best_solution(
                            format_path(probdata, path_length, path));
 
                 // Move to next agent.
-                release_assert(!found, "Agent {} is using more than one path");
+                release_assert(!found, "Agent {} is using more than one path", a);
                 found = true;
                 break;
             }

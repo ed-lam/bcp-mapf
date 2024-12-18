@@ -20,10 +20,11 @@ Author: Edward Lam <ed@ed-lam.com>
 #pragma once
 
 #include "problem/includes.h"
-#include "pricing/coordinates.h"
+#include "types/map_types.h"
 #include "types/memory_pool.h"
 #include "problem/map.h"
 #include "pricing/priority_queue.h"
+#include "types/hash_map.h"
 
 class Heuristic
 {
@@ -35,7 +36,7 @@ class Heuristic
         const Label* parent;
 #endif
         Node n;
-        IntCost g;
+        Time g;
     };
 #ifdef DEBUG
     static_assert(sizeof(Label) == 2*8 + 2*4);
@@ -74,7 +75,7 @@ class Heuristic
     const Map& map_;
 
     // Lower bounds
-    HashTable<Node, Vector<IntCost>> h_;
+    HashMap<Node, Vector<Time>> h_;
     Time max_path_length_;
 
     // Solver data structures
@@ -99,7 +100,7 @@ class Heuristic
     inline auto max_path_length() const { return max_path_length_; }
 
     // Get the lower bound from every node to a goal node
-    const Vector<IntCost>& get_h(const Node goal);
+    const Vector<Time>& get_h(const Node goal);
 
   private:
     // Check if a node has already been visited
@@ -111,6 +112,6 @@ class Heuristic
     void generate_neighbours(const Label* const current);
 
     // Compute lower bound from every node to a goal node
-    void search(const Node goal, Vector<IntCost>& h);
+    void search(const Node goal, Vector<Time>& h);
 };
 

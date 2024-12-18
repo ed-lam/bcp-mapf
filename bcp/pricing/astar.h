@@ -20,7 +20,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #pragma once
 
 #include "problem/includes.h"
-#include "pricing/coordinates.h"
+#include "types/map_types.h"
 #include "problem/map.h"
 #include "types/memory_pool.h"
 #include "pricing/reservation_table.h"
@@ -178,13 +178,13 @@ class AStar
     Data data_;
 
     // Solver data structures
-    const Vector<IntCost>* h_node_to_waypoint_;
-    Vector<IntCost> h_waypoint_to_goal_;
+    const Vector<Time>* h_node_to_waypoint_;
+    Vector<Time> h_waypoint_to_goal_;
     Heuristic heuristic_;
     MemoryPool label_pool_;
     AStarPriorityQueue open_;
-    HashTable<NodeTime, Label*> frontier_without_resources_;
-    HashTable<NodeTime, SmallVector<Label*, 4>> frontier_with_resources_;
+    HashMap<NodeTime, Label*> frontier_without_resources_;
+    HashMap<NodeTime, SmallVector<Label*, 4>> frontier_with_resources_;
 #ifdef DEBUG
     size_t nb_labels_;
 #endif
@@ -257,7 +257,7 @@ class AStar
     }
 
     // Expand next - time-expanded A*
-    template<IntCost default_cost, bool has_resources, bool is_last_segment, class... WaypointArgs>
+    template<Time default_cost, bool has_resources, bool is_last_segment, class... WaypointArgs>
     void generate_neighbours(Label* const current, WaypointArgs... waypoint_args);
 
     // Create end label

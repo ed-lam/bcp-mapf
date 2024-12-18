@@ -21,7 +21,7 @@ Author: Edward Lam <ed@ed-lam.com>
 //#define MAPF_CONSTRAINT_WAITBRANCHING_H
 //
 //#include "problem/includes.h"
-//#include "pricing/coordinates.h"
+//#include "types/map_types.h"
 //
 //enum WaitBranchDirection : bool
 //{

@@ -20,8 +20,9 @@ Author: Edward Lam <ed@ed-lam.com>
 #pragma once
 
 #include "problem/includes.h"
-#include "pricing/coordinates.h"
+#include "types/map_types.h"
 #include "problem/map.h"
+#include "types/hash_map.h"
 
 // Data structure for storing the costs of traversing an edge
 struct EdgeCosts
@@ -49,7 +50,7 @@ static_assert(sizeof(EdgeCosts) == 6 * 8);
 // Penalties for crossing an edge
 class EdgePenalties
 {
-    HashTable<NodeTime, EdgeCosts> edge_penalties_;
+    HashMap<NodeTime, EdgeCosts> edge_penalties_;
 
   public:
     // Constructors
@@ -69,7 +70,7 @@ class EdgePenalties
     inline auto find(const NodeTime nt) const { return edge_penalties_.find(nt); }
 
     // Return the edge costs of a node-time
-    template<IntCost default_cost>
+    template<Time default_cost>
     inline EdgeCosts get_edge_costs(const NodeTime nt)
     {
         // Make default edge costs.
@@ -136,7 +137,7 @@ class EdgePenalties
     // Debug
     void print(const Map& map)
     {
-        HashTable<NodeTime, EdgeCosts> incoming_penalties;
+        HashMap<NodeTime, EdgeCosts> incoming_penalties;
         for (const auto [outgoing_nt, penalties] : edge_penalties_)
         {
             if (penalties.north != 0)

@@ -37,7 +37,7 @@ Author: Edward Lam <ed@ed-lam.com>
 // Data for vertex conflicts
 struct VertexConflictsConsData
 {
-    HashTable<NodeTime, VertexConflict> conflicts;
+    HashMap<NodeTime, VertexConflict> conflicts;
 };
 
 // Create a constraint for vertex conflicts and include it
@@ -235,7 +235,7 @@ SCIP_RETCODE vertex_conflicts_check(
     }
 
     // Calculate the number of times a vertex is used by summing the columns.
-    HashTable<NodeTime, SCIP_Real> vertex_times_used;
+    HashMap<NodeTime, SCIP_Real> vertex_times_used;
     for (const auto& [var, _] : vars)
     {
         // Get the path.
@@ -337,7 +337,7 @@ SCIP_RETCODE vertex_conflicts_separate(
     }
 
     // Calculate the number of times a vertex is used by summing the columns.
-    HashTable<NodeTime, SCIP_Real> vertex_used;
+    HashMap<NodeTime, SCIP_Real> vertex_used;
     for (const auto& [var, var_val] : vars)
     {
         // Get the path.
@@ -835,7 +835,7 @@ SCIP_RETCODE vertex_conflicts_add_var(
     return SCIP_OKAY;
 }
 
-const HashTable<NodeTime, VertexConflict>& vertex_conflicts_get_constraints(
+const HashMap<NodeTime, VertexConflict>& vertex_conflicts_get_constraints(
     SCIP_ProbData* probdata    // Problem data
 )
 {

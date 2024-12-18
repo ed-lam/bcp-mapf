@@ -132,7 +132,7 @@ void Heuristic::generate_neighbours(const Label* const current)
     }
 }
 
-void Heuristic::search(const Node goal, Vector<IntCost>& h)
+void Heuristic::search(const Node goal, Vector<Time>& h)
 {
     // Reset.
     label_pool_.reset(sizeof(Label));
@@ -166,7 +166,7 @@ void Heuristic::search(const Node goal, Vector<IntCost>& h)
     debugln("=======================================");
 }
 
-const Vector<IntCost>& Heuristic::get_h(const Node goal)
+const Vector<Time>& Heuristic::get_h(const Node goal)
 {
     auto& h = h_[goal];
     if (h.empty())

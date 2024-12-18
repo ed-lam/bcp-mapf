@@ -114,7 +114,7 @@ SCIP_DECL_HEURFREE(heurFreePrioritizedPlanning)
 void block_path(const Edge* const path,
                 const Time path_length,
                 EdgePenalties& global_edge_penalties,
-                HashTable<Node, Time>& node_latest_visit_time,
+                HashMap<Node, Time>& node_latest_visit_time,
                 const Time max_path_length,
                 const Map& map)
 {
@@ -279,7 +279,7 @@ SCIP_DECL_HEUREXEC(heurExecPrioritizedPlanning)
     Vector<Agent> order;
     order.reserve(N);
     EdgePenalties global_edge_penalties;
-    HashTable<Node, Time> node_latest_visit_time;
+    HashMap<Node, Time> node_latest_visit_time;
     for (Agent a = 0; a < N; ++a)
     {
         for (const auto& [var, var_val] : agent_vars[a])
@@ -485,8 +485,8 @@ SCIP_DECL_HEUREXEC(heurExecPrioritizedPlanning)
     // Check.
 // #ifdef DEBUG
 //     {
-//         HashTable<NodeTime, SCIP_Real> used_vertices;
-//         HashTable<EdgeTime, SCIP_Real> used_edges;
+//         HashMap<NodeTime, SCIP_Real> used_vertices;
+//         HashMap<EdgeTime, SCIP_Real> used_edges;
 
 //         for (Agent a = 0; a < N; ++a)
 //         {

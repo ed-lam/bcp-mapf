@@ -20,7 +20,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #pragma once
 
 #include "problem/includes.h"
-#include "pricing/coordinates.h"
+#include "types/map_types.h"
 #include "constraints/separator.h"
 
 #include "problem/instance.h"
@@ -166,27 +166,27 @@ Vector<Vector<Pair<NodeTime, SCIP_ROW*>>>& SCIPprobdataGetCrossingAgentGoalConfl
 #endif
 
 // Get the vertices fractionally used by each agent
-const Vector<HashTable<NodeTime, SCIP_Real>>& SCIPprobdataGetFractionalVertices(
+const Vector<HashMap<NodeTime, SCIP_Real>>& SCIPprobdataGetFractionalVertices(
     SCIP_ProbData* probdata    // Problem data
 );
 
 // Get the edges fractionally used by each agent
-const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetFractionalEdges(
+const Vector<HashMap<EdgeTime, SCIP_Real>>& SCIPprobdataGetFractionalEdges(
     SCIP_ProbData* probdata    // Problem data
 );
 
 // Get the non-wait edges fractionally used by each agent
-const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetFractionalMoveEdges(
+const Vector<HashMap<EdgeTime, SCIP_Real>>& SCIPprobdataGetFractionalMoveEdges(
     SCIP_ProbData* probdata    // Problem data
 );
 
 // Get the non-wait edges used by each agent
-const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetPositiveMoveEdges(
+const Vector<HashMap<EdgeTime, SCIP_Real>>& SCIPprobdataGetPositiveMoveEdges(
     SCIP_ProbData* probdata    // Problem data
 );
 
 // Get the edges fractionally used by each agent, grouped by edge-time
-const HashTable<EdgeTime, SCIP_Real*>& SCIPprobdataGetFractionalEdgesVec(
+const HashMap<EdgeTime, SCIP_Real*>& SCIPprobdataGetFractionalEdgesVec(
     SCIP_ProbData* probdata    // Problem data
 );
 

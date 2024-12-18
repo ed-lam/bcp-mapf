@@ -190,8 +190,8 @@ SCIP_RETCODE rectangle_knapsack_conflicts_create_cut(
 bool find_rectangle_conflict(
     SCIP* scip,                                                      // SCIP
     const Map& map,                                                  // Map
-    const HashTable<EdgeTime, SCIP_Real>& a1_positive_move_edges,    // Edge weights for each agent
-    const HashTable<EdgeTime, SCIP_Real>& a2_positive_move_edges,    // Edge weights for each agent
+    const HashMap<EdgeTime, SCIP_Real>& a1_positive_move_edges,    // Edge weights for each agent
+    const HashMap<EdgeTime, SCIP_Real>& a2_positive_move_edges,    // Edge weights for each agent
     const Time conflict_time,                                        // Time of the conflict
     const Edge* a1_path,                                             // Path of agent 1
     const Edge* a2_path,                                             // Path of agent 1
@@ -521,8 +521,8 @@ bool find_rectangle_conflict(
 // bool find_rectangle_conflict_new(
 //     SCIP* scip,                                                      // SCIP
 //     const Map& map,                                                  // Map
-//     const HashTable<EdgeTime, SCIP_Real>& a1_positive_move_edges,    // Edge weights for each agent
-//     const HashTable<EdgeTime, SCIP_Real>& a2_positive_move_edges,    // Edge weights for each agent
+//     const HashMap<EdgeTime, SCIP_Real>& a1_positive_move_edges,    // Edge weights for each agent
+//     const HashMap<EdgeTime, SCIP_Real>& a2_positive_move_edges,    // Edge weights for each agent
 //     const Time conflict_time,                                        // Time of the conflict
 //     const Edge* a1_path,                                             // Path of agent 1
 //     const Edge* a2_path,                                             // Path of agent 1

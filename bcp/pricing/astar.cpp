@@ -20,14 +20,8 @@ Author: Edward Lam <ed@ed-lam.com>
 //#define PRINT_DEBUG
 
 #include "pricing/astar.h"
+#include "types/float_compare.h"
 #include <cstddef>
-
-#define EPS (1e-6)
-#define isEQ(x, y) (std::abs((x)-(y)) <= (EPS))
-#define isLT(x, y) ((x)-(y) < -(EPS))
-#define isLE(x, y) ((x)-(y) <= (EPS))
-#define isGT(x, y) ((x)-(y) > (EPS))
-#define isGE(x, y) ((x)-(y) >= -(EPS))
 
 #ifdef DEBUG
 static bool verbose = false;
@@ -310,11 +304,11 @@ void AStar::generate_early_segment(Label* const current,
     const auto h_goal_to_finish = finish_time_penalties.get_h(next_t + h_node_to_waypoint + h_waypoint_to_goal);
     const auto h = std::max(h_node_to_waypoint, waypoint_time - next_t) + h_waypoint_to_goal + h_goal_to_finish;
     next_label->f = next_label->g + h;
-    debug_assert(isGE(next_label->g, current->g + 1));
-    debug_assert(isGE(next_label->f, current->f));
+    debug_assert(is_ge(next_label->g, current->g + 1));
+    debug_assert(is_ge(next_label->f, current->f));
 
     // Check if cost-infeasible.
-    if (isGE(next_label->f, 0))
+    if (is_ge(next_label->f, 0.0))
     {
         // Print.
 #ifdef DEBUG
@@ -474,11 +468,11 @@ void AStar::generate_last_segment(Label* const current, const Node next_n, const
     const auto h_goal_to_finish = finish_time_penalties.get_h(next_t + h_node_to_waypoint);
     const auto h = std::max(h_node_to_waypoint, earliest_goal_time - next_t) + h_goal_to_finish;
     next_label->f = next_label->g + h;
-    debug_assert(isGE(next_label->g, current->g + 1));
-    debug_assert(isGE(next_label->f, current->f));
+    debug_assert(is_ge(next_label->g, current->g + 1));
+    debug_assert(is_ge(next_label->f, current->f));
 
     // Check if cost-infeasible.
-    if (isGE(next_label->f, 0))
+    if (is_ge(next_label->f, 0.0))
     {
         // Print.
 #ifdef DEBUG
@@ -562,7 +556,7 @@ void AStar::generate_last_segment(Label* const current, const Node next_n, const
 #endif
 }
 
-template<IntCost default_cost, bool has_resources, bool is_last_segment, class... WaypointArgs>
+template<Time default_cost, bool has_resources, bool is_last_segment, class... WaypointArgs>
 void AStar::generate_neighbours(Label* const current, WaypointArgs... waypoint_args)
 {
     // Get data.
@@ -665,7 +659,7 @@ void AStar::generate_end(Label* const current)
     new_label->n = -1;
 
     // Check if cost-infeasible.
-    if (isGE(new_label->f, 0))
+    if (is_ge(new_label->f, 0.0))
     {
         // Print.
 #ifdef DEBUG
@@ -735,10 +729,10 @@ AStar::Label* AStar::dominated<false>(Label* const new_label)
     {
         auto existing_label = it->second;
         debug_assert(existing_label->nt == new_label->nt);
-        if (isLE(existing_label->f, new_label->f))
+        if (is_le(existing_label->f, new_label->f))
         {
             // Existing label dominates new label.
-            debug_assert(isLE(existing_label->g, new_label->g));
+            debug_assert(is_le(existing_label->g, new_label->g));
 
             // Dominated.
             return nullptr;
@@ -747,7 +741,7 @@ AStar::Label* AStar::dominated<false>(Label* const new_label)
         {
             // New label dominates existing label.
             debug_assert(it == frontier_without_resources_.find(new_label->nt));
-            debug_assert(!isLE(existing_label->g, new_label->g));
+            debug_assert(!is_le(existing_label->g, new_label->g));
 
             // Replace the existing label with the new label.
             release_assert(existing_label->pqueue_index >= 0,
@@ -822,7 +816,7 @@ AStar::Label* AStar::dominated<true>(Label* const new_label)
                 }
             // If the existing label still costs less than or equal to the new label, even after incurring these
             // penalties, then the new label is dominated.
-            if (isLE(existing_label_potential_cost, new_label->f))
+            if (is_le(existing_label_potential_cost, new_label->f))
             {
                 debug_assert(!dominates);
                 return nullptr;
@@ -837,7 +831,7 @@ AStar::Label* AStar::dominated<true>(Label* const new_label)
                 {
                     new_label_potential_cost += goal_penalties[idx].cost;
                 }
-            if (isLE(new_label_potential_cost, existing_label->f))
+            if (is_le(new_label_potential_cost, existing_label->f))
             {
                 // If the existing label is not yet expanded, use its memory to store the new label.
                 debug_assert(nb_goal_penalties > 0 || existing_label->pqueue_index >= 0);
@@ -869,7 +863,7 @@ AStar::Label* AStar::dominated<true>(Label* const new_label)
     if (store_in_existing_label)
     {
         // Replace the existing label with the new label.
-        debug_assert(isLE(new_label->f, store_in_existing_label->f));
+        debug_assert(is_le(new_label->f, store_in_existing_label->f));
         debug_assert(store_in_existing_label->pqueue_index >= 0);
         open_.update_pqueue_index(new_label, store_in_existing_label->pqueue_index);
         memcpy(store_in_existing_label, new_label, label_pool_.object_size());
@@ -1042,7 +1036,7 @@ Pair<Vector<NodeTime>, Cost> AStar::solve()
     generate_start<has_resources>();
 
     // Solve up to but not including the last waypoint (goal).
-    constexpr IntCost default_cost = is_farkas ? 0 : 1;
+    constexpr Time default_cost = is_farkas ? 0 : 1;
     if (waypoints.size() > 1)
     {
         while (!open_.empty())
@@ -1186,7 +1180,7 @@ Pair<Vector<NodeTime>, Cost> AStar::solve()
 #endif
 
             // Check.
-            debug_assert(isLT(path_cost, 0));
+            debug_assert(is_lt(path_cost, 0.0));
             debug_assert(earliest_goal_time <= current->t && current->t <= latest_goal_time);
 
             // Finish.
@@ -1323,7 +1317,7 @@ Pair<Vector<NodeTime>, Cost> AStar::calculate_cost(const Vector<Node>& input_pat
 
     // Solve up to but not including the last waypoint (goal).
     Int idx = 1;
-    constexpr IntCost default_cost = is_farkas ? 0 : 1;
+    constexpr Time default_cost = is_farkas ? 0 : 1;
     if (waypoints.size() > 1)
     {
         while (!open_.empty())
@@ -1518,7 +1512,7 @@ Pair<Vector<NodeTime>, Cost> AStar::calculate_cost(const Vector<Node>& input_pat
 #endif
 
             // Check.
-            debug_assert(isLT(path_cost, 0));
+            debug_assert(is_lt(path_cost, 0.0));
             debug_assert(earliest_goal_time <= current->t && current->t <= latest_goal_time);
 
             // Finish.

@@ -102,12 +102,12 @@ struct SCIP_ProbData
     Vector<Pair<SCIP_VAR*, SCIP_Real>> vars;                                    // Array of variables for all agents
     Vector<Vector<Pair<SCIP_VAR*, SCIP_Real>>> agent_vars;                      // Array of variables for each agent
 #if defined(USE_THREEVERTEX_CONFLICTS) || defined(USE_VERTEX_FOUREDGE_CONFLICTS)
-    Vector<HashTable<NodeTime, SCIP_Real>> fractional_vertices;                 // Vertices with fractional values
+    Vector<HashMap<NodeTime, SCIP_Real>> fractional_vertices;                 // Vertices with fractional values
 #endif
-    Vector<HashTable<EdgeTime, SCIP_Real>> fractional_edges;                    // Edges with fractional values
-    Vector<HashTable<EdgeTime, SCIP_Real>> fractional_move_edges;               // Non-wait edges with fractional values
-    Vector<HashTable<EdgeTime, SCIP_Real>> positive_move_edges;                 // Non-wait edges with positive value
-    HashTable<EdgeTime, SCIP_Real*> fractional_edges_vec;                       // Edges with fractional values organised by edge
+    Vector<HashMap<EdgeTime, SCIP_Real>> fractional_edges;                    // Edges with fractional values
+    Vector<HashMap<EdgeTime, SCIP_Real>> fractional_move_edges;               // Non-wait edges with fractional values
+    Vector<HashMap<EdgeTime, SCIP_Real>> positive_move_edges;                 // Non-wait edges with positive value
+    HashMap<EdgeTime, SCIP_Real*> fractional_edges_vec;                       // Edges with fractional values organised by edge
 
     // Constraints
     Vector<SCIP_CONS*> agent_part;                                              // Agent partition constraints
@@ -1453,7 +1453,7 @@ Vector<Vector<Pair<NodeTime, SCIP_ROW*>>>& SCIPprobdataGetCrossingAgentGoalConfl
 
 // Get the vertices fractionally used by each agent
 #if defined(USE_THREEVERTEX_CONFLICTS) || defined(USE_VERTEX_FOUREDGE_CONFLICTS)
-const Vector<HashTable<NodeTime, SCIP_Real>>& SCIPprobdataGetFractionalVertices(
+const Vector<HashMap<NodeTime, SCIP_Real>>& SCIPprobdataGetFractionalVertices(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1463,7 +1463,7 @@ const Vector<HashTable<NodeTime, SCIP_Real>>& SCIPprobdataGetFractionalVertices(
 #endif
 
 // Get the edges fractionally used by each agent
-const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetFractionalEdges(
+const Vector<HashMap<EdgeTime, SCIP_Real>>& SCIPprobdataGetFractionalEdges(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1472,7 +1472,7 @@ const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetFractionalEdges(
 }
 
 // Get the non-wait edges fractionally used by each agent
-const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetFractionalMoveEdges(
+const Vector<HashMap<EdgeTime, SCIP_Real>>& SCIPprobdataGetFractionalMoveEdges(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1481,7 +1481,7 @@ const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetFractionalMoveEdges
 }
 
 // Get the non-wait edges used by each agent
-const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetPositiveMoveEdges(
+const Vector<HashMap<EdgeTime, SCIP_Real>>& SCIPprobdataGetPositiveMoveEdges(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1490,7 +1490,7 @@ const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetPositiveMoveEdges(
 }
 
 // Get the edges fractionally used by each agent, grouped by edge-time
-const HashTable<EdgeTime, SCIP_Real*>& SCIPprobdataGetFractionalEdgesVec(
+const HashMap<EdgeTime, SCIP_Real*>& SCIPprobdataGetFractionalEdgesVec(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1977,8 +1977,8 @@ void print_used_paths(
         }
 
     // Get fractional vertices.
-    HashTable<NodeTime, HashTable<Agent, SCIP_Real>> vertex_times_used;
-    HashTable<EdgeTime, HashTable<Agent, SCIP_Real>> edge_times_used;
+    HashMap<NodeTime, HashMap<Agent, SCIP_Real>> vertex_times_used;
+    HashMap<EdgeTime, HashMap<Agent, SCIP_Real>> edge_times_used;
     if (!sol &&
         SCIPgetStage(scip) == SCIP_STAGE_SOLVING &&
         SCIPgetLPSolstat(scip) == SCIP_LPSOLSTAT_OPTIMAL)

@@ -48,8 +48,8 @@ struct GoalTimeBound
     Time last;
 };
 
-Tuple<HashTable<NodeTime, Pair<Vector<Score>, Vector<Score>>>,
-      HashTable<AgentTime, SuccessorDirection>,
+Tuple<HashMap<NodeTime, Pair<Vector<Score>, Vector<Score>>>,
+      HashMap<AgentTime, SuccessorDirection>,
       Vector<Int>,
       Vector<GoalTimeBound>>
 get_lp_branch_candidates(
@@ -59,8 +59,8 @@ get_lp_branch_candidates(
 )
 {
     // Create output.
-    Tuple<HashTable<NodeTime, Pair<Vector<Score>, Vector<Score>>>,
-          HashTable<AgentTime, SuccessorDirection>,
+    Tuple<HashMap<NodeTime, Pair<Vector<Score>, Vector<Score>>>,
+          HashMap<AgentTime, SuccessorDirection>,
           Vector<Int>,
           Vector<GoalTimeBound>> output;
     auto& [candidates, succ_dirs, nb_paths, goal_time_bounds] = output;
@@ -390,7 +390,7 @@ Pair<AgentNodeTime, bool> find_decision_early_goal(
 //Pair<AgentTime, bool> find_decision_wait(
 //    SCIP* scip,                                             // SCIP
 //    SCIP_PROBDATA* probdata,                                // Problem data
-//    const HashTable<AgentTime, SuccessorDirection>& succ_dirs,    // Vertices with a wait
+//    const HashMap<AgentTime, SuccessorDirection>& succ_dirs,    // Vertices with a wait
 //    const Vector<GoalTimeBound>& goal_time_bounds           // Earliest and latest time an agent reaches its goal
 //)
 //{
@@ -552,7 +552,7 @@ Pair<AgentNodeTime, bool> find_decision_early_goal(
 Pair<AgentNodeTime, bool> find_decision_vertex(
     SCIP* scip,                                                                   // SCIP
     SCIP_PROBDATA* probdata,                                                      // Problem data
-    const HashTable<NodeTime, Pair<Vector<Score>, Vector<Score>>>& candidates,    // Candidate agent-time-nodes
+    const HashMap<NodeTime, Pair<Vector<Score>, Vector<Score>>>& candidates,    // Candidate agent-time-nodes
     const Vector<GoalTimeBound>& goal_time_bounds,                                // Earliest and latest time an agent reaches its goal
     const Vector<Int>& nb_paths                                                   // Number of paths used by an agent
 )

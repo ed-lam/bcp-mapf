@@ -26,7 +26,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "branching/vertex_branching_constraint.h"
 #include <iterator>
 
-HashTable<AgentNodeTime, Int>
+HashMap<AgentNodeTime, Int>
 get_pseudosolution_branch_candidates(
     SCIP* scip    // SCIP
 )
@@ -38,7 +38,7 @@ get_pseudosolution_branch_candidates(
     debug_assert(nb_candidate_vars > 0);
 
     // Calculate branching candidates.
-    HashTable<AgentNodeTime, Int> candidates;
+    HashMap<AgentNodeTime, Int> candidates;
     for (Int v = 0; v < nb_candidate_vars; ++v)
     {
         // Get the variable.

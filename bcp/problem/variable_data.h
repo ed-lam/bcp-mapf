@@ -19,7 +19,8 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #pragma once
 
-#include "pricing/coordinates.h"
+#include "problem/scip.h"
+#include "types/map_types.h"
 
 // Create variable data
 SCIP_RETCODE SCIPvardataCreate(

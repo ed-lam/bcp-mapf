@@ -23,7 +23,7 @@ Author: Edward Lam <ed@ed-lam.com>
 // #define MAPF_SEPARATOR_RECTANGLECONFLICTS_H
 //
 // #include "problem/includes.h"
-// #include "pricing/coordinates.h"
+// #include "types/map_types.h"
 // #include "problem/problem.h"
 //
 // struct RectangleConflict

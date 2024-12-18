@@ -9,7 +9,7 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED 1)
 
 # Set C++ version.
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED 1)
 
 # Set release build.
@@ -22,7 +22,7 @@ set(BCP_MAPF_SOURCE_FILES
     robin-hood-hashing/src/include/robin_hood.h
     bcp/problem/includes.h
     bcp/problem/debug.h
-    bcp/pricing/coordinates.h
+    bcp/types/map_types.h
     bcp/problem/map.h
     bcp/pricing/agents_data.h
     bcp/problem/instance.h
@@ -40,7 +40,7 @@ set(BCP_MAPF_SOURCE_FILES
     bcp/problem/includes.h
     bcp/problem/debug.h
     bcp/Clock.h
-    bcp/pricing/coordinates.h
+    bcp/types/map_types.h
     bcp/problem/reader.h
     bcp/problem/reader.cpp
     bcp/problem/problem.h

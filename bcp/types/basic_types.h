@@ -16,11 +16,9 @@ using UInt64 = uint64_t;
 using Float = double;
 using Size = std::ptrdiff_t;
 
-// using Agent = Int16;
-// using Cost = Float;
-// using Time = Int32;
-
-#include "pricing/coordinates.h"
+using Agent = Int16;
+using Cost = Float;
+using Time = Int32;
 
 constexpr auto INF = std::numeric_limits<Cost>::infinity();
 constexpr auto TIME_MAX = std::numeric_limits<Time>::max();

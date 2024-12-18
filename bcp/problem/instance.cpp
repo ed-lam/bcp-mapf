@@ -182,7 +182,7 @@ Instance::Instance(const std::filesystem::path& scenario_path, const Agent agent
                 agents_map_data.push_back(agent_map_data);
             }
         }
-        release_assert(agent_limit == std::numeric_limits<Int>::max() || agents.size() == agent_limit,
+        release_assert(agent_limit == std::numeric_limits<Agent>::max() || agents.size() == agent_limit,
                        "Scenario file contained {} agents. Not enough to read {} agents",
                        agents.size(), agent_limit);
         release_assert(!agents.empty(), "No agents in scenario file {}", scenario_path.string());
@@ -198,7 +198,7 @@ Instance::Instance(const std::filesystem::path& scenario_path, const Agent agent
         const auto [map_path, map_width2, map_height2] = agents_map_data[a];
 
         release_assert(map_path == agents_map_data[0].map_path,
-                       "Agent {} uses a different map");
+                       "Agent {} uses a different map", a);
         release_assert(map_width2 == map.width(),
                        "Map width of agent {} does not match actual map size", a);
         release_assert(map_height2 == map.height(),

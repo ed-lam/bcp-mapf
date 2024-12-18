@@ -146,7 +146,7 @@ SCIP_RETCODE agentwaitedge_conflicts_create_cut(
 Vector<AgentWaitEdgeConflictCandidate> get_candidates(
     const EdgeTime a1_et1,
     const EdgeTime a2_et1,
-    const HashTable<EdgeTime, SCIP_Real*>& fractional_edges_vec,
+    const HashMap<EdgeTime, SCIP_Real*>& fractional_edges_vec,
     const Map& map
 )
 {

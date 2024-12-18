@@ -41,7 +41,7 @@ Author: Edward Lam <ed@ed-lam.com>
 // Data for edge conflicts
 struct EdgeConflictsConsData
 {
-    HashTable<EdgeTime, EdgeConflict> conflicts;
+    HashMap<EdgeTime, EdgeConflict> conflicts;
 };
 
 // Create a constraint for edge conflicts and include it
@@ -241,7 +241,7 @@ SCIP_RETCODE edge_conflicts_check(
     const auto& vars = SCIPprobdataGetVars(probdata);
 
     // Calculate the number of times an edge is used by summing the columns.
-    HashTable<EdgeTime, SCIP_Real> edge_times_used;
+    HashMap<EdgeTime, SCIP_Real> edge_times_used;
     for (const auto& [var, _] : vars)
     {
         // Get the path.
@@ -340,7 +340,7 @@ SCIP_RETCODE edge_conflicts_separate(
     }
 
     // Calculate the number of times an edge is used by summing the columns.
-    HashTable<EdgeTime, SCIP_Real> edge_used;
+    HashMap<EdgeTime, SCIP_Real> edge_used;
     for (const auto& [var, var_val] : vars)
     {
         // Get the path.
@@ -916,7 +916,7 @@ SCIP_RETCODE edge_conflicts_add_var(
     return SCIP_OKAY;
 }
 
-const HashTable<EdgeTime, EdgeConflict>& edge_conflicts_get_constraints(
+const HashMap<EdgeTime, EdgeConflict>& edge_conflicts_get_constraints(
     SCIP_ProbData* probdata    // Problem data
 )
 {

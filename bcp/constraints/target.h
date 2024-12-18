@@ -22,7 +22,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #pragma once
 
 #include "problem/includes.h"
-#include "pricing/coordinates.h"
+#include "types/map_types.h"
 #include "problem/problem.h"
 
 // Create separator for goal conflicts and include it

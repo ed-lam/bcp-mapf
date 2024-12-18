@@ -20,7 +20,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #pragma once
 
 #include "problem/includes.h"
-#include "pricing/coordinates.h"
+#include "types/map_types.h"
 #include "problem/problem.h"
 
 struct EdgeConflict
@@ -65,7 +65,7 @@ SCIP_RETCODE edge_conflicts_add_var(
     const Edge* const path     // Path
 );
 
-const HashTable<EdgeTime, EdgeConflict>& edge_conflicts_get_constraints(
+const HashMap<EdgeTime, EdgeConflict>& edge_conflicts_get_constraints(
     SCIP_ProbData* probdata    // Problem data
 );
 

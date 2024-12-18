@@ -132,7 +132,7 @@ SCIP_RETCODE stepaside_conflicts_separate(
     const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
 
     // Get edges of each agent.
-    Array<Vector<HashTable<EdgeTime, SCIP_Real>>, 4> agent_dir_edges;
+    Array<Vector<HashMap<EdgeTime, SCIP_Real>>, 4> agent_dir_edges;
     agent_dir_edges[Direction::NORTH].resize(N);
     agent_dir_edges[Direction::SOUTH].resize(N);
     agent_dir_edges[Direction::EAST].resize(N);
