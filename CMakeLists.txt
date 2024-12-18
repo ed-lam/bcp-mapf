@@ -28,8 +28,8 @@ set(BCP_MAPF_SOURCE_FILES
     bcp/problem/instance.h
     bcp/problem/instance.cpp
     bcp/pricing/priority_queue.h
-    bcp/pricing/memory_pool.h
-    bcp/pricing/memory_pool.cpp
+    bcp/types/memory_pool.h
+    bcp/types/memory_pool.cpp
     bcp/pricing/distance_heuristic.h
     bcp/pricing/distance_heuristic.cpp
     bcp/pricing/penalties.h

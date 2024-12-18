@@ -21,7 +21,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #include "problem/includes.h"
 #include "pricing/coordinates.h"
-#include "pricing/memory_pool.h"
+#include "types/memory_pool.h"
 #include "problem/map.h"
 #include "pricing/priority_queue.h"
 
@@ -78,7 +78,7 @@ class Heuristic
     Time max_path_length_;
 
     // Solver data structures
-    LabelPool label_pool_;
+    MemoryPool label_pool_;
     HeuristicPriorityQueue open_;
     Vector<bool> visited_;
 #ifdef DEBUG

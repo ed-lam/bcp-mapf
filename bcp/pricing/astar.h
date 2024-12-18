@@ -22,7 +22,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "problem/includes.h"
 #include "pricing/coordinates.h"
 #include "problem/map.h"
-#include "pricing/memory_pool.h"
+#include "types/memory_pool.h"
 #include "pricing/reservation_table.h"
 #include "pricing/priority_queue.h"
 #include "pricing/penalties.h"
@@ -181,7 +181,7 @@ class AStar
     const Vector<IntCost>* h_node_to_waypoint_;
     Vector<IntCost> h_waypoint_to_goal_;
     Heuristic heuristic_;
-    LabelPool label_pool_;
+    MemoryPool label_pool_;
     AStarPriorityQueue open_;
     HashTable<NodeTime, Label*> frontier_without_resources_;
     HashTable<NodeTime, SmallVector<Label*, 4>> frontier_with_resources_;

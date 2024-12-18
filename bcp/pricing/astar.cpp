@@ -175,8 +175,7 @@ void AStar::generate_start()
     const auto waypoint_time = waypoints[0].t;
 
     // Create label.
-    auto new_label = reinterpret_cast<Label*>(label_pool_.get_label_buffer());
-    memset(new_label, 0, label_pool_.label_size());
+    auto new_label = reinterpret_cast<Label*>(label_pool_.get_buffer<false, true>());
 #ifdef DEBUG
     new_label->label_id = nb_labels_++;
 #endif
@@ -279,8 +278,8 @@ void AStar::generate_early_segment(Label* const current,
     }
 
     // Create label.
-    auto next_label = reinterpret_cast<Label*>(label_pool_.get_label_buffer());
-    memcpy(next_label, current, label_pool_.label_size());
+    auto next_label = reinterpret_cast<Label*>(label_pool_.get_buffer<false, false>());
+    memcpy(next_label, current, label_pool_.object_size());
 #ifdef DEBUG
     next_label->label_id = nb_labels_++;
 #endif
@@ -443,8 +442,8 @@ void AStar::generate_last_segment(Label* const current, const Node next_n, const
     }
 
     // Create label.
-    auto next_label = reinterpret_cast<Label*>(label_pool_.get_label_buffer());
-    memcpy(next_label, current, label_pool_.label_size());
+    auto next_label = reinterpret_cast<Label*>(label_pool_.get_buffer<false, false>());
+    memcpy(next_label, current, label_pool_.object_size());
 #ifdef DEBUG
     next_label->label_id = nb_labels_++;
 #endif
@@ -654,8 +653,8 @@ void AStar::generate_end(Label* const current)
     ] = data_;
 
     // Create label.
-    auto new_label = reinterpret_cast<Label*>(label_pool_.get_label_buffer());
-    memcpy(new_label, current, label_pool_.label_size());
+    auto new_label = reinterpret_cast<Label*>(label_pool_.get_buffer<false, false>());
+    memcpy(new_label, current, label_pool_.object_size());
 #ifdef DEBUG
     new_label->label_id = nb_labels_++;
 #endif
@@ -691,7 +690,7 @@ void AStar::generate_end(Label* const current)
     }
 
     // Store the label.
-    label_pool_.commit_latest_label();
+    label_pool_.commit_buffer();
     open_.push(new_label);
 
     // Print.
@@ -756,7 +755,7 @@ AStar::Label* AStar::dominated<false>(Label* const new_label)
             // if (existing_label->pqueue_index >= 0)
             {
                 open_.update_pqueue_index(new_label, existing_label->pqueue_index);
-                memcpy(existing_label, new_label, label_pool_.label_size());
+                memcpy(existing_label, new_label, label_pool_.object_size());
                 open_.decrease_key(existing_label);
             }
             // else
@@ -771,7 +770,7 @@ AStar::Label* AStar::dominated<false>(Label* const new_label)
     else
     {
         // Store the label.
-        label_pool_.commit_latest_label();
+        label_pool_.commit_buffer();
         open_.push(new_label);
 
         // Not dominated.
@@ -873,7 +872,7 @@ AStar::Label* AStar::dominated<true>(Label* const new_label)
         debug_assert(isLE(new_label->f, store_in_existing_label->f));
         debug_assert(store_in_existing_label->pqueue_index >= 0);
         open_.update_pqueue_index(new_label, store_in_existing_label->pqueue_index);
-        memcpy(store_in_existing_label, new_label, label_pool_.label_size());
+        memcpy(store_in_existing_label, new_label, label_pool_.object_size());
         open_.decrease_key(store_in_existing_label);
 
         existing_labels.push_back(store_in_existing_label);
@@ -881,7 +880,7 @@ AStar::Label* AStar::dominated<true>(Label* const new_label)
     }
     else
     {
-        label_pool_.commit_latest_label();
+        label_pool_.commit_buffer();
         open_.push(new_label);
         debug_assert(new_label->pqueue_index >= 0);
 

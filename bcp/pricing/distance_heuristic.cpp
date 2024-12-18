@@ -55,7 +55,7 @@ bool Heuristic::dominated(const Node n)
 void Heuristic::generate_start(const Node start)
 {
     // Create label.
-    auto new_label = reinterpret_cast<Label*>(label_pool_.get_label_buffer());
+    auto new_label = reinterpret_cast<Label*>(label_pool_.get_buffer<true, false>());
 #ifdef DEBUG
     new_label->label_id = nb_labels_++;
     new_label->parent = nullptr;
@@ -65,7 +65,6 @@ void Heuristic::generate_start(const Node start)
 
     // Store the label.
     dominated(start);
-    label_pool_.commit_latest_label();
     open_.push(new_label);
 
     // Print.
@@ -82,7 +81,7 @@ void Heuristic::generate(const Label* const current, const Node n)
     if (!dominated(n))
     {
         // Create label.
-        auto new_label = reinterpret_cast<Label*>(label_pool_.get_label_buffer());
+        auto new_label = reinterpret_cast<Label*>(label_pool_.get_buffer<true, false>());
 #ifdef DEBUG
         new_label->label_id = nb_labels_++;
         new_label->parent = current;
@@ -91,7 +90,6 @@ void Heuristic::generate(const Label* const current, const Node n)
         new_label->g = current->g + 1;
 
         // Store the label.
-        label_pool_.commit_latest_label();
         open_.push(new_label);
 
         // Print.
