@@ -24,7 +24,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "problem/map.h"
 #include "types/memory_pool.h"
 #include "pricing/reservation_table.h"
-#include "pricing/priority_queue.h"
+#include "types/priority_queue.h"
 #include "pricing/penalties.h"
 #include "pricing/distance_heuristic.h"
 #include "boost/container/small_vector.hpp"
@@ -35,6 +35,7 @@ using SmallVector = boost::container::small_vector<T, N>;
 class AStar
 {
     // Label for main low-level search
+    using PriorityQueueSizeType = Int32;
     struct Label
     {
 #ifdef DEBUG
@@ -55,7 +56,7 @@ class AStar
 #ifdef USE_RESERVATION_TABLE
         Int reserves;
 #endif
-        Int pqueue_index;
+        PriorityQueueSizeType pqueue_index;
         std::byte state_[0];
     };
 #ifdef DEBUG
@@ -65,86 +66,55 @@ class AStar
 #endif
 
     // Comparison of labels
-    struct LabelCompare
+    struct LabelComparison
     {
-#ifdef USE_RESERVATION_TABLE
-        ReservationTable reservation_table_;
-
-        LabelCompare(const Int map_size) : reservation_table_(map_size) {}
-#endif
-
-        inline bool operator()(const Label* const a, const Label* const b) const
+        static inline bool lt(const Label* const lhs, const Label* const rhs)
         {
             // Prefer smallest f (shorter path) and break ties with fewest visits to reserved vertices
             // and then largest g (i.e., smallest h for the given f).
 #ifdef USE_RESERVATION_TABLE
-            return (a->f <  b->f) ||
-                   (a->f == b->f && a->reserves <  b->reserves) ||
-                   (a->f == b->f && a->reserves == b->reserves && a->g > b->g);
+            return std::tie(lhs->f, lhs->reserves, rhs->g) < std::tie(rhs->f, rhs->reserves, lhs->g);
 #else
-            return (a->f <  b->f) ||
-                   (a->f == b->f && a->g > b->g);
+            return std::tie(lhs->f, rhs->g) < std::tie(rhs->f, lhs->g);
+#endif
+        }
+        static inline bool le(const Label* const lhs, const Label* const rhs)
+        {
+            // Prefer smallest f (shorter path) and break ties with fewest visits to reserved vertices
+            // and then largest g (i.e., smallest h for the given f).
+#ifdef USE_RESERVATION_TABLE
+            return std::tie(lhs->f, lhs->reserves, rhs->g) <= std::tie(rhs->f, rhs->reserves, lhs->g);
+#else
+            return std::tie(lhs->f, rhs->g) <= std::tie(rhs->f, lhs->g);
+#endif
+        }
+        static inline bool eq(const Label* const lhs, const Label* const rhs)
+        {
+            // Prefer smallest f (shorter path) and break ties with fewest visits to reserved vertices
+            // and then largest g (i.e., smallest h for the given f).
+#ifdef USE_RESERVATION_TABLE
+            return std::tie(lhs->f, lhs->reserves, rhs->g) == std::tie(rhs->f, rhs->reserves, lhs->g);
+#else
+            return std::tie(lhs->f, rhs->g) == std::tie(rhs->f, lhs->g);
 #endif
         }
     };
 
     // Priority queue holding labels
-    class AStarPriorityQueue : public PriorityQueue<Label, LabelCompare>
+    class AStarPriorityQueue : public PriorityQueue<Label*, LabelComparison, PriorityQueueSizeType>
     {
-        friend class AStar;
-
       public:
-        // Inherit constructors.
-        using PriorityQueue::PriorityQueue;
-
-        // Checks.
-#ifdef DEBUG
-        Cost get_f(const Label* label) const
-        {
-            return label->f;
-        }
-        void check_pqueue_index() const
-        {
-            for (Int pqueue_index = 0; pqueue_index < size_; ++pqueue_index)
-            {
-                debug_assert(elts_[pqueue_index]->pqueue_index == pqueue_index);
-            }
-        }
-        void check_label(const Label* const label)
-        {
-            debug_assert(label &&
-                         (-1 == label->pqueue_index ||
-                          (label->pqueue_index < size_ && elts_[label->pqueue_index] == label)));
-        }
-#endif
-
-      protected:
         // Modify the handle in the label pointing to its position in the priority queue
-        inline void update_pqueue_index(Label* label, const Int pqueue_index)
+        void update_index(Label* label, const PriorityQueueSizeType index)
         {
-            label->pqueue_index = pqueue_index;
+            label->pqueue_index = index;
         }
 
-        // Reprioritise an element up or down
-        void decrease_key(Label* label)
+        // Check the validity of an index
+        Bool check_index(Label* const& label, const PriorityQueueSizeType index) const
         {
-            debug_assert(contains(label));
-            heapify_up(label->pqueue_index);
+            return (label->pqueue_index == index);
         }
-        void increase_key(Label* label)
-        {
-            debug_assert(contains(label));
-            heapify_down(label->pqueue_index);
-        }
-
-#ifdef DEBUG
-        // Check if the priority queue contains label
-        inline bool contains(Label* label) const
-        {
-            const auto index = label->pqueue_index;
-            return index < size_ && label == elts_[index];
-        }
-#endif
     };
 
   public:
@@ -185,6 +155,7 @@ class AStar
     AStarPriorityQueue open_;
     HashMap<NodeTime, Label*> frontier_without_resources_;
     HashMap<NodeTime, SmallVector<Label*, 4>> frontier_with_resources_;
+    ReservationTable reservation_table_;
 #ifdef DEBUG
     size_t nb_labels_;
 #endif
@@ -202,7 +173,7 @@ class AStar
     // Getters
     inline auto max_path_length() const { return heuristic_.max_path_length(); }
 #ifdef USE_RESERVATION_TABLE
-    auto& reservation_table() { return open_.cmp().reservation_table_; };
+    auto& reservation_table() { return reservation_table_; };
 #endif
     auto& data() { return data_; }
     const auto& data() const { return data_; }

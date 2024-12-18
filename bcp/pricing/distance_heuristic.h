@@ -23,7 +23,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "types/map_types.h"
 #include "types/memory_pool.h"
 #include "problem/map.h"
-#include "pricing/priority_queue.h"
+#include "types/priority_queue.h"
 #include "types/hash_map.h"
 
 class Heuristic
@@ -45,30 +45,32 @@ class Heuristic
 #endif
 
     // Comparison of labels
-    struct LabelCompare
+    struct LabelComparison
     {
-        inline bool operator()(const Label* const a, const Label* const b) const
+        static inline bool lt(const Label* const lhs, const Label* const rhs)
         {
-            return a->g < b->g;
+            return lhs->g <  rhs->g;
+        }
+        static inline bool le(const Label* const lhs, const Label* const rhs)
+        {
+            return lhs->g <= rhs->g;
+        }
+        static inline bool eq(const Label* const lhs, const Label* const rhs)
+        {
+            return lhs->g == rhs->g;
         }
     };
 
     // Priority queue holding labels
-    class HeuristicPriorityQueue : public PriorityQueue<Label, LabelCompare>
+    using PriorityQueueSizeType = Int32;
+    class HeuristicPriorityQueue : public PriorityQueue<Label*, LabelComparison, PriorityQueueSizeType>
     {
       public:
-        // Inherit constructors.
-        using PriorityQueue::PriorityQueue;
-
-      protected:
         // Modify the handle in the label pointing to its position in the priority queue
-        inline void update_pqueue_index(Label*, const Int) {}
+        void update_index(Label*, const PriorityQueueSizeType) {}
 
-        // Checks.
-#ifdef DEBUG
-        Cost get_f(const Label* label) const { return label->g; }
-        void check_pqueue_index() const {}
-#endif
+        // Check the validity of an index
+        Bool check_index(Label* const&, const PriorityQueueSizeType) const { return true; }
     };
 
     // Instance

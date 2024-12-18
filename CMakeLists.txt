@@ -27,7 +27,7 @@ set(BCP_MAPF_SOURCE_FILES
     bcp/pricing/agents_data.h
     bcp/problem/instance.h
     bcp/problem/instance.cpp
-    bcp/pricing/priority_queue.h
+    bcp/types/priority_queue.h
     bcp/types/memory_pool.h
     bcp/types/memory_pool.cpp
     bcp/pricing/distance_heuristic.h

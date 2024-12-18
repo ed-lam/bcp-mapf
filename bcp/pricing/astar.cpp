@@ -134,14 +134,11 @@ AStar::AStar(const Map& map) :
     h_node_to_waypoint_(nullptr),
     h_waypoint_to_goal_(),
     heuristic_(map),
-    label_pool_()
-#ifdef USE_RESERVATION_TABLE
-  , open_(map.size())
-#else
-  , open_()
-#endif
-  , frontier_without_resources_()
-  , frontier_with_resources_()
+    label_pool_(),
+    open_(),
+    frontier_without_resources_(),
+    frontier_with_resources_(),
+    reservation_table_(map_.size())
 #ifdef DEBUG
   , nb_labels_(0)
 #endif
@@ -748,9 +745,9 @@ AStar::Label* AStar::dominated<false>(Label* const new_label)
                            "New label replacing an existing label that is not in the priority queue");
             // if (existing_label->pqueue_index >= 0)
             {
-                open_.update_pqueue_index(new_label, existing_label->pqueue_index);
+                open_.update_index(new_label, existing_label->pqueue_index);
                 memcpy(existing_label, new_label, label_pool_.object_size());
-                open_.decrease_key(existing_label);
+                open_.update(existing_label->pqueue_index, existing_label);
             }
             // else
             // {
@@ -865,9 +862,9 @@ AStar::Label* AStar::dominated<true>(Label* const new_label)
         // Replace the existing label with the new label.
         debug_assert(is_le(new_label->f, store_in_existing_label->f));
         debug_assert(store_in_existing_label->pqueue_index >= 0);
-        open_.update_pqueue_index(new_label, store_in_existing_label->pqueue_index);
+        open_.update_index(new_label, store_in_existing_label->pqueue_index);
         memcpy(store_in_existing_label, new_label, label_pool_.object_size());
-        open_.decrease_key(store_in_existing_label);
+        open_.update(store_in_existing_label->pqueue_index, store_in_existing_label);
 
         existing_labels.push_back(store_in_existing_label);
         return store_in_existing_label;
