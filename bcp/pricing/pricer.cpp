@@ -36,8 +36,8 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "pricing/astar.h"
 
 // Pricer properties
-#define PRICER_NAME     "trufflehog"
-#define PRICER_DESC     "Truffle Hog pricer"
+#define PRICER_NAME     "exact"
+#define PRICER_DESC     "Exact pricer"
 #define PRICER_PRIORITY 0
 #define PRICER_DELAY    TRUE    // Only call pricer if all problem variables have non-negative reduced costs
 
@@ -77,7 +77,7 @@ struct SCIP_PricerData
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wuninitialized"
 static
-SCIP_DECL_PRICERINIT(pricerTruffleHogInit)
+SCIP_DECL_PRICERINIT(pricerExactInit)
 {
     // Check.
     debug_assert(scip);
@@ -137,7 +137,7 @@ SCIP_DECL_PRICERINIT(pricerTruffleHogInit)
 
 // Free pricer
 static
-SCIP_DECL_PRICERFREE(pricerTruffleHogFree)
+SCIP_DECL_PRICERFREE(pricerExactFree)
 {
     // Check.
     debug_assert(scip);
@@ -242,7 +242,7 @@ MasterProblemStatus calculate_agents_order(
 }
 
 static
-SCIP_RETCODE run_trufflehog_pricer(
+SCIP_RETCODE run_pricer(
     SCIP* scip,               // SCIP
     SCIP_PRICER* pricer,      // Pricer
     SCIP_RESULT* result,      // Output result
@@ -947,23 +947,23 @@ SCIP_RETCODE run_trufflehog_pricer(
 
 // Reduced cost pricing for feasible master problem
 static
-SCIP_DECL_PRICERREDCOST(pricerTruffleHogRedCost)
+SCIP_DECL_PRICERREDCOST(pricerExactRedCost)
 {
-    return run_trufflehog_pricer(scip, pricer, result, stopearly, lowerbound);
+    return run_pricer(scip, pricer, result, stopearly, lowerbound);
 }
 
 // Farkas pricing for infeasible master problem
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 static
-SCIP_DECL_PRICERFARKAS(pricerTruffleHogFarkas)
+SCIP_DECL_PRICERFARKAS(pricerExactFarkas)
 {
     unreachable();
 }
 #pragma GCC diagnostic pop
 
 // Create pricer and include it in SCIP
-SCIP_RETCODE SCIPincludePricerTruffleHog(
+SCIP_RETCODE SCIPincludePricerExact(
     SCIP* scip    // SCIP
 )
 {
@@ -975,20 +975,20 @@ SCIP_RETCODE SCIPincludePricerTruffleHog(
                                      PRICER_DESC,
                                      PRICER_PRIORITY,
                                      PRICER_DELAY,
-                                     pricerTruffleHogRedCost,
-                                     pricerTruffleHogFarkas,
+                                     pricerExactRedCost,
+                                     pricerExactFarkas,
                                      nullptr));
 
     // Set callbacks.
-    SCIP_CALL(SCIPsetPricerInit(scip, pricer, pricerTruffleHogInit));
-    SCIP_CALL(SCIPsetPricerFree(scip, pricer, pricerTruffleHogFree));
+    SCIP_CALL(SCIPsetPricerInit(scip, pricer, pricerExactInit));
+    SCIP_CALL(SCIPsetPricerFree(scip, pricer, pricerExactFree));
 
     // Done.
     return SCIP_OKAY;
 }
 
 // Add problem specific data to the pricer and activate
-SCIP_RETCODE SCIPpricerTruffleHogActivate(
+SCIP_RETCODE SCIPpricerExactActivate(
     SCIP* scip    // SCIP
 )
 {

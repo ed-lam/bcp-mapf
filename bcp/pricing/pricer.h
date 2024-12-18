@@ -22,13 +22,13 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "problem/includes.h"
 #include "problem/problem.h"
 
-// Include Truffle Hog pricer
-SCIP_RETCODE SCIPincludePricerTruffleHog(
+// Include exact pricer
+SCIP_RETCODE SCIPincludePricerExact(
     SCIP* scip    // SCIP
 );
 
 // Add problem specific data to the pricer and activate
-SCIP_RETCODE SCIPpricerTruffleHogActivate(
+SCIP_RETCODE SCIPpricerExactActivate(
     SCIP* scip    // SCIP
 );
 

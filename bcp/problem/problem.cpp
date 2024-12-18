@@ -1281,9 +1281,9 @@ SCIP_RETCODE SCIPprobdataCreate(
     // Set problem data.
     SCIP_CALL(SCIPsetProbData(scip, probdata));
 
-    // Include Trufflehog pricer.
-    SCIP_CALL(SCIPincludePricerTruffleHog(scip));
-    SCIP_CALL(SCIPpricerTruffleHogActivate(scip));
+    // Include exact pricer.
+    SCIP_CALL(SCIPincludePricerExact(scip));
+    SCIP_CALL(SCIPpricerExactActivate(scip));
 
     // Include branching rule.
     SCIP_CALL(SCIPincludeBranchrule(scip));
