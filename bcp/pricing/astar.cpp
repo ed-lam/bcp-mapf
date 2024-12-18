@@ -137,8 +137,10 @@ AStar::AStar(const Map& map) :
     label_pool_(),
     open_(),
     frontier_without_resources_(),
-    frontier_with_resources_(),
-    reservation_table_(map_.size())
+    frontier_with_resources_()
+#ifdef USE_RESERVATION_TABLE
+  , reservation_table_(map_.size())
+#endif
 #ifdef DEBUG
   , nb_labels_(0)
 #endif
@@ -716,7 +718,9 @@ AStar::Label* AStar::dominated<false>(Label* const new_label)
 //#endif
 
     // Check.
+#ifdef USE_GOAL_CONFLICTS
     debug_assert(data_.goal_penalties.empty());
+#endif
 
     // Try to put in the new label.
     auto [it, success] = frontier_without_resources_.try_emplace(NodeTime{new_label->nt}, new_label);

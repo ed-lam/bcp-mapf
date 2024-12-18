@@ -34,18 +34,23 @@ struct EdgeCosts
         {
             Cost north;
             Cost south;
-            Cost east;
             Cost west;
+            Cost east;
             Cost wait;
         };
     };
     bool used;
 
-    inline EdgeCosts(const Cost x) : north(x), south(x), east(x), west(x), wait(x), used(false) {}
+    inline EdgeCosts(const Cost x) : north(x), south(x), west(x), east(x), wait(x), used(false) {}
     inline EdgeCosts() : EdgeCosts(0) {}
 };
 static_assert(std::is_trivially_copyable<EdgeCosts>::value);
 static_assert(sizeof(EdgeCosts) == 6 * 8);
+static_assert(Direction::NORTH == 0);
+static_assert(Direction::SOUTH == 1);
+static_assert(Direction::WEST == 2);
+static_assert(Direction::EAST == 3);
+static_assert(Direction::WAIT == 4);
 
 // Penalties for crossing an edge
 class EdgePenalties
@@ -86,14 +91,14 @@ class EdgePenalties
 
             debug_assert(penalties.north >= 0);
             debug_assert(penalties.south >= 0);
-            debug_assert(penalties.east >= 0);
             debug_assert(penalties.west >= 0);
+            debug_assert(penalties.east >= 0);
             debug_assert(penalties.wait >= 0);
 
             costs.north += penalties.north;
             costs.south += penalties.south;
-            costs.east += penalties.east;
             costs.west += penalties.west;
+            costs.east += penalties.east;
             costs.wait += penalties.wait;
         }
 
@@ -126,8 +131,8 @@ class EdgePenalties
         {
             debug_assert(penalties.north >= 0);
             debug_assert(penalties.south >= 0);
-            debug_assert(penalties.east >= 0);
             debug_assert(penalties.west >= 0);
+            debug_assert(penalties.east >= 0);
             debug_assert(penalties.wait >= 0);
             debug_assert(!penalties.used);
         }
@@ -154,19 +159,19 @@ class EdgePenalties
                 const NodeTime incoming_nt{incoming_n, incoming_t};
                 incoming_penalties[incoming_nt].north += penalties.south;
             }
-            if (penalties.east != 0)
-            {
-                const auto incoming_n = map.get_east(outgoing_nt.n);
-                const auto incoming_t = outgoing_nt.t + 1;
-                const NodeTime incoming_nt{incoming_n, incoming_t};
-                incoming_penalties[incoming_nt].west += penalties.east;
-            }
             if (penalties.west != 0)
             {
                 const auto incoming_n = map.get_west(outgoing_nt.n);
                 const auto incoming_t = outgoing_nt.t + 1;
                 const NodeTime incoming_nt{incoming_n, incoming_t};
                 incoming_penalties[incoming_nt].east += penalties.west;
+            }
+            if (penalties.east != 0)
+            {
+                const auto incoming_n = map.get_east(outgoing_nt.n);
+                const auto incoming_t = outgoing_nt.t + 1;
+                const NodeTime incoming_nt{incoming_n, incoming_t};
+                incoming_penalties[incoming_nt].west += penalties.east;
             }
             if (penalties.wait != 0)
             {
@@ -179,13 +184,13 @@ class EdgePenalties
 
         println("Edge penalties:");
         println("{:>20s}{:>8s}{:>8s}{:>8s}{:>8s}{:>15s}{:>15s}{:>15s}{:>15s}{:>15s}",
-                "NT", "N", "T", "X", "Y", "From North", "From South", "From East", "From West", "From Wait");
+                "NT", "N", "T", "X", "Y", "From North", "From South", "From West", "From East", "From Wait");
         for (const auto [nt, penalties] : incoming_penalties)
         {
             println("{:>20d}{:>8d}{:>8d}{:>8d}{:>8d}{:>15.2f}{:>15.2f}{:>15.2f}{:>15.2f}{:>15.2f}",
                     nt.nt, nt.n, nt.t,
                     map.get_x(nt.n), map.get_y(nt.n),
-                    penalties.north, penalties.south, penalties.east, penalties.west, penalties.wait);
+                    penalties.north, penalties.south, penalties.west, penalties.east, penalties.wait);
         }
         println("");
     }
@@ -206,13 +211,13 @@ class EdgePenalties
 
         println("Used edge penalties:");
         println("{:>20s}{:>8s}{:>8s}{:>8s}{:>8s}{:>15s}{:>15s}{:>15s}{:>15s}{:>15s}",
-                "NT", "N", "T", "X", "Y", "To North", "To South", "To East", "To West", "To Wait");
+                "NT", "N", "T", "X", "Y", "To North", "To South", "To West", "To East", "To Wait");
         for (const auto& [nt, penalties]: all_penalties)
         {
             println("{:>20d}{:>8d}{:>8d}{:>8d}{:>8d}{:>15.2f}{:>15.2f}{:>15.2f}{:>15.2f}{:>15.2f}",
                     nt.nt, nt.n, nt.t,
                     map.get_x(nt.n), map.get_y(nt.n),
-                    penalties.north, penalties.south, penalties.east, penalties.west, penalties.wait);
+                    penalties.north, penalties.south, penalties.west, penalties.east, penalties.wait);
         }
         println("");
     }

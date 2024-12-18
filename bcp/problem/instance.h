@@ -1,44 +1,41 @@
-/*
-This file is part of BCP-MAPF.
-
-BCP-MAPF is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-BCP-MAPF is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
-
-Author: Edward Lam <ed@ed-lam.com>
-*/
-
 #pragma once
 
-#include "pricing/agents_data.h"
+#include "problem/debug.h"
 #include "problem/map.h"
-#include <filesystem>
+#include "types/basic_types.h"
+#include "types/file_system.h"
+#include "types/matrix.h"
+#include "types/string.h"
+#include "types/vector.h"
+
+struct AgentData
+{
+    Node start;
+    Node goal;
+};
 
 struct Instance
 {
-    std::filesystem::path scenario_path;
-    std::filesystem::path map_path;
+    // Instance
+    String name;
+    FilePath scenario_path;
+    FilePath map_path;
 
+    // Map
     Map map;
-    AgentsData agents;
+
+    // Agents
+    Agent num_agents;
+    Vector<AgentData> agents;
+    Time time_horizon;
 
   public:
-    // Constructors
-    Instance() = default;
-    Instance(const std::filesystem::path& scenario_path, const Agent agent_limit = std::numeric_limits<Agent>::max());
-    Instance(const Instance&) = default;
-    Instance(Instance&&) = default;
-    Instance& operator=(const Instance&) = default;
-    Instance& operator=(Instance&&) = default;
+    // Constructors and destructor
+    Instance(const FilePath& scenario_path, const Agent agent_limit);
+    Instance() = delete;
+    Instance(const Instance&) = delete;
+    Instance(Instance&&) = delete;
+    Instance& operator=(const Instance&) = delete;
+    Instance& operator=(Instance&&) = delete;
     ~Instance() = default;
 };
-

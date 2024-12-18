@@ -23,6 +23,7 @@ set(BCP_MAPF_SOURCE_FILES
     bcp/problem/includes.h
     bcp/problem/debug.h
     bcp/types/map_types.h
+    bcp/problem/map.cpp
     bcp/problem/map.h
     bcp/pricing/agents_data.h
     bcp/problem/instance.h

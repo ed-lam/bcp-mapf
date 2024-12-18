@@ -33,7 +33,7 @@ SCIP_RETCODE start_solver(
 {
     // Parse program options.
     String instance_file;
-    Agent agent_limit = std::numeric_limits<Agent>::max();
+    Agent agent_limit = -1;
     SCIP_Real time_limit = 0;
     SCIP_Longint node_limit = 0;
     SCIP_Real gap_limit = 0;
@@ -339,7 +339,6 @@ SCIP_RETCODE start_solver(
     }
 
     // Read instance.
-    release_assert(agent_limit > 0, "Cannot limit to {} number of agents", agent_limit);
     SCIP_CALL(read_instance(scip, instance_file.c_str(), agent_limit));
 
     // Set time limit.

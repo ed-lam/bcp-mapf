@@ -1,215 +1,111 @@
-/*
-This file is part of BCP-MAPF.
+// #define PRINT_DEBUG
 
-BCP-MAPF is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-BCP-MAPF is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
-
-Author: Edward Lam <ed@ed-lam.com>
-*/
-
+#include <cmath>
 #include <fstream>
+#include <sstream>
+#include <regex>
 #include "problem/instance.h"
 
-struct AgentMapData
+struct Line
 {
-    String map_path;
-    Position map_width;
-    Position map_height;
+    Node start;
+    Node goal;
 };
 
-void read_map(const std::filesystem::path& map_path, Map& map)
+Instance::Instance(const FilePath& scenario_path_, const Agent agent_limit_)
 {
-    // Open map file.
-    std::ifstream map_file;
-    map_file.open(map_path, std::ios::in);
-    release_assert(map_file.good(), "Invalid map file {}", map_path.string());
+    // Check.
+    // release_assert(agent_limit > 0, "Using {} agents but must have at least 1 agent", agent_limit);
 
-    // Read map.
-    {
-        char buf[1024];
-        map_file.getline(buf, 1024);
-        release_assert(strstr(buf, "type octile"), "Invalid map file format");
-    }
+    // Get instance name.
+    scenario_path = scenario_path_;
+    name = scenario_path.filename().stem().string();
 
-    // Read map size.
-    Position width = 0;
-    Position height = 0;
-    String param;
+    // Open scenario file.
+    std::ifstream scenario_file;
+    scenario_file.open(scenario_path, std::ios::in);
+    release_assert(scenario_file.good(), "Cannot find scenario file \"{}\"", scenario_path.string());
+
+    // Read file.
+    char buffer[1024];
+    scenario_file.getline(buffer, 1024);
+    release_assert(strstr(buffer, "version 1"), "Expecting \"version 1\" scenario file format");
+
+    // Read agents data.
+    Vector<Line> agent_lines;
+    String agent_map_path;
+    Position agent_map_width;
+    Position agent_map_height;
+    Position start_x;
+    Position start_y;
+    Position goal_x;
+    Position goal_y;
+    Float tmp;
+    String first_agent_map_path;
+    while (scenario_file >>
+           tmp >>
+           agent_map_path >>
+           agent_map_width >> agent_map_height >>
+           start_x >> start_y >>
+           goal_x >> goal_y >>
+           tmp)
     {
-        Int value;
-        for (Int i = 0; i < 2; ++i)
+        // Add padding.
+        agent_map_width += 2;
+        agent_map_height += 2;
+        start_x++;
+        start_y++;
+        goal_x++;
+        goal_y++;
+
+        // Read map.
+        if (map.empty())
         {
-            map_file >> param >> value;
-            if (param == "width")
-            {
-                width = value;
-            }
-            else if (param == "height")
-            {
-                height = value;
-            }
-            else
-            {
-                err("Invalid input in map file {}", param);
-            }
-        }
-        release_assert(height > 0, "Invalid map height {}", height);
-        release_assert(width > 0, "Invalid map width {}", width);
-        height += 2; // Add padding.
-        width += 2;
-    }
+            // Prepend the directory of the scenario file.
+            map_path = scenario_path.parent_path().append(agent_map_path);
 
-    // Create map.
-    map.resize(width, height);
+            // Store map data for checking.
+            first_agent_map_path = agent_map_path;
 
-    // Read grid.
-    map_file >> param;
-    release_assert(param == "map", "Invalid map file header");
-    {
-        auto c = static_cast<char>(map_file.get());
-        release_assert(map_file.good(), "Invalid map header");
-        if (c == '\r')
-        {
-            c = static_cast<char>(map_file.get());
-            release_assert(map_file.good(), "Invalid map header");
-        }
-        release_assert(c == '\n', "Invalid map header");
-    }
-    Node n = width + 1; // Start reading into the second row, second column of the grid
-    while (true)
-    {
-        auto c = static_cast<char>(map_file.get());
-        if (!map_file.good())
-        {
-            // eof
-            break;
+            // Read map.
+            map = Map(map_path);
         }
 
-        switch (c)
-        {
-            case '\n':
-                if (auto c2 = map_file.peek(); map_file.good() && c2 != '\r' && c2 != '\n')
-                {
-                    n += 2;
-                }
-                break;
-            case ' ':
-            case '\t':
-            case '\r':
-                continue;
-            case '.':
-                release_assert(n < map.size(), "More cells in the map file than its size");
-                map.set_passable(n);
-                [[fallthrough]];
-            default:
-                n++;
-                break;
-        }
+        // Check.
+        const auto a = agent_lines.size();
+        const auto start = map.get_n(start_x, start_y);
+        const auto goal = map.get_n(goal_x, goal_y);
+        release_assert(agent_map_path == first_agent_map_path, "Agent {} uses a different map", a);
+        release_assert(agent_map_width == map.width(),
+                        "Map width of agent {} does not match actual map size", a);
+        release_assert(agent_map_height == map.height(),
+                        "Map height of agent {} does not match actual map size", a);
+        release_assert(start < map.size() && map[start], "Agent {} starts at an obstacle", a);
+        release_assert(goal < map.size() && map[goal], "Agent {} ends at an obstacle", a);
+
+        // Store.
+        auto& line = agent_lines.emplace_back();
+        line.start = start;
+        line.goal = goal;
     }
-    n += width + 1; // Should be +2 but already counted a +1 from the previous \n
-    release_assert(n == map.size(), "Unexpected number of cells");
 
     // Close file.
-    map_file.close();
-}
+    scenario_file.close();
 
-Instance::Instance(const std::filesystem::path& scenario_path, const Agent agent_limit) :
-    scenario_path(scenario_path),
-    map_path(),
-    map(),
-    agents()
-{
-    // Read agents.
-    Vector<AgentMapData> agents_map_data;
+    // Split agents data into agents and requests.
+    release_assert(agent_limit_ == -1 || (1 <= agent_limit_ && agent_limit_ <= agent_lines.size()),
+                   "Cannot read {} agents from a scenario with only {} agents",
+                   agent_limit_, agent_lines.size());
+    const auto agent_limit = agent_limit_ == -1 ? agent_lines.size() : agent_limit_;
+    for (auto it = agent_lines.begin(); it != agent_lines.begin() + agent_limit; ++it)
     {
-        // Open scenario file.
-        std::ifstream scen_file;
-        scen_file.open(scenario_path, std::ios::in);
-        release_assert(scen_file.good(), "Cannot find scenario file {}", scenario_path.string());
-
-        // Check file format.
-        {
-            char buf[1024];
-            scen_file.getline(buf, 1024);
-            release_assert(strstr(buf, "version 1"), "Expecting \"version 1\" scenario file format");
-        }
-
-        // Read agents data.
-        {
-            Position start_x;
-            Position start_y;
-            Position goal_x;
-            Position goal_y;
-            Float tmp;
-            AgentMapData agent_map_data;
-            while (agents.size() < agent_limit &&
-                   (scen_file >> tmp >>
-                    agent_map_data.map_path >>
-                    agent_map_data.map_width >> agent_map_data.map_height >>
-                    start_x >> start_y >>
-                    goal_x >> goal_y >> tmp))
-            {
-                // Add padding.
-                agent_map_data.map_width += 2;
-                agent_map_data.map_height += 2;
-                start_x++;
-                start_y++;
-                goal_x++;
-                goal_y++;
-
-                // Read map.
-                if (map.empty())
-                {
-                    // Prepend the directory of the scenario file.
-                    map_path = scenario_path.parent_path().append(agent_map_data.map_path);
-
-                    // Read map.
-                    read_map(map_path, map);
-                }
-
-                // Store.
-                agents.add_agent(start_x, start_y, goal_x, goal_y, map);
-                agents_map_data.push_back(agent_map_data);
-            }
-        }
-        release_assert(agent_limit == std::numeric_limits<Agent>::max() || agents.size() == agent_limit,
-                       "Scenario file contained {} agents. Not enough to read {} agents",
-                       agents.size(), agent_limit);
-        release_assert(!agents.empty(), "No agents in scenario file {}", scenario_path.string());
-
-        // Close file.
-        scen_file.close();
+        const auto& line = *it;
+        auto& agent_data = agents.emplace_back();
+        agent_data.start = line.start;
+        agent_data.goal = line.goal;
     }
+    num_agents = agent_limit;
 
     // Check.
-    for (Agent a = 0; a < agents.size(); ++a)
-    {
-        const auto [start_id, goal_id, start_x, start_y, goal_x, goal_y] = agents[a];
-        const auto [map_path, map_width2, map_height2] = agents_map_data[a];
-
-        release_assert(map_path == agents_map_data[0].map_path,
-                       "Agent {} uses a different map", a);
-        release_assert(map_width2 == map.width(),
-                       "Map width of agent {} does not match actual map size", a);
-        release_assert(map_height2 == map.height(),
-                       "Map height of agent {} does not match actual map size", a);
-
-        const auto start_tile = start_y * map.width() + start_x;
-        release_assert(start_tile < map.size() && map[start_tile],
-                       "Agent {} starts at an obstacle", a);
-
-        const auto goal_tile = goal_y * map.width() + goal_x;
-        release_assert(goal_tile < map.size() && map[goal_tile],
-                       "Agent {} ends at an obstacle", a);
-    }
+    debug_assert(num_agents == agents.size());
 }

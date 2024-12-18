@@ -155,7 +155,9 @@ class AStar
     AStarPriorityQueue open_;
     HashMap<NodeTime, Label*> frontier_without_resources_;
     HashMap<NodeTime, SmallVector<Label*, 4>> frontier_with_resources_;
+#ifdef USE_RESERVATION_TABLE
     ReservationTable reservation_table_;
+#endif
 #ifdef DEBUG
     size_t nb_labels_;
 #endif

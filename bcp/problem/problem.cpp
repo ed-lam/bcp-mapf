@@ -1082,36 +1082,30 @@ SCIP_RETCODE SCIPprobdataCreate(
 
     // Check start and end.
     {
-        Position* start_x;
-        Position* start_y;
-        Position* end_x;
-        Position* end_y;
-        SCIP_CALL(SCIPallocBufferArray(scip, &start_x, N));
-        SCIP_CALL(SCIPallocBufferArray(scip, &start_y, N));
-        SCIP_CALL(SCIPallocBufferArray(scip, &end_x, N));
-        SCIP_CALL(SCIPallocBufferArray(scip, &end_y, N));
+        const auto& map = instance->map;
+
+        Node* start;
+        Node* end;
+        SCIP_CALL(SCIPallocBufferArray(scip, &start, N));
+        SCIP_CALL(SCIPallocBufferArray(scip, &end, N));
         for (Agent a = 0; a < N; ++a)
         {
             const auto& agent_data = instance->agents[a];
-            start_x[a] = agent_data.start_x;
-            start_y[a] = agent_data.start_y;
-            end_x[a] = agent_data.goal_x;
-            end_y[a] = agent_data.goal_y;
+            start[a] = agent_data.start;
+            end[a] = agent_data.goal;
         }
         for (Agent a = 0; a < N - 1; ++a)
             for (Agent b = a + 1; b < N; ++b)
             {
-                release_assert(start_x[a] != start_x[b] || start_y[a] != start_y[b],
+                release_assert(start[a] != start[b],
                                "Agent {} and {} both start at ({},{})",
-                               a, b, start_x[a], start_y[a]);
-                release_assert(end_x[a] != end_x[b] || end_y[a] != end_y[b],
+                               a, b, map.get_x(start[a]), map.get_y(start[a]));
+                release_assert(end[a] != end[b],
                                "Agent {} and {} both end at ({},{})",
-                               a, b, end_x[a], end_y[a]);
+                               a, b, map.get_x(end[a]), map.get_y(end[a]));
             }
-        SCIPfreeBufferArray(scip, &start_x);
-        SCIPfreeBufferArray(scip, &start_y);
-        SCIPfreeBufferArray(scip, &end_x);
-        SCIPfreeBufferArray(scip, &end_y);
+        SCIPfreeBufferArray(scip, &start);
+        SCIPfreeBufferArray(scip, &end);
     }
 
     // Create problem data object.
@@ -1827,7 +1821,7 @@ const Map& SCIPprobdataGetMap(
 }
 
 // Get the agents data
-const AgentsData& SCIPprobdataGetAgentsData(
+const Vector<AgentData>& SCIPprobdataGetAgentsData(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1929,7 +1923,7 @@ void print_map(
     {
         for (Position x = 0; x < width; ++x)
         {
-            const auto passable = map[map.get_id(x, y)];
+            const auto passable = map[map.get_n(x, y)];
             if (passable)
             {
                 fmt::print(".");

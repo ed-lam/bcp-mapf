@@ -788,7 +788,11 @@ SCIP_RETCODE run_trufflehog_pricer(
         debug_assert(astar.max_path_length() >= 1);
         earliest_goal_time = 0;
         latest_goal_time = astar.max_path_length() - 1;
-        latest_visit_time = map.latest_visit_time();
+        latest_visit_time.resize(map.size());
+        for (Node n = 0; n < map.size(); ++n)
+        {
+            latest_visit_time[n] = map[n] ? TIME_MAX : -1;
+        }
         for (Int c = 0; c < n_length_branching_conss; ++c)
         {
             // Get the constraint.

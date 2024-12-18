@@ -237,7 +237,7 @@ Agent SCIPprobdataGetN(
 );
 
 // Get the agents data
-const AgentsData& SCIPprobdataGetAgentsData(
+const Vector<AgentData>& SCIPprobdataGetAgentsData(
     SCIP_ProbData* probdata    // Problem data
 );
 

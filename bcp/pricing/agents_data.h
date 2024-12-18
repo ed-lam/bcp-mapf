@@ -68,8 +68,8 @@ class AgentsData
                           const Position goal_y,
                           const Map& map)
     {
-        data.push_back({map.get_id(start_x, start_y),
-                        map.get_id(goal_x, goal_y),
+        data.push_back({map.get_n(start_x, start_y),
+                        map.get_n(goal_x, goal_y),
                         start_x, start_y,
                         goal_x, goal_y});
     }

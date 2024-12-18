@@ -55,7 +55,7 @@ inline void append_edge(
     Vector<EdgeTime>& edges    // Output edges of the rectangle
 )
 {
-    edges.emplace_back(map.get_id(x, y), d, t);
+    edges.emplace_back(map.get_n(x, y), d, t);
 #ifdef PRINT_DEBUG
     const auto et = edges.back();
     // debugln("        ({},{}) {} time {}", map.get_x(et.n), map.get_y(et.n), Direction{et.d}, et.t);
@@ -788,7 +788,7 @@ bool find_rectangle_conflict(
 //             if (t >= 0)
 //             {
 //                 auto& et = rectangle_edges.emplace_back();
-//                 et.n = map.get_id(x, y);
+//                 et.n = map.get_n(x, y);
 //                 et.t = t;
 //                 et.d = a1_dir;
 //                 // debugln("        ({},{}) {} time {}", map.get_x(et.n), map.get_y(et.n), Direction{et.d}, et.t);
@@ -808,7 +808,7 @@ bool find_rectangle_conflict(
 //             if (t >= std::max(a1_rect_end_t, a1_rect_y_diff))
 //             {
 //                 auto& et = rectangle_edges.emplace_back();
-//                 et.n = map.get_id(x, y);
+//                 et.n = map.get_n(x, y);
 //                 et.t = t;
 //                 et.d = a1_dir;
 //                 // debugln("        ({},{}) {} time {}", map.get_x(et.n), map.get_y(et.n), Direction{et.d}, et.t);
@@ -838,7 +838,7 @@ bool find_rectangle_conflict(
 //             if (t >= 0)
 //             {
 //                 auto& et = rectangle_edges.emplace_back();
-//                 et.n = map.get_id(x, y);
+//                 et.n = map.get_n(x, y);
 //                 et.t = t;
 //                 et.d = a1_dir;
 //                 // debugln("        ({},{}) {} time {}", map.get_x(et.n), map.get_y(et.n), Direction{et.d}, et.t);
@@ -858,7 +858,7 @@ bool find_rectangle_conflict(
 //             if (t >= std::max(a1_rect_end_t, a1_rect_x_diff))
 //             {
 //                 auto& et = rectangle_edges.emplace_back();
-//                 et.n = map.get_id(x, y);
+//                 et.n = map.get_n(x, y);
 //                 et.t = t;
 //                 et.d = a1_dir;
 //                 // debugln("        ({},{}) {} time {}", map.get_x(et.n), map.get_y(et.n), Direction{et.d}, et.t);
@@ -889,7 +889,7 @@ bool find_rectangle_conflict(
 //             if (t >= 0)
 //             {
 //                 auto& et = rectangle_edges.emplace_back();
-//                 et.n = map.get_id(x, y);
+//                 et.n = map.get_n(x, y);
 //                 et.t = t;
 //                 et.d = a2_dir;
 //                 // debugln("        ({},{}) {} time {}", map.get_x(et.n), map.get_y(et.n), Direction{et.d}, et.t);
@@ -909,7 +909,7 @@ bool find_rectangle_conflict(
 //             if (t >= std::max(a2_rect_end_t, a2_rect_y_diff))
 //             {
 //                 auto& et = rectangle_edges.emplace_back();
-//                 et.n = map.get_id(x, y);
+//                 et.n = map.get_n(x, y);
 //                 et.t = t;
 //                 et.d = a2_dir;
 //                 // debugln("        ({},{}) {} time {}", map.get_x(et.n), map.get_y(et.n), Direction{et.d}, et.t);
@@ -940,7 +940,7 @@ bool find_rectangle_conflict(
 //             if (t >= 0)
 //             {
 //                 auto& et = rectangle_edges.emplace_back();
-//                 et.n = map.get_id(x, y);
+//                 et.n = map.get_n(x, y);
 //                 et.t = t;
 //                 et.d = a2_dir;
 //                 // debugln("        ({},{}) {} time {}", map.get_x(et.n), map.get_y(et.n), Direction{et.d}, et.t);
@@ -960,7 +960,7 @@ bool find_rectangle_conflict(
 //             if (t >= std::max(a2_rect_end_t, a2_rect_x_diff))
 //             {
 //                 auto& et = rectangle_edges.emplace_back();
-//                 et.n = map.get_id(x, y);
+//                 et.n = map.get_n(x, y);
 //                 et.t = t;
 //                 et.d = a2_dir;
 //                 // debugln("        ({},{}) {} time {}", map.get_x(et.n), map.get_y(et.n), Direction{et.d}, et.t);

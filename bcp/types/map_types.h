@@ -91,12 +91,12 @@ inline bool operator!=(const NodeTime lhs, const NodeTime rhs)
 
 enum Direction : uint8_t
 {
-    NORTH = 0,
-    SOUTH = 1,
-    EAST = 2,
-    WEST = 3,
-    WAIT = 4,
-    INVALID = 5
+    NORTH = 0,  // 0000
+    SOUTH = 1,  // 0001
+    WEST = 2,   // 0010
+    EAST = 3,   // 0011
+    WAIT = 4,   // 0100
+    INVALID = 5 // 0101
 };
 // inline Direction& operator++(Direction& d)
 // {
