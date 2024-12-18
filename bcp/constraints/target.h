@@ -19,8 +19,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #ifdef USE_GOAL_CONFLICTS
 
-#ifndef MAPF_SEPARATOR_GOALCONFLICTS_H
-#define MAPF_SEPARATOR_GOALCONFLICTS_H
+#pragma once
 
 #include "problem/includes.h"
 #include "pricing/coordinates.h"
@@ -42,4 +41,3 @@ SCIP_RETCODE goal_conflicts_add_var(
 
 #endif
 
-#endif

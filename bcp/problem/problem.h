@@ -17,8 +17,7 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#ifndef MAPF_PROBDATA_H
-#define MAPF_PROBDATA_H
+#pragma once
 
 #include "problem/includes.h"
 #include "pricing/coordinates.h"
@@ -306,4 +305,3 @@ void print_goal_conflicts_dual(
 SCIP_Real get_coeff(SCIP_ROW* row, SCIP_VAR* var);
 #endif
 
-#endif

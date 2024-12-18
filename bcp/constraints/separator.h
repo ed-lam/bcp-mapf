@@ -17,8 +17,7 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#ifndef MAPF_SEPARATOR_H
-#define MAPF_SEPARATOR_H
+#pragma once
 
 #include "problem/includes.h"
 #include "pricing/coordinates.h"
@@ -105,4 +104,3 @@ class TwoAgentRobustCut
     inline EdgeTime& a2_edge_time(const Int idx) { return ets_[a1_end + idx]; }
 };
 
-#endif

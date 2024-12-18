@@ -17,8 +17,7 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#ifndef MAPF_INCLUDES_H
-#define MAPF_INCLUDES_H
+#pragma once
 
 // ---------------------------------------------------------------------------------------
 
@@ -81,4 +80,3 @@ using SharedPtr = std::shared_ptr<T>;
 
 // ---------------------------------------------------------------------------------------
 
-#endif

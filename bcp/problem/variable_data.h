@@ -17,8 +17,7 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#ifndef MAPF_VARIABLEDATA_H
-#define MAPF_VARIABLEDATA_H
+#pragma once
 
 #include "pricing/coordinates.h"
 
@@ -55,4 +54,3 @@ const Edge* SCIPvardataGetPath(
     SCIP_VARDATA* vardata    // Variable data
 );
 
-#endif

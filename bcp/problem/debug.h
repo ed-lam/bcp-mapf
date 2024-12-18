@@ -17,8 +17,7 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#ifndef MAPF_DEBUG_H
-#define MAPF_DEBUG_H
+#pragma once
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -89,4 +88,3 @@ Author: Edward Lam <ed@ed-lam.com>
     err("Reached unreachable section in function \"{}\"", __PRETTY_FUNCTION__); \
 } while (false)
 
-#endif

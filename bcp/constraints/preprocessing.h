@@ -17,8 +17,7 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#ifndef MAPF_SEPARATOR_PREPROCESSING_H
-#define MAPF_SEPARATOR_PREPROCESSING_H
+#pragma once
 
 #include "problem/includes.h"
 
@@ -27,4 +26,3 @@ SCIP_RETCODE SCIPincludeSepaPreprocessing(
     SCIP* scip    // SCIP
 );
 
-#endif

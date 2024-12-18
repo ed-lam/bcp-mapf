@@ -19,8 +19,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #ifdef USE_PRIORITIZED_PLANNING_PRIMAL_HEURISTIC
 
-#ifndef MAPF_HEURISTIC_PRIORITIZEDPLANNING_H
-#define MAPF_HEURISTIC_PRIORITIZEDPLANNING_H
+#pragma once
 
 #include "scip/def.h"
 #include "scip/type_retcode.h"
@@ -33,4 +32,3 @@ SCIP_RETCODE SCIPincludeHeurPrioritizedPlanning(
 
 #endif
 
-#endif

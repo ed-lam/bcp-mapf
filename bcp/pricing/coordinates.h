@@ -17,8 +17,7 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#ifndef TRUFFLEHOG_COORDINATES_H
-#define TRUFFLEHOG_COORDINATES_H
+#pragma once
 
 #include "problem/includes.h"
 
@@ -315,4 +314,3 @@ struct fmt::formatter<EdgeTime> : formatter<std::string_view>
 //    s ^= robin_hood::hash<T>(v) + 0x9e3779b9 + (s << 6) + (s >> 2);
 //}
 
-#endif

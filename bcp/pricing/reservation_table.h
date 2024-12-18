@@ -17,8 +17,7 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#ifndef TRUFFLEHOG_RESERVATIONTABLE_H
-#define TRUFFLEHOG_RESERVATIONTABLE_H
+#pragma once
 
 #include "problem/includes.h"
 #include "pricing/coordinates.h"
@@ -139,4 +138,3 @@ class ReservationTable
 
 #endif
 
-#endif

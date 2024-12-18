@@ -17,8 +17,7 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#ifndef MAPF_PRICER_TRUFFLEHOG_H
-#define MAPF_PRICER_TRUFFLEHOG_H
+#pragma once
 
 #include "problem/includes.h"
 #include "problem/problem.h"
@@ -33,4 +32,3 @@ SCIP_RETCODE SCIPpricerTruffleHogActivate(
     SCIP* scip    // SCIP
 );
 
-#endif

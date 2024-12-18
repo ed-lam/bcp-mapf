@@ -17,8 +17,7 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#ifndef TRUFFLEHOG_AGENTSDATA_H
-#define TRUFFLEHOG_AGENTSDATA_H
+#pragma once
 
 #include "problem/includes.h"
 #include "pricing/coordinates.h"
@@ -76,4 +75,3 @@ class AgentsData
     }
 };
 
-#endif

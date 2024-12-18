@@ -19,8 +19,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #ifdef USE_RECTANGLE_KNAPSACK_CONFLICTS
 
-#ifndef MAPF_SEPARATOR_RECTANGLEKNAPSACKCONFLICTS_H
-#define MAPF_SEPARATOR_RECTANGLEKNAPSACKCONFLICTS_H
+#pragma once
 
 #include "problem/includes.h"
 
@@ -45,4 +44,3 @@ const Vector<RectangleKnapsackCut>& rectangle_knapsack_get_cuts(
 
 #endif
 
-#endif

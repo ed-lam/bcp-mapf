@@ -19,8 +19,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #ifdef USE_WAITDELAY_CONFLICTS
 
-#ifndef MAPF_SEPARATOR_WAITDELAYCONFLICTS_H
-#define MAPF_SEPARATOR_WAITDELAYCONFLICTS_H
+#pragma once
 
 #include "problem/includes.h"
 
@@ -31,4 +30,3 @@ SCIP_RETCODE SCIPincludeSepaWaitDelayConflicts(
 
 #endif
 
-#endif

@@ -17,8 +17,7 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#ifndef MAPF_OUTPUT_H
-#define MAPF_OUTPUT_H
+#pragma once
 
 #include "problem/includes.h"
 
@@ -27,4 +26,3 @@ SCIP_RETCODE write_best_solution(
     SCIP* scip    // SCIP
 );
 
-#endif

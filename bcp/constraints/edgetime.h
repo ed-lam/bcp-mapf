@@ -17,8 +17,7 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#ifndef MAPF_CONSTRAINTHANDLER_EDGECONFLICTS_H
-#define MAPF_CONSTRAINTHANDLER_EDGECONFLICTS_H
+#pragma once
 
 #include "problem/includes.h"
 #include "pricing/coordinates.h"
@@ -70,4 +69,3 @@ const HashTable<EdgeTime, EdgeConflict>& edge_conflicts_get_constraints(
     SCIP_ProbData* probdata    // Problem data
 );
 
-#endif

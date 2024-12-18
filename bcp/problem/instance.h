@@ -17,8 +17,7 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#ifndef TRUFFLEHOG_INSTANCE_H
-#define TRUFFLEHOG_INSTANCE_H
+#pragma once
 
 #include "pricing/agents_data.h"
 #include "problem/map.h"
@@ -43,4 +42,3 @@ struct Instance
     ~Instance() = default;
 };
 
-#endif

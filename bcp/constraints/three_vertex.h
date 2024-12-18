@@ -19,8 +19,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #ifdef USE_THREEVERTEX_CONFLICTS
 
-#ifndef MAPF_SEPARATOR_THREEVERTEXCONFLICTS_H
-#define MAPF_SEPARATOR_THREEVERTEXCONFLICTS_H
+#pragma once
 
 #include "problem/includes.h"
 
@@ -31,4 +30,3 @@ SCIP_RETCODE SCIPincludeSepaThreeVertexConflicts(
 
 #endif
 
-#endif

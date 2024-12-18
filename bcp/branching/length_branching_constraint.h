@@ -17,8 +17,7 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#ifndef MAPF_CONSTRAINT_LENGTHBRANCHING_H
-#define MAPF_CONSTRAINT_LENGTHBRANCHING_H
+#pragma once
 
 #include "problem/includes.h"
 #include "pricing/coordinates.h"
@@ -61,4 +60,3 @@ NodeTime SCIPgetLengthBranchingNodeTime(
     SCIP_CONS* cons    // Constraint enforcing goal branching
 );
 
-#endif

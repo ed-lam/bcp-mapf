@@ -17,8 +17,7 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#ifndef TRUFFLEHOG_PRIORITYQUEUE_H
-#define TRUFFLEHOG_PRIORITYQUEUE_H
+#pragma once
 
 // #define CHECK_HEAP
 
@@ -259,4 +258,3 @@ class PriorityQueue
 #endif
 };
 
-#endif

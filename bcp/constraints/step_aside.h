@@ -19,8 +19,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #ifdef USE_STEPASIDE_CONFLICTS
 
-#ifndef MAPF_SEPARATOR_STEPASIDECONFLICTS_H
-#define MAPF_SEPARATOR_STEPASIDECONFLICTS_H
+#pragma once
 
 #include "problem/includes.h"
 
@@ -31,4 +30,3 @@ SCIP_RETCODE SCIPincludeSepaStepAsideConflicts(
 
 #endif
 
-#endif

@@ -17,8 +17,7 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#ifndef MAPF_BRANCHINGRULE_H
-#define MAPF_BRANCHINGRULE_H
+#pragma once
 
 #include "problem/includes.h"
 #include "pricing/coordinates.h"
@@ -67,4 +66,3 @@ branch_on_length(
     const bool prefer_branch_0    // Preferred branch direction
 );
 
-#endif

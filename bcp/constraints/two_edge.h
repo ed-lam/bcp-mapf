@@ -19,8 +19,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #if defined(USE_TWOEDGE_CONFLICTS) || defined(USE_WAITTWOEDGE_CONFLICTS)
 
-#ifndef MAPF_SEPARATOR_TWOEDGECONFLICTS_H
-#define MAPF_SEPARATOR_TWOEDGECONFLICTS_H
+#pragma once
 
 #include "problem/includes.h"
 
@@ -31,4 +30,3 @@ SCIP_RETCODE SCIPincludeSepaTwoEdgeConflicts(
 
 #endif
 
-#endif

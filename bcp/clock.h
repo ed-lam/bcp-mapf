@@ -17,8 +17,7 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#ifndef MAPF_CLOCK_H
-#define MAPF_CLOCK_H
+#pragma once
 
 #include "scip/def.h"
 #include "scip/clock.h"
@@ -36,4 +35,3 @@ inline SCIP_Real get_time_remaining(SCIP* scip)
     return scip->set->limit_time - get_clock(scip);
 }
 
-#endif

@@ -19,8 +19,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #if defined(USE_CORRIDOR_CONFLICTS) || defined(USE_WAITCORRIDOR_CONFLICTS)
 
-#ifndef MAPF_SEPARATOR_CORRIDORCONFLICTS_H
-#define MAPF_SEPARATOR_CORRIDORCONFLICTS_H
+#pragma once
 
 #include "problem/includes.h"
 
@@ -31,4 +30,3 @@ SCIP_RETCODE SCIPincludeSepaCorridorConflicts(
 
 #endif
 
-#endif
