@@ -152,7 +152,7 @@ void AStar::generate_start()
 #ifdef DEBUG
     new_label->label_id = nb_labels_++;
 #endif
-    const auto h_node_to_waypoint = std::max((*h_node_to_waypoint_)[start], waypoint_time - start_time);
+    const auto h_node_to_waypoint = std::max(h_node_to_waypoint_[start], waypoint_time - start_time);
     const auto h_waypoint_to_goal = h_waypoint_to_goal_[0];
     const auto h_goal_to_finish = finish_time_penalties.get_h(start_time + h_node_to_waypoint + h_waypoint_to_goal);
     const auto h = std::max(h_node_to_waypoint, waypoint_time - start_time) + h_waypoint_to_goal + h_goal_to_finish;
@@ -227,7 +227,7 @@ void AStar::generate_early_segment(Label* const current,
     const NodeTime next_nt{next_n, next_t};
 
     // Check if time-infeasible.
-    const auto h_node_to_waypoint = std::max((*h_node_to_waypoint_)[next_nt.n], waypoint_time - next_t);
+    const auto h_node_to_waypoint = std::max(h_node_to_waypoint_[next_nt.n], waypoint_time - next_t);
     const auto h_waypoint_to_goal = h_waypoint_to_goal_[w];
     debug_assert(h_node_to_waypoint >= 0);
     debug_assert(h_waypoint_to_goal >= 0);
@@ -393,7 +393,7 @@ void AStar::generate_last_segment(Label* const current, const Node next_n, const
     const NodeTime next_nt{next_n, next_t};
 
     // Check if time-infeasible.
-    const auto h_node_to_waypoint = std::max((*h_node_to_waypoint_)[next_nt.n], earliest_goal_time - next_t);
+    const auto h_node_to_waypoint = std::max(h_node_to_waypoint_[next_nt.n], earliest_goal_time - next_t);
     debug_assert(h_node_to_waypoint >= 0);
     if (next_t + h_node_to_waypoint > latest_goal_time)
     {
@@ -632,7 +632,7 @@ void AStar::generate_end(Label* const current)
     new_label->label_id = nb_labels_++;
 #endif
     new_label->parent = current;
-    debug_assert((*h_node_to_waypoint_)[current->n] == 0);
+    debug_assert(h_node_to_waypoint_[current->n] == 0);
     new_label->g += finish_time_penalties.get_penalty(current->t);
     new_label->f = new_label->g;
     new_label->n = -1;
@@ -1013,7 +1013,7 @@ Pair<Vector<NodeTime>, Cost> AStar::solve()
 
     // Create the first label.
     Waypoint w = 0;
-    h_node_to_waypoint_ = &heuristic_.get_h(waypoints[w].n);
+    h_node_to_waypoint_ = heuristic_.get_h(waypoints[w].n);
     generate_start<has_resources>();
 
     // Solve up to but not including the last waypoint (goal).
@@ -1071,7 +1071,7 @@ Pair<Vector<NodeTime>, Cost> AStar::solve()
 
                 // Advance to the next waypoint.
                 ++w;
-                h_node_to_waypoint_ = &heuristic_.get_h(waypoints[w].n);
+                h_node_to_waypoint_ = heuristic_.get_h(waypoints[w].n);
 
                 // Clear priority queue.
                 open_.clear();
@@ -1293,7 +1293,7 @@ Pair<Vector<NodeTime>, Cost> AStar::calculate_cost(const Vector<Node>& input_pat
 
     // Create the first label.
     Waypoint w = 0;
-    h_node_to_waypoint_ = &heuristic_.get_h(waypoints[w].n);
+    h_node_to_waypoint_ = heuristic_.get_h(waypoints[w].n);
     generate_start<has_resources>();
 
     // Solve up to but not including the last waypoint (goal).
@@ -1352,7 +1352,7 @@ Pair<Vector<NodeTime>, Cost> AStar::calculate_cost(const Vector<Node>& input_pat
 
                 // Advance to the next waypoint.
                 ++w;
-                h_node_to_waypoint_ = &heuristic_.get_h(waypoints[w].n);
+                h_node_to_waypoint_ = heuristic_.get_h(waypoints[w].n);
 
                 // Clear priority queue.
                 open_.clear();

@@ -87,6 +87,7 @@ struct SCIP_ProbData
     // Instance data
     SharedPtr<Instance> instance;                                               // Instance
     Agent N;                                                                    // Number of agents
+    Time max_path_length;
 
     // Model data
     SCIP_PricerData* pricerdata;                                                // Pricer data
@@ -149,6 +150,7 @@ SCIP_DECL_PROBTRANS(probtrans)
     // Copy instance data.
     (*targetdata)->instance = sourcedata->instance;
     (*targetdata)->N = sourcedata->N;
+    (*targetdata)->max_path_length = sourcedata->max_path_length;
 
     // Copy model data.
     (*targetdata)->pricerdata = sourcedata->pricerdata;
@@ -1264,12 +1266,18 @@ SCIP_RETCODE SCIPprobdataCreate(
     }
 
     // Calculate the longest path length. Do this internally after computing h.
+    probdata->max_path_length = 0;
     {
+        const auto& map = instance->map;
         const auto& agents = instance->agents;
         for (Agent a = 0; a < N; ++a)
         {
             const auto goal = agents[a].goal;
-            probdata->astar->compute_h(goal);
+            const auto h = probdata->astar->get_h(goal);
+            for (Node n = 0; n < map.size(); ++n)
+            {
+                probdata->max_path_length = std::max(probdata->max_path_length, h[n]);
+            }
         }
     }
 
@@ -1841,6 +1849,16 @@ AStar& SCIPprobdataGetAStar(
 {
     debug_assert(probdata);
     return *probdata->astar;
+}
+
+// Get the maximum path length
+Time SCIPprobdataGetMaxPathLength(
+    SCIP_ProbData* probdata    // Problem data
+)
+{
+    debug_assert(probdata);
+    debug_assert(probdata->max_path_length >= 1);
+    return probdata->max_path_length;
 }
 
 // Format path

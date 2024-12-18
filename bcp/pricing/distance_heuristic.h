@@ -1,119 +1,80 @@
-/*
-This file is part of BCP-MAPF.
-
-BCP-MAPF is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-BCP-MAPF is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
-
-Author: Edward Lam <ed@ed-lam.com>
-*/
-
 #pragma once
 
-#include "problem/includes.h"
+#include "problem/map.h"
+#include "types/hash_map.h"
 #include "types/map_types.h"
 #include "types/memory_pool.h"
-#include "problem/map.h"
 #include "types/priority_queue.h"
-#include "types/hash_map.h"
 
-class Heuristic
+class DistanceHeuristic
 {
-    // Label for heuristic
+    // Item in the priority queue
     struct Label
     {
-#ifdef DEBUG
-        size_t label_id;
-        const Label* parent;
-#endif
-        Node n;
         Time g;
+        Node n;
     };
-#ifdef DEBUG
-    static_assert(sizeof(Label) == 2*8 + 2*4);
-#else
-    static_assert(sizeof(Label) == 2*4);
-#endif
 
     // Comparison of labels
     struct LabelComparison
     {
-        static inline bool lt(const Label* const lhs, const Label* const rhs)
+        static inline bool lt(const Label lhs, const Label rhs)
         {
-            return lhs->g <  rhs->g;
+            return lhs.g <  rhs.g;
         }
-        static inline bool le(const Label* const lhs, const Label* const rhs)
+        static inline bool le(const Label lhs, const Label rhs)
         {
-            return lhs->g <= rhs->g;
+            return lhs.g <= rhs.g;
         }
-        static inline bool eq(const Label* const lhs, const Label* const rhs)
+        static inline bool eq(const Label lhs, const Label rhs)
         {
-            return lhs->g == rhs->g;
+            return lhs.g == rhs.g;
         }
     };
 
-    // Priority queue holding labels
+    // Priority queue data structure
     using PriorityQueueSizeType = Int32;
-    class HeuristicPriorityQueue : public PriorityQueue<Label*, LabelComparison, PriorityQueueSizeType>
+    class HeuristicPriorityQueue : public PriorityQueue<Label, LabelComparison, PriorityQueueSizeType>
     {
       public:
         // Modify the handle in the label pointing to its position in the priority queue
-        void update_index(Label*, const PriorityQueueSizeType) {}
+        void update_index(Label, const PriorityQueueSizeType) {}
 
         // Check the validity of an index
-        Bool check_index(Label* const&, const PriorityQueueSizeType) const { return true; }
+        Bool check_index(Label const&, const PriorityQueueSizeType) const { return true; }
     };
-
     // Instance
     const Map& map_;
 
     // Lower bounds
     HashMap<Node, Vector<Time>> h_;
-    Time max_path_length_;
 
-    // Solver data structures
-    MemoryPool label_pool_;
+    // Solver state
     HeuristicPriorityQueue open_;
-    Vector<bool> visited_;
-#ifdef DEBUG
-    size_t nb_labels_;
-#endif
 
   public:
-    // Constructors
-    Heuristic() = delete;
-    Heuristic(const Map& map);
-    Heuristic(const Heuristic&) = delete;
-    Heuristic(Heuristic&&) = delete;
-    Heuristic& operator=(const Heuristic&) = delete;
-    Heuristic& operator=(Heuristic&&) = delete;
-    ~Heuristic() = default;
-
-    // Getters
-    inline auto max_path_length() const { return max_path_length_; }
+    // Constructors and destructor
+    DistanceHeuristic() = delete;
+    DistanceHeuristic(const Map& map);
+    DistanceHeuristic(const DistanceHeuristic&) noexcept = default;
+    DistanceHeuristic(DistanceHeuristic&&) noexcept = default;
+    DistanceHeuristic& operator=(const DistanceHeuristic&) noexcept = delete;
+    DistanceHeuristic& operator=(DistanceHeuristic&&) noexcept = delete;
+    ~DistanceHeuristic() = default;
 
     // Get the lower bound from every node to a goal node
-    const Vector<Time>& get_h(const Node goal);
+    const Time* get_h(const Node goal);
+    Vector<Time> get_h_using_map(const Node goal, const Map& map);
 
   private:
     // Check if a node has already been visited
-    bool dominated(const Node n);
+    Bool dominated(const Node n);
 
     // Generate labels
-    void generate_start(const Node start);
-    void generate(const Label* const current, const Node n);
-    void generate_neighbours(const Label* const current);
+    void generate_start(const Node n, Time* h);
+    void generate(const Node current, const Node next, Time* h);
+    void generate_neighbours(const Node current, Time* h, const Map& map);
 
     // Compute lower bound from every node to a goal node
-    void search(const Node goal, Vector<Time>& h);
+    void search(const Node goal, Time* h, const Map& map);
 };
-

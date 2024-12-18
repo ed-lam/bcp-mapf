@@ -246,6 +246,11 @@ AStar& SCIPprobdataGetAStar(
     SCIP_ProbData* probdata    // Problem data
 );
 
+// Get the maximum path length
+Time SCIPprobdataGetMaxPathLength(
+    SCIP_ProbData* probdata    // Problem data
+);
+
 // Format path
 String format_path(
     SCIP_ProbData* probdata,    // Problem data

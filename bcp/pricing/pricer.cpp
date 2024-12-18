@@ -281,6 +281,7 @@ SCIP_RETCODE run_pricer(
     const auto N = SCIPprobdataGetN(probdata);
     const auto& map = SCIPprobdataGetMap(probdata);
     const auto& agents = SCIPprobdataGetAgentsData(probdata);
+    const auto max_path_length = SCIPprobdataGetMaxPathLength(probdata);
 
     // Update variable values.
     update_variable_values(scip);
@@ -784,9 +785,9 @@ SCIP_RETCODE run_pricer(
 #endif
 
         // Modify edge costs for length branching decisions.
-        debug_assert(astar.max_path_length() >= 1);
         earliest_goal_time = 0;
-        latest_goal_time = astar.max_path_length() - 1;
+        debug_assert(max_path_length >= 1);
+        latest_goal_time = max_path_length - 1;
         latest_visit_time.resize(map.size());
         for (Node n = 0; n < map.size(); ++n)
         {

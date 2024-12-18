@@ -148,9 +148,9 @@ class AStar
     Data data_;
 
     // Solver data structures
-    const Vector<Time>* h_node_to_waypoint_;
+    const Time* h_node_to_waypoint_;
     Vector<Time> h_waypoint_to_goal_;
-    Heuristic heuristic_;
+    DistanceHeuristic heuristic_;
     MemoryPool label_pool_;
     AStarPriorityQueue open_;
     HashMap<NodeTime, Label*> frontier_without_resources_;
@@ -173,7 +173,6 @@ class AStar
     ~AStar() = default;
 
     // Getters
-    inline auto max_path_length() const { return heuristic_.max_path_length(); }
 #ifdef USE_RESERVATION_TABLE
     auto& reservation_table() { return reservation_table_; };
 #endif
@@ -181,7 +180,7 @@ class AStar
     const auto& data() const { return data_; }
 
     // Solve
-    inline void compute_h(const Node goal) { heuristic_.get_h(goal); }
+    inline const auto& get_h(const Node goal) { return heuristic_.get_h(goal); }
     void preprocess_input();
     void before_solve();
     template<bool is_farkas>
