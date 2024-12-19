@@ -106,14 +106,14 @@ bool AStar::Data::can_be_better(const Data& previous_data)
     return false;
 }
 
-AStar::AStar(const Map& map) :
+AStar::AStar(const Map& map, DistanceHeuristic& distance_heuristic) :
     map_(map),
 
     data_(),
 
     h_node_to_waypoint_(nullptr),
     h_waypoint_to_goal_(),
-    heuristic_(map),
+    distance_heuristic_(distance_heuristic),
     label_pool_(),
     open_(),
     frontier_without_resources_(),
@@ -1002,7 +1002,7 @@ Pair<Vector<NodeTime>, Cost> AStar::solve()
     h_waypoint_to_goal_.back() = 0;
     for (Waypoint w = waypoints.size() - 2; w >= 0; --w)
     {
-        const auto h = heuristic_.get_h(waypoints[w + 1].n)[waypoints[w].n];
+        const auto h = distance_heuristic_.get_h(waypoints[w + 1].n)[waypoints[w].n];
         const auto t_diff = waypoints[w + 1].t - waypoints[w].t;
         if (w != static_cast<Waypoint>(waypoints.size() - 2) && t_diff < h)
         {
@@ -1013,7 +1013,7 @@ Pair<Vector<NodeTime>, Cost> AStar::solve()
 
     // Create the first label.
     Waypoint w = 0;
-    h_node_to_waypoint_ = heuristic_.get_h(waypoints[w].n);
+    h_node_to_waypoint_ = distance_heuristic_.get_h(waypoints[w].n);
     generate_start<has_resources>();
 
     // Solve up to but not including the last waypoint (goal).
@@ -1071,7 +1071,7 @@ Pair<Vector<NodeTime>, Cost> AStar::solve()
 
                 // Advance to the next waypoint.
                 ++w;
-                h_node_to_waypoint_ = heuristic_.get_h(waypoints[w].n);
+                h_node_to_waypoint_ = distance_heuristic_.get_h(waypoints[w].n);
 
                 // Clear priority queue.
                 open_.clear();
@@ -1282,7 +1282,7 @@ Pair<Vector<NodeTime>, Cost> AStar::calculate_cost(const Vector<Node>& input_pat
     h_waypoint_to_goal_.back() = 0;
     for (Waypoint w = waypoints.size() - 2; w >= 0; --w)
     {
-        const auto h = heuristic_.get_h(waypoints[w + 1].n)[waypoints[w].n];
+        const auto h = distance_heuristic_.get_h(waypoints[w + 1].n)[waypoints[w].n];
         const auto t_diff = waypoints[w + 1].t - waypoints[w].t;
         if (w != static_cast<Waypoint>(waypoints.size() - 2) && t_diff < h)
         {
@@ -1293,7 +1293,7 @@ Pair<Vector<NodeTime>, Cost> AStar::calculate_cost(const Vector<Node>& input_pat
 
     // Create the first label.
     Waypoint w = 0;
-    h_node_to_waypoint_ = heuristic_.get_h(waypoints[w].n);
+    h_node_to_waypoint_ = distance_heuristic_.get_h(waypoints[w].n);
     generate_start<has_resources>();
 
     // Solve up to but not including the last waypoint (goal).
@@ -1352,7 +1352,7 @@ Pair<Vector<NodeTime>, Cost> AStar::calculate_cost(const Vector<Node>& input_pat
 
                 // Advance to the next waypoint.
                 ++w;
-                h_node_to_waypoint_ = heuristic_.get_h(waypoints[w].n);
+                h_node_to_waypoint_ = distance_heuristic_.get_h(waypoints[w].n);
 
                 // Clear priority queue.
                 open_.clear();

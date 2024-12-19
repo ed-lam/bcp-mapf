@@ -38,10 +38,9 @@ struct GoalConflict
 
 // Create problem data
 SCIP_RETCODE SCIPprobdataCreate(
-    SCIP* scip,                       // SCIP
-    const char* probname,             // Problem name
-    SharedPtr<Instance>& instance,    // Instance
-    SharedPtr<AStar>& astar           // Search algorithm
+    SCIP* scip,                      // SCIP
+    const char* probname,            // Problem name
+    SharedPtr<Instance>& instance    // Instance
 );
 
 // Add a new variable from a primal heuristic

@@ -150,7 +150,7 @@ class AStar
     // Solver data structures
     const Time* h_node_to_waypoint_;
     Vector<Time> h_waypoint_to_goal_;
-    DistanceHeuristic heuristic_;
+    DistanceHeuristic& distance_heuristic_;
     MemoryPool label_pool_;
     AStarPriorityQueue open_;
     HashMap<NodeTime, Label*> frontier_without_resources_;
@@ -165,7 +165,7 @@ class AStar
   public:
     // Constructors
     AStar() = delete;
-    AStar(const Map& map);
+    AStar(const Map& map, DistanceHeuristic& distance_heuristic);
     AStar(const AStar&) = delete;
     AStar(AStar&&) = delete;
     AStar& operator=(const AStar&) = delete;
@@ -180,7 +180,6 @@ class AStar
     const auto& data() const { return data_; }
 
     // Solve
-    inline const auto& get_h(const Node goal) { return heuristic_.get_h(goal); }
     void preprocess_input();
     void before_solve();
     template<bool is_farkas>

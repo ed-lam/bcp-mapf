@@ -91,6 +91,7 @@ struct SCIP_ProbData
 
     // Model data
     SCIP_PricerData* pricerdata;                                                // Pricer data
+    SharedPtr<DistanceHeuristic> distance_heuristic;                            // Distance heuristic function
     SharedPtr<AStar> astar;                                                     // Pricing solver
     bool found_cuts;                                                            // Indicates whether a cut is found in the current separation round
 
@@ -1052,10 +1053,9 @@ SCIP_RETCODE SCIPprobdataAddTwoAgentRobustCut(
 
 // Create the problem
 SCIP_RETCODE SCIPprobdataCreate(
-    SCIP* scip,                       // SCIP
-    const char* probname,             // Problem name
-    SharedPtr<Instance>& instance,    // Instance
-    SharedPtr<AStar>& astar           // Search algorithm
+    SCIP* scip,                      // SCIP
+    const char* probname,            // Problem name
+    SharedPtr<Instance>& instance    // Instance
 )
 {
     // Check.
@@ -1117,7 +1117,8 @@ SCIP_RETCODE SCIPprobdataCreate(
 
     // Copy model data.
     probdata->pricerdata = nullptr;
-    probdata->astar = astar;
+    probdata->distance_heuristic = std::make_shared<DistanceHeuristic>(map);
+    probdata->astar = std::make_shared<AStar>(map, *probdata->distance_heuristic);
 
     // Create agent partition constraints.
     probdata->agent_part.resize(N);
@@ -1273,7 +1274,7 @@ SCIP_RETCODE SCIPprobdataCreate(
         for (Agent a = 0; a < N; ++a)
         {
             const auto goal = agents[a].goal;
-            const auto h = probdata->astar->get_h(goal);
+            const auto h = probdata->distance_heuristic->get_h(goal);
             for (Node n = 0; n < map.size(); ++n)
             {
                 probdata->max_path_length = std::max(probdata->max_path_length, h[n]);

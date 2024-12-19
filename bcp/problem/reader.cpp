@@ -42,11 +42,8 @@ SCIP_RETCODE read_instance(
     // Load instance.
     auto instance = std::make_shared<Instance>(scenario_path, nb_agents);
 
-    // Create pricing solver.
-    auto astar = std::make_shared<AStar>(instance->map);
-
     // Create the problem.
-    SCIP_CALL(SCIPprobdataCreate(scip, instance_name.c_str(), instance, astar));
+    SCIP_CALL(SCIPprobdataCreate(scip, instance_name.c_str(), instance));
 
     // Done.
     return SCIP_OKAY;
