@@ -19,10 +19,6 @@ Author: Edward Lam <ed@ed-lam.com>
 
 //#define PRINT_DEBUG
 
-#ifdef DEBUG
-//#define MAKE_NAMES
-#endif
-
 #ifndef DEBUG
 #define REMOVE_PADDING
 #endif
@@ -421,12 +417,12 @@ SCIP_RETCODE SCIPprobdataAddDummyVar(
     constexpr SCIP_Real obj = ARTIFICIAL_VAR_COST;
 
     // Create and add variable.
-#ifdef MAKE_NAMES
+#ifdef DEBUG
     const auto name = fmt::format("dummy_path({})", a);
 #endif
     SCIP_CALL(SCIPcreateVar(scip,
                             var,
-#ifdef MAKE_NAMES
+#ifdef DEBUG
                             name.c_str(),
 #else
                             "",
@@ -500,13 +496,13 @@ SCIP_RETCODE SCIPprobdataAddHeuristicVar(
     const SCIP_Real obj = path_length - 1;
 
     // Create and add variable.
-#ifdef MAKE_NAMES
+#ifdef DEBUG
     const auto name = fmt::format("path({},({}))",
                                   a, format_path(probdata, path_length, path)).substr(0, 255);
 #endif
     SCIP_CALL(SCIPcreateVar(scip,
                             var,
-#ifdef MAKE_NAMES
+#ifdef DEBUG
                             name.c_str(),
 #else
                             "",
@@ -651,13 +647,13 @@ SCIP_RETCODE SCIPprobdataAddInitialVar(
     const SCIP_Real obj = path_length - 1;
 
     // Create and add variable.
-#ifdef MAKE_NAMES
+#ifdef DEBUG
     const auto name = fmt::format("path({},({}))",
                                   a, format_path(probdata, path_length, path)).substr(0, 255);
 #endif
     SCIP_CALL(SCIPcreateVar(scip,
                             var,
-#ifdef MAKE_NAMES
+#ifdef DEBUG
                             name.c_str(),
 #else
                             "",
@@ -785,13 +781,13 @@ SCIP_RETCODE SCIPprobdataAddPricedVar(
     const SCIP_Real obj = path_length - 1;
 
     // Create and add variable.
-#ifdef MAKE_NAMES
+#ifdef DEBUG
     const auto name = fmt::format("path({},({}))",
                                   a, format_path(probdata, path_length, path)).substr(0, 255);
 #endif
     SCIP_CALL(SCIPcreateVar(scip,
                             var,
-#ifdef MAKE_NAMES
+#ifdef DEBUG
                             name.c_str(),
 #else
                             "",
@@ -889,7 +885,7 @@ SCIP_RETCODE SCIPprobdataAddTwoAgentRobustCut(
     SCIP_CALL(SCIPcreateEmptyRowSepa(scip,
                                      &row,
                                      sepa,
-#ifdef MAKE_NAMES
+#ifdef DEBUG
                                      cut.name().c_str(),
 #else
                                      "",
@@ -1075,6 +1071,7 @@ SCIP_RETCODE SCIPprobdataCreate(
     // Get problem data.
     const auto N = instance->agents.size();
     release_assert(N > 0, "Zero agents in the instance");
+    const auto& map = instance->map;
 
     // Tell SCIP the B&B node is infeasible if it has objective value greater than the
     // cost of a dummy path.
@@ -1082,8 +1079,6 @@ SCIP_RETCODE SCIPprobdataCreate(
 
     // Check start and end.
     {
-        const auto& map = instance->map;
-
         Node* start;
         Node* end;
         SCIP_CALL(SCIPallocBufferArray(scip, &start, N));
@@ -1112,7 +1107,7 @@ SCIP_RETCODE SCIPprobdataCreate(
     SCIP_ProbData* probdata = nullptr;
     SCIP_CALL(SCIPallocBlockMemory(scip, &probdata));
     debug_assert(probdata);
-    new(probdata) SCIP_ProbData;
+    new (probdata) SCIP_ProbData;
 
     // Copy instance data.
     probdata->instance = instance;

@@ -17,7 +17,7 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-//#define PRINT_DEBUG
+// #define PRINT_DEBUG
 
 #include "pricing/pricer.h"
 #include "problem/includes.h"
@@ -241,7 +241,6 @@ MasterProblemStatus calculate_agents_order(
     return master_lp_status;
 }
 
-static
 SCIP_RETCODE run_pricer(
     SCIP* scip,               // SCIP
     SCIP_PRICER* pricer,      // Pricer
@@ -387,9 +386,9 @@ SCIP_RETCODE run_pricer(
     ] = astar.data();
 
     // Print used paths.
-#ifdef PRINT_DEBUG
-    print_used_paths(scip);
-#endif
+// #ifdef PRINT_DEBUG
+//     print_used_paths(scip);
+// #endif
 
     // Use debug solution.
 //     {

@@ -17,7 +17,7 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-//#define PRINT_DEBUG
+// #define PRINT_DEBUG
 
 #include "constraints/nodetime.h"
 #include "problem/problem.h"

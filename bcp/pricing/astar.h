@@ -29,7 +29,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "pricing/distance_heuristic.h"
 #include "boost/container/small_vector.hpp"
 
-template <class T, std::size_t N>
+template <class T, Size N>
 using SmallVector = boost::container::small_vector<T, N>;
 
 class AStar

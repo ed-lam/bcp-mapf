@@ -109,11 +109,11 @@ else ()
     if ((NOT GUROBI_INCLUDE_DIRS OR NOT GUROBI_LIBRARY) AND (NOT CPLEX_INCLUDE_DIR OR NOT CPLEX_LIBRARY))
         set(LPS spx CACHE STRING "options for LP solver")
         set(CONF_INCLUDE_DIRS ../soplex/src/)
-        configure_file(scipoptsuite-7.0.3/soplex/soplex-config.cmake.in
+        configure_file(scipoptsuite-9.2.0/soplex/soplex-config.cmake.in
                        "${CMAKE_BINARY_DIR}/soplex/soplex-config.cmake"
                        @ONLY)
         set(SOPLEX_DIR ${CMAKE_BINARY_DIR}/soplex)
-        add_subdirectory(scipoptsuite-7.0.3/soplex/ EXCLUDE_FROM_ALL)
+        add_subdirectory(scipoptsuite-9.2.0/soplex/ EXCLUDE_FROM_ALL)
         message("Using SoPlex as LP solver ${SOPLEX_INCLUDE_DIRS}")
     endif ()
 
@@ -126,14 +126,14 @@ else ()
     set(PAPILO off)
     set(ZIMPL off)
     set(IPOPT off)
-    configure_file(scipoptsuite-7.0.3/scip/src/scip/config.h.in "${CMAKE_BINARY_DIR}/scip/config.h" @ONLY)
+    configure_file(scipoptsuite-9.2.0/scip/src/scip/config.h.in "${CMAKE_BINARY_DIR}/scip/config.h" @ONLY)
     target_include_directories(bcp-mapf PUBLIC ${CMAKE_BINARY_DIR})
     if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -ldl")
     endif ()
-    add_subdirectory(scipoptsuite-7.0.3/scip/ EXCLUDE_FROM_ALL)
-    target_include_directories(bcp-mapf PRIVATE          scipoptsuite-7.0.3/scip/src/
-                                        SYSTEM INTERFACE scipoptsuite-7.0.3/scip/src/)
+    add_subdirectory(scipoptsuite-9.2.0/scip/ EXCLUDE_FROM_ALL)
+    target_include_directories(bcp-mapf PRIVATE          scipoptsuite-9.2.0/scip/src/
+                                        SYSTEM INTERFACE scipoptsuite-9.2.0/scip/src/)
     set(SCIP_LIBRARY libscip)
 
 endif ()

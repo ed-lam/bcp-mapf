@@ -260,7 +260,6 @@ Pair<AgentNodeTime, bool> find_decision_early_goal(
     const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
 #endif
 
-
     // Select an agent involved in a rectangle knapsack conflict.
 #ifdef USE_RECTANGLE_KNAPSACK_CONFLICTS
     const auto& rectangle_knapsack_cuts = rectangle_knapsack_get_cuts(probdata);

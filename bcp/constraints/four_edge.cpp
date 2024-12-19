@@ -135,7 +135,6 @@ SCIP_RETCODE fouredge_conflicts_separate(
 //                   (170, ((219, 167), (219, 166)), 110)
 //    ) with LHS 1.3332 RHS 1
 
-
     // Find conflicts.
     for (Agent a1 = 0; a1 < N; ++a1)
     {

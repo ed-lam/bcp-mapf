@@ -19,24 +19,20 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #pragma once
 
-// ---------------------------------------------------------------------------------------
-
 #define OUTPUTS_DIR "outputs"
 #define ARTIFICIAL_VAR_COST                                 1e6
 #define PRICE_PRIORITY_DECAY_FACTOR                         1.3
 #define CUT_VIOLATION                                       0.1
 
-// ---------------------------------------------------------------------------------------
-
-#include "types/basic_types.h"
 #include "problem/debug.h"
-#include <string>
-#include <memory>
-#include <array>
-#include <string>
+#include "types/basic_types.h"
+#include "types/hash_map.h"
+#include "types/pointers.h"
+#include "types/string.h"
+#include "types/tuple.h"
+#include "types/vector.h"
 #include <memory>
 #include <utility>
-#include "robin-hood-hashing/src/include/robin_hood.h"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -45,25 +41,3 @@ Author: Edward Lam <ed@ed-lam.com>
 
 using Int = Int32;
 using Waypoint = Int32;
-
-using String = std::string;
-
-template<class T, size_t Size>
-using Array = std::array<T, Size>;
-
-template<class T1, class T2>
-using Pair = std::pair<T1, T2>;
-
-template <class T>
-using UniquePtr = std::unique_ptr<T>;
-
-// ---------------------------------------------------------------------------------------
-
-template<class ...T>
-using Tuple = std::tuple<T...>;
-
-template<class T>
-using SharedPtr = std::shared_ptr<T>;
-
-// ---------------------------------------------------------------------------------------
-

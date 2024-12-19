@@ -20,7 +20,9 @@ Author: Edward Lam <ed@ed-lam.com>
 #pragma once
 
 #include "problem/includes.h"
+#include "types/array.h"
 #include "types/map_types.h"
+#include "types/tuple.h"
 
 struct AgentRobustCut
 {

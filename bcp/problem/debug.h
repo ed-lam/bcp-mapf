@@ -24,8 +24,9 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "scip/scip.h"
 #pragma GCC diagnostic pop
 
-#include "fmt/color.h"
-#include "fmt/format.h"
+#include <fmt/color.h>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 
 #ifdef DEBUG
 #define println(format, ...) do { \

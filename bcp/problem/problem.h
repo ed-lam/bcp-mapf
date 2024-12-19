@@ -304,4 +304,3 @@ void print_goal_conflicts_dual(
 #ifdef DEBUG
 SCIP_Real get_coeff(SCIP_ROW* row, SCIP_VAR* var);
 #endif
-
