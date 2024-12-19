@@ -19,86 +19,41 @@ endif ()
 
 # Set source files.
 set(BCP_MAPF_SOURCE_FILES
-    robin-hood-hashing/src/include/robin_hood.h
-    bcp/problem/includes.h
-    bcp/problem/debug.h
-    bcp/types/map_types.h
-    bcp/problem/map.cpp
-    bcp/problem/map.h
-    bcp/pricing/agents_data.h
-    bcp/problem/instance.h
-    bcp/problem/instance.cpp
-    bcp/types/priority_queue.h
-    bcp/types/memory_pool.h
-    bcp/types/memory_pool.cpp
-    bcp/pricing/distance_heuristic.h
-    bcp/pricing/distance_heuristic.cpp
-    bcp/pricing/penalties.h
-    bcp/pricing/astar.h
-    bcp/pricing/astar.cpp
-    bcp/pricing/reservation_table.h
-    bcp/Main.cpp
-    bcp/problem/includes.h
-    bcp/problem/debug.h
-    bcp/Clock.h
-    bcp/types/map_types.h
-    bcp/problem/reader.h
-    bcp/problem/reader.cpp
-    bcp/problem/problem.h
-    bcp/problem/problem.cpp
-    bcp/problem/variable_data.h
-    bcp/problem/variable_data.cpp
-    bcp/pricing/pricer.h
-    bcp/pricing/pricer.cpp
-    bcp/constraints/nodetime.h
-    bcp/constraints/nodetime.cpp
-    bcp/constraints/edgetime.h
-    bcp/constraints/edgetime.cpp
-    bcp/constraints/separator.h
-    bcp/constraints/preprocessing.h
-    bcp/constraints/preprocessing.cpp
-    bcp/constraints/rectangle.h
-    bcp/constraints/rectangle.cpp
-    bcp/constraints/rectangle_knapsack.h
-    bcp/constraints/rectangle_knapsack.cpp
-    bcp/constraints/corridor.h
-    bcp/constraints/corridor.cpp
-    bcp/constraints/step_aside.h
-    bcp/constraints/step_aside.cpp
-    bcp/constraints/wait_delay.h
-    bcp/constraints/wait_delay.cpp
-    bcp/constraints/exit_entry.h
-    bcp/constraints/exit_entry.cpp
-    bcp/constraints/two_edge.h
-    bcp/constraints/two_edge.cpp
-    bcp/constraints/two_vertex.h
-    bcp/constraints/two_vertex.cpp
-    bcp/constraints/three_vertex.h
-    bcp/constraints/three_vertex.cpp
-    bcp/constraints/four_edge.h
-    bcp/constraints/four_edge.cpp
-    bcp/constraints/five_edge.h
-    bcp/constraints/five_edge.cpp
-    bcp/constraints/six_edge.h
-    bcp/constraints/six_edge.cpp
-    bcp/constraints/agent_wait_edge.h
-    bcp/constraints/agent_wait_edge.cpp
-    bcp/constraints/vertex_four_edge.h
-    bcp/constraints/vertex_four_edge.cpp
-    bcp/constraints/target.h
-    bcp/constraints/target.cpp
-    bcp/branching/branching_rule.h
     bcp/branching/branching_rule.cpp
     bcp/branching/fractional.cpp
-    bcp/branching/pseudosolution.cpp
-    bcp/branching/vertex_branching_constraint.h
-    bcp/branching/vertex_branching_constraint.cpp
-    bcp/branching/length_branching_constraint.h
     bcp/branching/length_branching_constraint.cpp
-    bcp/heuristics/prioritized_planning.h
+    bcp/branching/pseudosolution.cpp
+    bcp/branching/vertex_branching_constraint.cpp
+    bcp/constraints/agent_wait_edge.cpp
+    bcp/constraints/corridor.cpp
+    bcp/constraints/edgetime.cpp
+    bcp/constraints/exit_entry.cpp
+    bcp/constraints/five_edge.cpp
+    bcp/constraints/four_edge.cpp
+    bcp/constraints/nodetime.cpp
+    bcp/constraints/preprocessing.cpp
+    bcp/constraints/rectangle_knapsack.cpp
+    bcp/constraints/rectangle.cpp
+    bcp/constraints/six_edge.cpp
+    bcp/constraints/step_aside.cpp
+    bcp/constraints/target.cpp
+    bcp/constraints/three_vertex.cpp
+    bcp/constraints/two_edge.cpp
+    bcp/constraints/two_vertex.cpp
+    bcp/constraints/vertex_four_edge.cpp
+    bcp/constraints/wait_delay.cpp
     bcp/heuristics/prioritized_planning.cpp
-    bcp/problem/output.h
+    bcp/main.cpp
+    bcp/pricing/astar.cpp
+    bcp/pricing/distance_heuristic.cpp
+    bcp/pricing/pricer.cpp
+    bcp/problem/instance.cpp
+    bcp/problem/map.cpp
     bcp/problem/output.cpp
+    bcp/problem/problem.cpp
+    bcp/problem/reader.cpp
+    bcp/problem/variable_data.cpp
+    bcp/types/memory_pool.cpp
 )
 
 # Create target.
