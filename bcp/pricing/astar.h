@@ -19,15 +19,17 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #pragma once
 
-#include "problem/includes.h"
-#include "types/map_types.h"
-#include "problem/map.h"
-#include "types/memory_pool.h"
-#include "pricing/reservation_table.h"
-#include "types/priority_queue.h"
-#include "pricing/penalties.h"
-#include "pricing/distance_heuristic.h"
 #include "boost/container/small_vector.hpp"
+#include "pricing/distance_heuristic.h"
+#include "pricing/edgetime_penalties.h"
+#include "pricing/finish_time_penalties.h"
+#include "pricing/node_crossing_penalties.h"
+#include "pricing/reservation_table.h"
+#include "problem/includes.h"
+#include "problem/map.h"
+#include "types/map_types.h"
+#include "types/memory_pool.h"
+#include "types/priority_queue.h"
 
 template <class T, Size N>
 using SmallVector = boost::container::small_vector<T, N>;
@@ -130,10 +132,10 @@ class AStar
         // Costs
         Cost cost_offset;
         Vector<Time> latest_visit_time;
-        EdgePenalties edge_penalties;
+        EdgeTimePenalties edge_penalties;
         FinishTimePenalties finish_time_penalties;
 #ifdef USE_GOAL_CONFLICTS
-        GoalPenalties goal_penalties;
+        NodeCrossingPenalties node_crossing_penalties;
 #endif
 
         // Check if any cost is better
@@ -181,7 +183,7 @@ class AStar
 
     // Solve
     void preprocess_input();
-    void before_solve();
+    void finalise();
     template<bool is_farkas>
     Pair<Vector<NodeTime>, Cost> solve();
 

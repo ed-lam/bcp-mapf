@@ -382,7 +382,7 @@ SCIP_RETCODE run_pricer(
            edge_penalties,
            finish_time_penalties
 #ifdef USE_GOAL_CONFLICTS
-         , goal_penalties
+         , node_crossing_penalties
 #endif
     ] = astar.data();
 
@@ -455,7 +455,7 @@ SCIP_RETCODE run_pricer(
 //
 //                 // Search.
 //                 astar.preprocess_input();
-//                 astar.before_solve(); // TODO: Merge back in.
+//                 astar.finalise(); // TODO: Merge back in.
 //                 astar.set_verbose();
 //                 const auto [path_vertices, path_cost] = astar.calculate_cost(input_path);
 //
@@ -535,7 +535,7 @@ SCIP_RETCODE run_pricer(
 #endif
 
     // Make edge penalties for all agents.
-    EdgePenalties global_edge_penalties;
+    EdgeTimePenalties global_edge_penalties;
 
     // Input dual values for vertex conflicts.
     for (const auto& [nt, vertex_conflict] : vertex_conflicts_conss)
@@ -549,27 +549,27 @@ SCIP_RETCODE run_pricer(
             const auto t = nt.t - 1;
             {
                 const auto n = map.get_south(nt.n);
-                auto& penalties = global_edge_penalties.get_edge_penalties(n, t);
+                auto& penalties = global_edge_penalties.insert(n, t);
                 penalties.north -= dual;
             }
             {
                 const auto n = map.get_north(nt.n);
-                auto& penalties = global_edge_penalties.get_edge_penalties(n, t);
+                auto& penalties = global_edge_penalties.insert(n, t);
                 penalties.south -= dual;
             }
             {
                 const auto n = map.get_west(nt.n);
-                auto& penalties = global_edge_penalties.get_edge_penalties(n, t);
+                auto& penalties = global_edge_penalties.insert(n, t);
                 penalties.east -= dual;
             }
             {
                 const auto n = map.get_east(nt.n);
-                auto& penalties = global_edge_penalties.get_edge_penalties(n, t);
+                auto& penalties = global_edge_penalties.insert(n, t);
                 penalties.west -= dual;
             }
             {
                 const auto n = map.get_wait(nt.n);
-                auto& penalties = global_edge_penalties.get_edge_penalties(n, t);
+                auto& penalties = global_edge_penalties.insert(n, t);
                 penalties.wait -= dual;
             }
         }
@@ -586,7 +586,7 @@ SCIP_RETCODE run_pricer(
             // Add the dual variable value to the edges.
             for (const auto e : edges)
             {
-                auto& penalties = global_edge_penalties.get_edge_penalties(e.n, t);
+                auto& penalties = global_edge_penalties.insert(e.n, t);
                 penalties.d[e.d] -= dual;
             }
         }
@@ -635,7 +635,7 @@ SCIP_RETCODE run_pricer(
         edge_penalties = global_edge_penalties;
         finish_time_penalties.clear();
 #ifdef USE_GOAL_CONFLICTS
-        goal_penalties.clear();
+        node_crossing_penalties.clear();
 #endif
         for (const auto& [row, ets_begin, ets_end] : agent_robust_cuts[a])
         {
@@ -649,7 +649,7 @@ SCIP_RETCODE run_pricer(
                     const auto n = it->n;
                     const auto d = it->d;
                     const auto t = it->t;
-                    auto& penalties = edge_penalties.get_edge_penalties(n, t);
+                    auto& penalties = edge_penalties.insert(n, t);
                     penalties.d[d] -= dual;
 
                     // If a wait edge in a two-agent robust cut corresponds to waiting at the goal, incur the
@@ -710,7 +710,7 @@ SCIP_RETCODE run_pricer(
             debug_assert(SCIPisFeasLE(scip, dual, 0.0));
             if (SCIPisFeasLT(scip, dual, 0.0))
             {
-                goal_penalties.add(nt, -dual);
+                node_crossing_penalties.add(nt, -dual);
             }
         }
 #endif
@@ -739,27 +739,27 @@ SCIP_RETCODE run_pricer(
                 const auto prev_time = nt.t - 1;
                 {
                     const auto n = map.get_south(nt.n);
-                    auto& penalties = edge_penalties.get_edge_penalties(n, prev_time);
+                    auto& penalties = edge_penalties.insert(n, prev_time);
                     penalties.north = std::numeric_limits<Cost>::infinity();
                 }
                 {
                     const auto n = map.get_north(nt.n);
-                    auto& penalties = edge_penalties.get_edge_penalties(n, prev_time);
+                    auto& penalties = edge_penalties.insert(n, prev_time);
                     penalties.south = std::numeric_limits<Cost>::infinity();
                 }
                 {
                     const auto n = map.get_west(nt.n);
-                    auto& penalties = edge_penalties.get_edge_penalties(n, prev_time);
+                    auto& penalties = edge_penalties.insert(n, prev_time);
                     penalties.east = std::numeric_limits<Cost>::infinity();
                 }
                 {
                     const auto n = map.get_east(nt.n);
-                    auto& penalties = edge_penalties.get_edge_penalties(n, prev_time);
+                    auto& penalties = edge_penalties.insert(n, prev_time);
                     penalties.west = std::numeric_limits<Cost>::infinity();
                 }
                 {
                     const auto n = map.get_wait(nt.n);
-                    auto& penalties = edge_penalties.get_edge_penalties(n, prev_time);
+                    auto& penalties = edge_penalties.insert(n, prev_time);
                     penalties.wait = std::numeric_limits<Cost>::infinity();
                 }
             }
@@ -843,7 +843,7 @@ SCIP_RETCODE run_pricer(
 #endif
 
         // Solve.
-        astar.before_solve(); // TODO: Merge back in.
+        astar.finalise(); // TODO: Merge back in.
         std::tie(path_vertices, path_cost) = astar.solve<is_farkas>();
         if (!path_vertices.empty())
         {

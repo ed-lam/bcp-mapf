@@ -263,7 +263,7 @@ SCIP_DECL_HEUREXEC(heurExecPrioritizedPlanning)
            edge_penalties,
            finish_time_penalties
 #ifdef USE_GOAL_CONFLICTS
-         , goal_penalties
+         , node_crossing_penalties
 #endif
     ] = astar.data();
 
@@ -271,7 +271,7 @@ SCIP_DECL_HEUREXEC(heurExecPrioritizedPlanning)
     cost_offset = -astar.max_path_length() * 1e2;
     finish_time_penalties.clear();
 #ifdef USE_GOAL_CONFLICTS
-    goal_penalties.clear();
+    node_crossing_penalties.clear();
 #endif
 
     // Create order of agents to solve.
@@ -443,7 +443,7 @@ SCIP_DECL_HEUREXEC(heurExecPrioritizedPlanning)
 // #endif
 
         // Solve.
-        astar.before_solve(); // TODO: Merge back in.
+        astar.finalise(); // TODO: Merge back in.
         const auto [path_vertices, path_cost] = astar.solve<false>();
 
         // End timer.

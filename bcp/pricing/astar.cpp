@@ -85,19 +85,19 @@ bool AStar::Data::can_be_better(const Data& previous_data)
         return true;
     }
     for (Time t = 0; t < static_cast<Time>(finish_time_penalties.size()); ++t)
-        if (finish_time_penalties[t] < previous_data.finish_time_penalties[t])
+        if (finish_time_penalties.get_penalty(t) < previous_data.finish_time_penalties.get_penalty(t))
         {
             return true;
         }
 
 #ifdef USE_GOAL_CONFLICTS
-    if (goal_penalties.size() != previous_data.goal_penalties.size())
+    if (node_crossing_penalties.size() != previous_data.node_crossing_penalties.size())
     {
         return true;
     }
-    for (Int idx = 0; idx < static_cast<Int>(goal_penalties.size()); ++idx)
-        if (goal_penalties[idx].nt != previous_data.goal_penalties[idx].nt ||
-            goal_penalties[idx].cost < previous_data.goal_penalties[idx].cost)
+    for (Int idx = 0; idx < static_cast<Int>(node_crossing_penalties.size()); ++idx)
+        if (node_crossing_penalties[idx].nt != previous_data.node_crossing_penalties[idx].nt ||
+            node_crossing_penalties[idx].penalty < previous_data.node_crossing_penalties[idx].penalty)
         {
             return true;
         }
@@ -141,7 +141,7 @@ void AStar::generate_start()
                  edge_penalties,
                  finish_time_penalties
 #ifdef USE_GOAL_CONFLICTS
-               , goal_penalties
+               , node_crossing_penalties
 #endif
     ] = data_;
     constexpr auto start_time = 0;
@@ -180,7 +180,7 @@ void AStar::generate_start()
     if (verbose)
     {
 #ifdef USE_GOAL_CONFLICTS
-        const auto nb_goal_penalties = goal_penalties.size();
+        const auto nb_goal_penalties = node_crossing_penalties.size();
 #else
         const auto nb_goal_penalties = 0;
 #endif
@@ -219,7 +219,7 @@ void AStar::generate_early_segment(Label* const current,
                  edge_penalties,
                  finish_time_penalties
 #ifdef USE_GOAL_CONFLICTS
-               , goal_penalties
+               , node_crossing_penalties
 #endif
     ] = data_;
 
@@ -265,9 +265,9 @@ void AStar::generate_early_segment(Label* const current,
 
     // Check all goal crossings.
 #ifdef USE_GOAL_CONFLICTS
-    for (Int idx = 0; idx < goal_penalties.size(); ++idx)
+    for (Int idx = 0; idx < node_crossing_penalties.size(); ++idx)
     {
-        const auto [goal_nt, goal_cost] = goal_penalties[idx];
+        const auto [goal_nt, goal_cost] = node_crossing_penalties[idx];
 
         const auto crossed = get_bitset(next_label->state_, idx);
         if (!crossed && (next_n == goal_nt.n && next_t >= goal_nt.t))
@@ -294,7 +294,7 @@ void AStar::generate_early_segment(Label* const current,
         if (verbose)
         {
 #ifdef USE_GOAL_CONFLICTS
-            const auto nb_goal_penalties = goal_penalties.size();
+            const auto nb_goal_penalties = node_crossing_penalties.size();
 #else
             const auto nb_goal_penalties = 0;
 #endif
@@ -330,7 +330,7 @@ void AStar::generate_early_segment(Label* const current,
         if (next_label)
         {
 #ifdef USE_GOAL_CONFLICTS
-            const auto nb_goal_penalties = goal_penalties.size();
+            const auto nb_goal_penalties = node_crossing_penalties.size();
 #else
             const auto nb_goal_penalties = 0;
 #endif
@@ -350,7 +350,7 @@ void AStar::generate_early_segment(Label* const current,
         else
         {
 #ifdef USE_GOAL_CONFLICTS
-            const auto nb_goal_penalties = goal_penalties.size();
+            const auto nb_goal_penalties = node_crossing_penalties.size();
 #else
             const auto nb_goal_penalties = 0;
 #endif
@@ -385,7 +385,7 @@ void AStar::generate_last_segment(Label* const current, const Node next_n, const
                  edge_penalties,
                  finish_time_penalties
 #ifdef USE_GOAL_CONFLICTS
-               , goal_penalties
+               , node_crossing_penalties
 #endif
     ] = data_;
 
@@ -429,9 +429,9 @@ void AStar::generate_last_segment(Label* const current, const Node next_n, const
 
     // Check all goal crossings.
 #ifdef USE_GOAL_CONFLICTS
-    for (Int idx = 0; idx < goal_penalties.size(); ++idx)
+    for (Int idx = 0; idx < node_crossing_penalties.size(); ++idx)
     {
-        const auto [goal_nt, goal_cost] = goal_penalties[idx];
+        const auto [goal_nt, goal_cost] = node_crossing_penalties[idx];
 
         const auto crossed = get_bitset(next_label->state_, idx);
         if (!crossed && (next_n == goal_nt.n && next_t >= goal_nt.t))
@@ -458,7 +458,7 @@ void AStar::generate_last_segment(Label* const current, const Node next_n, const
         if (verbose)
         {
 #ifdef USE_GOAL_CONFLICTS
-            const auto nb_goal_penalties = goal_penalties.size();
+            const auto nb_goal_penalties = node_crossing_penalties.size();
 #else
             const auto nb_goal_penalties = 0;
 #endif
@@ -494,7 +494,7 @@ void AStar::generate_last_segment(Label* const current, const Node next_n, const
         if (next_label)
         {
 #ifdef USE_GOAL_CONFLICTS
-            const auto nb_goal_penalties = goal_penalties.size();
+            const auto nb_goal_penalties = node_crossing_penalties.size();
 #else
             const auto nb_goal_penalties = 0;
 #endif
@@ -514,7 +514,7 @@ void AStar::generate_last_segment(Label* const current, const Node next_n, const
         else
         {
 #ifdef USE_GOAL_CONFLICTS
-            const auto nb_goal_penalties = goal_penalties.size();
+            const auto nb_goal_penalties = node_crossing_penalties.size();
 #else
             const auto nb_goal_penalties = 0;
 #endif
@@ -549,7 +549,7 @@ void AStar::generate_neighbours(Label* const current, WaypointArgs... waypoint_a
            edge_penalties,
            finish_time_penalties
 #ifdef USE_GOAL_CONFLICTS
-         , goal_penalties
+         , node_crossing_penalties
 #endif
     ] = data_;
 
@@ -558,7 +558,7 @@ void AStar::generate_neighbours(Label* const current, WaypointArgs... waypoint_a
     if (verbose)
     {
 #ifdef USE_GOAL_CONFLICTS
-        const auto nb_goal_penalties = goal_penalties.size();
+        const auto nb_goal_penalties = node_crossing_penalties.size();
 #else
         const auto nb_goal_penalties = 0;
 #endif
@@ -578,7 +578,7 @@ void AStar::generate_neighbours(Label* const current, WaypointArgs... waypoint_a
 #endif
 
     // Expand in five directions.
-    const auto edge_costs = edge_penalties.get_edge_costs<default_cost>(current->nt);
+    const auto edge_costs = edge_penalties.get_costs<default_cost>(current->nt);
     const auto current_n = current->n;
     const auto next_t = current->t + 1;
     if (const auto next_n = map_.get_north(current_n);
@@ -621,7 +621,7 @@ void AStar::generate_end(Label* const current)
                  edge_penalties,
                  finish_time_penalties
 #ifdef USE_GOAL_CONFLICTS
-               , goal_penalties
+               , node_crossing_penalties
 #endif
     ] = data_;
 
@@ -645,7 +645,7 @@ void AStar::generate_end(Label* const current)
         if (verbose)
         {
 #ifdef USE_GOAL_CONFLICTS
-            const auto nb_goal_penalties = goal_penalties.size();
+            const auto nb_goal_penalties = node_crossing_penalties.size();
 #else
             const auto nb_goal_penalties = 0;
 #endif
@@ -671,7 +671,7 @@ void AStar::generate_end(Label* const current)
     if (verbose)
     {
 #ifdef USE_GOAL_CONFLICTS
-        const auto nb_goal_penalties = goal_penalties.size();
+        const auto nb_goal_penalties = node_crossing_penalties.size();
 #else
         const auto nb_goal_penalties = 0;
 #endif
@@ -699,7 +699,7 @@ AStar::Label* AStar::dominated<false>(Label* const new_label)
 
     // Check.
 #ifdef USE_GOAL_CONFLICTS
-    debug_assert(data_.goal_penalties.empty());
+    debug_assert(data_.node_crossing_penalties.empty());
 #endif
 
     // Try to put in the new label.
@@ -758,8 +758,8 @@ AStar::Label* AStar::dominated<true>(Label* const new_label)
 {
 #ifdef USE_GOAL_CONFLICTS
     // Get goal crossings.
-    const auto& goal_penalties = data_.goal_penalties;
-    const auto nb_goal_penalties = goal_penalties.size();
+    const auto& node_crossing_penalties = data_.node_crossing_penalties;
+    const auto nb_goal_penalties = node_crossing_penalties.size();
     // debug_assert(nb_goal_penalties > 0);
 
     // Print.
@@ -793,7 +793,7 @@ AStar::Label* AStar::dominated<true>(Label* const new_label)
             for (Int idx = 0; idx < nb_goal_penalties; ++idx)
                 if (get_bitset(new_label->state_, idx) > get_bitset(existing_label->state_, idx))
                 {
-                    existing_label_potential_cost += goal_penalties[idx].cost;
+                    existing_label_potential_cost += node_crossing_penalties[idx].penalty;
                 }
             // If the existing label still costs less than or equal to the new label, even after incurring these
             // penalties, then the new label is dominated.
@@ -810,7 +810,7 @@ AStar::Label* AStar::dominated<true>(Label* const new_label)
             for (Int idx = 0; idx < nb_goal_penalties; ++idx)
                 if (get_bitset(existing_label->state_, idx) > get_bitset(new_label->state_, idx))
                 {
-                    new_label_potential_cost += goal_penalties[idx].cost;
+                    new_label_potential_cost += node_crossing_penalties[idx].penalty;
                 }
             if (is_le(new_label_potential_cost, existing_label->f))
             {
@@ -880,7 +880,7 @@ void AStar::preprocess_input()
            edge_penalties,
            finish_time_penalties
 #ifdef USE_GOAL_CONFLICTS
-         , goal_penalties
+         , node_crossing_penalties
 #endif
     ] = data_;
 
@@ -893,7 +893,7 @@ template<bool is_farkas>
 Pair<Vector<NodeTime>, Cost> AStar::solve()
 {
 #ifdef USE_GOAL_CONFLICTS
-    if (!data_.goal_penalties.empty())
+    if (!data_.node_crossing_penalties.empty())
     {
         constexpr bool has_resources = true;
         return solve<is_farkas, has_resources>();
@@ -922,7 +922,7 @@ Pair<Vector<NodeTime>, Cost> AStar::solve()
                  edge_penalties,
                  finish_time_penalties
 #ifdef USE_GOAL_CONFLICTS
-               , goal_penalties
+               , node_crossing_penalties
 #endif
     ] = data_;
 
@@ -959,15 +959,15 @@ Pair<Vector<NodeTime>, Cost> AStar::solve()
     auto& path_cost = output.second;
 
     // Prepare costs.
-//     data_.edge_penalties.before_solve();
-//     data_.finish_time_penalties.before_solve();
+//     data_.edge_penalties.finalise();
+//     data_.finish_time_penalties.finalise();
 // #ifdef USE_GOAL_CONFLICTS
-//     data_.goal_penalties.before_solve();
+//     data_.node_crossing_penalties.finalise();
 // #endif
 
     // Get number of resources.
 #ifdef USE_GOAL_CONFLICTS
-    const auto nb_goal_crossings = goal_penalties.size();
+    const auto nb_goal_crossings = node_crossing_penalties.size();
 #else
     constexpr Int nb_goal_crossings = 0;
 #endif
@@ -977,7 +977,7 @@ Pair<Vector<NodeTime>, Cost> AStar::solve()
 #ifdef USE_GOAL_CONFLICTS
     for (Int idx = 0; idx < nb_goal_crossings; ++idx)
     {
-        const auto [goal_nt, goal_cost] = goal_penalties[idx];
+        const auto [goal_nt, goal_cost] = node_crossing_penalties[idx];
         println("Goal crossing ({},{}) at or after time {} incurs {:.6f}",
                 map_.get_x(goal_nt.n), map_.get_y(goal_nt.n), goal_nt.t, goal_cost);
     }
@@ -1044,7 +1044,7 @@ Pair<Vector<NodeTime>, Cost> AStar::solve()
 
                     // Print.
 #ifdef USE_GOAL_CONFLICTS
-                    const auto nb_goal_penalties = goal_penalties.size();
+                    const auto nb_goal_penalties = node_crossing_penalties.size();
 #else
                     const auto nb_goal_penalties = 0;
 #endif
@@ -1180,13 +1180,13 @@ Pair<Vector<NodeTime>, Cost> AStar::solve()
 }
 
 // TODO: move back into solve()
-void AStar::before_solve()
+void AStar::finalise()
 {
     // Prepare costs.
-    data_.edge_penalties.before_solve();
-    data_.finish_time_penalties.before_solve();
+    data_.edge_penalties.finalise();
+    data_.finish_time_penalties.finalise();
 #ifdef USE_GOAL_CONFLICTS
-    data_.goal_penalties.before_solve();
+    data_.node_crossing_penalties.finalise();
 #endif
 }
 
@@ -1220,7 +1220,7 @@ Pair<Vector<NodeTime>, Cost> AStar::calculate_cost(const Vector<Node>& input_pat
            edge_penalties,
            finish_time_penalties
 #ifdef USE_GOAL_CONFLICTS
-         , goal_penalties
+         , node_crossing_penalties
 #endif
     ] = data_;
 
@@ -1257,15 +1257,15 @@ Pair<Vector<NodeTime>, Cost> AStar::calculate_cost(const Vector<Node>& input_pat
     auto& path_cost = output.second;
 
     // Prepare costs.
-    data_.edge_penalties.before_solve();
-    data_.finish_time_penalties.before_solve();
+    data_.edge_penalties.finalise();
+    data_.finish_time_penalties.finalise();
 #ifdef USE_GOAL_CONFLICTS
-    data_.goal_penalties.before_solve();
+    data_.node_crossing_penalties.finalise();
 #endif
 
     // Get number of resources.
 #ifdef USE_GOAL_CONFLICTS
-    const auto nb_goal_crossings = goal_penalties.size();
+    const auto nb_goal_crossings = node_crossing_penalties.size();
 #else
     constexpr Int nb_goal_crossings = 0;
 #endif
@@ -1325,7 +1325,7 @@ Pair<Vector<NodeTime>, Cost> AStar::calculate_cost(const Vector<Node>& input_pat
 
                     // Print.
 #ifdef USE_GOAL_CONFLICTS
-                    const auto nb_goal_penalties = goal_penalties.size();
+                    const auto nb_goal_penalties = node_crossing_penalties.size();
 #else
                     const auto nb_goal_penalties = 0;
 #endif
@@ -1368,7 +1368,7 @@ Pair<Vector<NodeTime>, Cost> AStar::calculate_cost(const Vector<Node>& input_pat
             const auto waypoint_time = waypoints[w].t;
 
             // Expand in five directions.
-            const auto edge_costs = edge_penalties.get_edge_costs<default_cost>(current->nt);
+            const auto edge_costs = edge_penalties.get_costs<default_cost>(current->nt);
             const auto current_n = current->n;
             const auto next_t = current->t + 1;
             if (const auto next_n = map_.get_north(current_n);
@@ -1419,7 +1419,7 @@ Pair<Vector<NodeTime>, Cost> AStar::calculate_cost(const Vector<Node>& input_pat
         if (current->n >= 0)
         {
             // Expand in five directions.
-            const auto edge_costs = edge_penalties.get_edge_costs<default_cost>(current->nt);
+            const auto edge_costs = edge_penalties.get_costs<default_cost>(current->nt);
             const auto current_n = current->n;
             const auto next_t = current->t + 1;
             if (const auto next_n = map_.get_north(current_n);
