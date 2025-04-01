@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.21)
 project(bcp-mapf)
 
 # Verbose.
@@ -9,7 +9,7 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED 1)
 
 # Set C++ version.
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED 1)
 
 # Set release build.
@@ -139,6 +139,33 @@ else ()
 
 endif ()
 
+# Find boost.
+# find_path(BOOST_INCLUDE_DIR
+#     NAMES boost/heap/pairing_heap.hpp
+#     HINTS "${BOOST_DIR}" "$ENV{BOOST_DIR}")
+# if (NOT BOOST_INCLUDE_DIR)
+
+    # Download boost if not found.
+    set(BOOST_VERSION 1.87.0)
+    message(STATUS "Downloading Boost libraries")
+    include(FetchContent)
+    # Set(FETCHCONTENT_QUIET FALSE)
+    FetchContent_Declare(boost
+        URL https://github.com/boostorg/boost/releases/download/boost-${BOOST_VERSION}/boost-${BOOST_VERSION}-b2-nodocs.tar.gz
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+    FetchContent_MakeAvailable(boost)
+    message("Downloaded Boost to ${boost_SOURCE_DIR}")
+    SET(BOOST_INCLUDE_DIR "${boost_SOURCE_DIR}")
+
+    # Include boost again.
+    find_path(BOOST_INCLUDE_DIR
+        NAMES boost/heap/d_ary_heap.hpp
+        HINTS "${BOOST_DIR}" "$ENV{BOOST_DIR}" "boost_1_87_0"
+        REQUIRED)
+
+# endif ()
+message("Found Boost libraries at ${BOOST_INCLUDE_DIR}")
+
 # Include fmt.
 add_subdirectory(fmt EXCLUDE_FROM_ALL)
 target_include_directories(bcp-mapf PUBLIC fmt/include/)
@@ -150,9 +177,6 @@ target_include_directories(bcp-mapf PUBLIC cxxopts/include/)
 target_include_directories(bcp-mapf PUBLIC robin-hood-hashing/src/include/)
 
 # Include Boost.
-find_path(BOOST_INCLUDE_DIR
-          NAMES boost/container/small_vector.hpp
-          HINTS "${BOOST_DIR}" "$ENV{BOOST_DIR}")
 target_include_directories(bcp-mapf PUBLIC ${BOOST_INCLUDE_DIR})
 
 # Link to math library.
@@ -198,7 +222,7 @@ target_compile_options(bcp-mapf PRIVATE -DUSE_BEST_FIRST_NODE_SELECTION)
 #target_compile_options(bcp-mapf PRIVATE -DUSE_RESTART_DEPTH_FIRST_NODE_SELECTION)
 
 # Set warnings.
-target_compile_options(bcp-mapf PRIVATE -Wall -Wextra -Wignored-qualifiers -Werror=return-type)
+target_compile_options(bcp-mapf PRIVATE -Wall -Wextra -Wignored-qualifiers -Werror=return-type -Wno-sign-compare)
 
 # Set flags.
 check_cxx_compiler_flag("-march=native" MARCH_NATIVE)
