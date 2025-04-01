@@ -56,7 +56,7 @@ class DistanceHeuristic
     // Constructors and destructor
     DistanceHeuristic() = delete;
     DistanceHeuristic(const Map& map);
-    DistanceHeuristic(const DistanceHeuristic&) noexcept = default;
+    DistanceHeuristic(const DistanceHeuristic&) noexcept = delete;
     DistanceHeuristic(DistanceHeuristic&&) noexcept = default;
     DistanceHeuristic& operator=(const DistanceHeuristic&) noexcept = delete;
     DistanceHeuristic& operator=(DistanceHeuristic&&) noexcept = delete;

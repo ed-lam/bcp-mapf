@@ -13,9 +13,9 @@ union XY
     };
     UInt32 xy;
 
-    constexpr XY() noexcept = default;
-    constexpr XY(const UInt32 xy) noexcept : xy(xy) {}
-    constexpr XY(const Position x, const Position y) noexcept : x(x), y(y) {}
+    XY() noexcept = default;
+    XY(const UInt32 xy) noexcept : xy(xy) {}
+    XY(const Position x, const Position y) noexcept : x(x), y(y) {}
 
     // auto operator<=>(const XY& rhs) const { return xy <=> rhs.xy; }
 };
@@ -42,9 +42,9 @@ union XYT
     };
     UInt64 xyt;
 
-    constexpr XYT() noexcept = default;
-    constexpr XYT(const UInt64 xyt) noexcept : xyt(xyt) {}
-    constexpr XYT(const Position x, const Position y, const Time t) noexcept : x(x), y(y), t(t) {}
+    XYT() noexcept = default;
+    XYT(const UInt64 xyt) noexcept : xyt(xyt) {}
+    XYT(const Position x, const Position y, const Time t) noexcept : x(x), y(y), t(t) {}
 };
 static_assert(sizeof(Position) == 2);
 static_assert(sizeof(Time) == 4);
@@ -71,9 +71,9 @@ union NodeTime
     };
     UInt64 nt;
 
-    constexpr NodeTime() noexcept = default;
-    constexpr NodeTime(const UInt64 nt) noexcept : nt(nt) {}
-    constexpr NodeTime(const Node n, const Time t) noexcept : n(n), t(t) {}
+    NodeTime() noexcept = default;
+    NodeTime(const UInt64 nt) noexcept : nt(nt) {}
+    NodeTime(const Node n, const Time t) noexcept : n(n), t(t) {}
 };
 static_assert(sizeof(Node) == 4);
 static_assert(sizeof(Time) == 4);
@@ -113,8 +113,8 @@ union Edge
     };
     UInt32 id;
 
-    constexpr Edge() noexcept = default;
-    constexpr Edge(const Node n, const Direction d) noexcept : n(n), d(d) {}
+    Edge() noexcept = default;
+    Edge(const Node n, const Direction d) noexcept : n(n), d(d) {}
 };
 static_assert(sizeof(Node) == 4);
 static_assert(sizeof(Edge) == 4);
@@ -144,10 +144,10 @@ union EdgeTime
     };
     UInt64 id;
 
-    constexpr EdgeTime() noexcept = default;
-    constexpr EdgeTime(const Edge e, const Time t) noexcept : et{e, t} {}
-    constexpr EdgeTime(const NodeTime nt, const Direction d) noexcept : n(nt.n), d(d), t(nt.t) {}
-    constexpr EdgeTime(const Node n, const Direction d, const Time t) noexcept : n(n), d(d), t(t) {}
+    EdgeTime() noexcept = default;
+    EdgeTime(const Edge e, const Time t) noexcept : et{e, t} {}
+    EdgeTime(const NodeTime nt, const Direction d) noexcept : n(nt.n), d(d), t(nt.t) {}
+    EdgeTime(const Node n, const Direction d, const Time t) noexcept : n(n), d(d), t(t) {}
 
     inline NodeTime nt() const noexcept { return NodeTime{n, t}; }
 };
