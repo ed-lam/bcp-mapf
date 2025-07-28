@@ -1,6 +1,8 @@
 BCP-MAPF
 ========
 
+BCP-MAPF is superseded by a [new version](https://github.com/ed-lam/bcp2-mapf).
+
 BCP-MAPF is an implementation of a branch-and-cut-and-price algorithm for the multi-agent path finding problem. It is described in the paper:
 
 [Branch-and-Cut-and-Price for Multi-Agent Path Finding](https://ed-lam.com/papers/bcpmapf2022.pdf). Edward Lam, Pierre Le Bodic, Daniel Harabor and Peter J. Stuckey. Computers & Operations Research, vol. 144, pp. 105809. 2022.
